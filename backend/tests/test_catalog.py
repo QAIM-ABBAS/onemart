@@ -73,3 +73,14 @@ def test_home_payload(client, seed_catalog):
 
 def test_unknown_product_404(client):
     assert client.get("/api/products/nope").status_code == 404
+
+
+def test_placeholder_svg_escapes_markup(client):
+    import xml.etree.ElementTree as ET
+
+    res = client.get("/api/img/placeholder.svg", params={"text": "Head & <Shoulders>"})
+    assert res.status_code == 200
+    root = ET.fromstring(res.content)  # raises if the SVG is not well-formed
+    labels = [el.text or "" for el in root.iter() if el.tag.endswith("text")]
+    # only the first two words are drawn, so the label is "Head &"
+    assert any("HEAD &" in label for label in labels)

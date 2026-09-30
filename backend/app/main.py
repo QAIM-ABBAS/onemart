@@ -1,5 +1,6 @@
 import logging
 from contextlib import asynccontextmanager
+from html import escape
 
 from fastapi import FastAPI, Request
 from fastapi.exceptions import RequestValidationError
@@ -128,12 +129,12 @@ def placeholder_image(
     fg: str = Query("1F3D2B", pattern=r"^[0-9A-Fa-f]{6}$"),
 ):
     words = [w for w in text.split() if w][:2]
-    initials = "".join(w[0].upper() for w in words) or "OM"
-    label = " ".join(words)
+    initials = escape("".join(w[0].upper() for w in words) or "OM")
+    label = escape(" ".join(words).upper())
     svg = f"""<svg xmlns="http://www.w3.org/2000/svg" width="800" height="800" viewBox="0 0 800 800">
   <rect width="800" height="800" fill="#{bg}"/>
   <rect x="40" y="40" width="720" height="720" fill="none" stroke="#{fg}" stroke-opacity="0.18" stroke-width="2"/>
   <text x="400" y="380" text-anchor="middle" font-family="Georgia, 'Times New Roman', serif" font-size="200" fill="#{fg}" fill-opacity="0.9">{initials}</text>
-  <text x="400" y="470" text-anchor="middle" font-family="Helvetica, Arial, sans-serif" font-size="34" letter-spacing="4" fill="#{fg}" fill-opacity="0.65">{label.upper()}</text>
+  <text x="400" y="470" text-anchor="middle" font-family="Helvetica, Arial, sans-serif" font-size="34" letter-spacing="4" fill="#{fg}" fill-opacity="0.65">{label}</text>
 </svg>"""
     return Response(content=svg, media_type="image/svg+xml", headers={"Cache-Control": "public, max-age=86400"})
