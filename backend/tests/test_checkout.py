@@ -32,6 +32,30 @@ def test_guest_cart_and_login_merge(client, customer, seed_catalog):
     assert patched.json()["items"][0]["quantity"] == 2
 
 
+def test_login_merges_guest_cart_into_existing_account_cart(client, customer, seed_catalog):
+    # First sign-in: the account gets its own (empty) cart.
+    headers = login(client, customer)
+    assert client.get("/api/cart", headers=headers).json()["item_count"] == 0
+    owned = client.post("/api/cart/items", json={"variant_id": 2, "quantity": 1}, headers=headers)
+    assert owned.status_code == 201, owned.text
+
+    # Fresh guest session shopping while the account already owns a cart.
+    client.post("/api/auth/logout")
+    client.cookies.clear()
+    assert client.post("/api/cart/items", json={"variant_id": 2, "quantity": 1}).status_code == 201
+    assert client.post("/api/cart/items", json={"variant_id": 1, "quantity": 1}).status_code == 201
+
+    # Second sign-in takes the merge branch: guest rows move onto the account cart.
+    headers = login(client, customer)
+    cart = client.get("/api/cart", headers=headers).json()
+    assert cart["item_count"] == 3, cart
+    assert {i["variant_id"]: i["quantity"] for i in cart["items"]} == {2: 2, 1: 1}
+
+    summary = client.get("/api/checkout/summary", headers=headers)
+    assert summary.status_code == 200, summary.text
+    assert summary.json()["item_count"] == 3
+
+
 def test_cart_stock_guard(client, seed_catalog):
     assert client.post("/api/cart/items", json={"variant_id": 1, "quantity": 2}).status_code == 409
     assert client.post("/api/cart/items", json={"variant_id": 1, "quantity": 1}).status_code == 201
@@ -94,6 +118,9 @@ def test_concurrent_checkout_only_one_wins(client, db, seed_catalog):
 
     lock = threading.Lock()
     results = []
+    # Both carts must be filled before either checkout starts, otherwise one
+    # racer's add can land after the other's checkout has consumed the stock.
+    ready = threading.Barrier(2)
 
     def race(email: str) -> None:
         with TestClient(app=client.app, base_url="http://testserver") as racer:
@@ -107,6 +134,7 @@ def test_concurrent_checkout_only_one_wins(client, db, seed_catalog):
                 "/api/cart/items", json={"variant_id": 1, "quantity": 1}, headers=headers
             )
             assert add.status_code == 201, add.text
+            ready.wait(timeout=30)
             response = racer.post("/api/checkout", json={"address": ADDRESS}, headers=headers)
             with lock:
                 results.append(response)

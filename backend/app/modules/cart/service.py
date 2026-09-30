@@ -80,9 +80,15 @@ def _merge_items(db: Session, *, source: Cart, target: Cart) -> None:
         )
         if existing:
             existing.quantity = min(existing.quantity + source_item.quantity, 99)
+            # Leave the source collection so delete-orphan drops the duplicate row
+            # instead of a later cascade deleting it from the target cart.
+            source.items.remove(source_item)
             db.delete(source_item)
         else:
-            source_item.cart_id = target.id
+            # Appending via the relationship keeps both collections in sync; a raw
+            # cart_id reassignment would leave the item in source.items and the
+            # delete-orphan cascade on the guest cart would destroy it.
+            target.items.append(source_item)
     db.flush()
 
 
