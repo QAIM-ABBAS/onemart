@@ -104,7 +104,10 @@ async function run(name, fn) {
         }
       });
       failures.push(
-        `  url: ${pg.url()}\n  auth: ${JSON.stringify(auth)}\n  rq: ${JSON.stringify(rq)}\n  probe: ${probe}\n  body: ${txt}`,
+        `  url: ${pg.url()}\n  auth: ${JSON.stringify(auth)}\n  rq: ${JSON.stringify(rq)}\n  probe: ${probe}\n  body: ${txt}\n  api tail:\n${apiLog
+          .slice(-40)
+          .map((l) => "    " + l)
+          .join("\n")}`,
       );
       await shot(pg, `fail-${name.replace(/[^a-z0-9]+/gi, "-")}`);
     } catch {
@@ -120,7 +123,8 @@ wire(page, "[cust]");
 
 const goto = async (p, url) => {
   try {
-    await p.goto(BASE + url, { waitUntil: "domcontentloaded", timeout: 45000 });
+    // 60s: absorbs a cold Vite start right after `docker compose up --recreate`.
+    await p.goto(BASE + url, { waitUntil: "domcontentloaded", timeout: 60000 });
   } catch (e) {
     const finalUrl = p.url();
     throw new Error(`goto ${url} failed (now at ${finalUrl}): ${e.message}`);
@@ -252,8 +256,8 @@ await run("place order lands on confirmation with timeline", async () => {
 
 await run("order history lists the order", async () => {
   await goto(page, "/orders");
-  await page.waitForFunction(() => document.body.innerText.includes("My orders"), {
-    timeout: 20000,
+  await page.waitForFunction(() => document.body.innerText.includes("OM-"), {
+    timeout: 25000,
   });
   const t = await bodyText(page);
   check(t.includes("OM-"), "no order number in history list");
