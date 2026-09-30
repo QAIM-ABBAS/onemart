@@ -1,0 +1,10 @@
+# Optional host access to Redis. Copy to docker-compose.override.yml (git-ignored)
+# and set REDIS_URL=redis://localhost:17500/0 for host-run uvicorn.
+#
+# 17500 is >= 15001, outside Windows' dynamic port range (1024-15001), so
+# Hyper-V/WinNAT/WSL reservations cannot steal it (they caused the 7500 bind
+# failure: "excluded port range 7448-7547").
+services:
+  redis:
+    ports:
+      - "127.0.0.1:17500:6379"

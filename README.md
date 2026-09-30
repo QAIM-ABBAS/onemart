@@ -12,8 +12,8 @@ Modular monolith, not microservices: one FastAPI app with clear module boundarie
 | Layer     | Tech |
 |-----------|------|
 | API       | FastAPI, SQLAlchemy 2.0 (typed ORM), Alembic, Pydantic v2 |
-| DB        | PostgreSQL 16 (Docker Compose, port `5433`) |
-| Cache     | Redis 7 (Docker Compose, port `7500`; falls back to an in-process cache when unreachable) |
+| DB        | PostgreSQL 16 (Docker Compose, `127.0.0.1:5433`) |
+| Cache     | Redis 7 (Docker Compose, internal only — not published; falls back to an in-process cache when unreachable) |
 | Frontend  | React 19, Vite 6, TypeScript (strict), Tailwind CSS v4, React Router 7 |
 | Data/Auth | TanStack Query (server state), Zustand (auth state), JWT access token + httpOnly refresh cookie |
 | Tooling   | Ruff, pytest, Docker Compose, puppeteer-core for E2E smoke |
@@ -59,11 +59,15 @@ notifications.
 docker compose up --build
 ```
 
-- Web (Vite dev): http://localhost:5173
-- API (FastAPI + auto docs): http://localhost:8000/docs
-- DB: `localhost:5433`, Redis: `localhost:7500`
+- Web (Vite dev): http://127.0.0.1:5173
+- API (FastAPI + auto docs): http://127.0.0.1:8000/docs
+- DB: `127.0.0.1:5433` — Redis: not published (compose network only; see
+  `docker-compose.override.example.yml` to expose it on `127.0.0.1:17500`)
 
 The API container runs `alembic upgrade head` and seeds demo data on first start.
+`backend/` and `frontend/` are bind-mounted, so host edits hot-reload
+(uvicorn `--reload` for the API, Vite HMR for the SPA). All published ports bind
+to `127.0.0.1` only.
 
 ## Quick start (local development)
 

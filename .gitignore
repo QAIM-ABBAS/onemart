@@ -29,3 +29,4 @@ Thumbs.db
 
 # ...
 NoteForMyself
+docker-compose.override.yml
