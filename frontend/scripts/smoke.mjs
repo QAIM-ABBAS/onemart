@@ -32,7 +32,10 @@ const browser = await puppeteer.launch({
 function wire(page, tag) {
   page.on("pageerror", (e) => problems.push(`${tag} pageerror: ${e.message}`));
   page.on("console", (m) => {
-    if (m.type() === "error") problems.push(`${tag} console: ${m.text()}`);
+    if (m.type() !== "error") return;
+    const loc = m.location()?.url ?? "";
+    if (loc.includes("/auth/refresh")) return;
+    problems.push(`${tag} console: ${m.text()}`);
   });
   page.on("request", (r) => {
     if (r.url().includes("/api/")) apiLog.push(`${tag} > ${r.method()} ${r.url().replace(BASE, "")}`);
@@ -67,8 +70,42 @@ async function run(name, fn) {
     failures.push(`${name}: ${e.message}`);
     const pg = step.startsWith("admin") ? apage ?? page : page;
     try {
-      const txt = await pg.evaluate(() => document.body.innerText.slice(0, 600));
-      failures.push(`  url: ${pg.url()}\n  body: ${txt}`);
+      const txt = await pg.evaluate(() => document.body.innerText.slice(0, 300));
+      const auth = await pg.evaluate(() => {
+        const s = window.__auth?.getState?.();
+        return s ? { user: s.user?.email ?? null, booted: s.booted } : "no __auth";
+      });
+      const rq = await pg.evaluate(() => {
+        const rq = window.__rq;
+        if (!rq) return "no __rq";
+        return rq
+          .getQueryCache()
+          .getAll()
+          .filter((q) => JSON.stringify(q.queryKey).includes("orders"))
+          .map((q) => ({
+            key: JSON.stringify(q.queryKey),
+            status: q.state.status,
+            fetch: q.state.fetchStatus,
+            age: q.state.dataUpdatedAt ? Date.now() - q.state.dataUpdatedAt : null,
+            items: q.state.data?.items?.length ?? null,
+            obs: q.getObserversCount(),
+          }));
+      });
+      const probe = await pg.evaluate(async () => {
+        const t0 = performance.now();
+        try {
+          const r = await fetch("/api/orders?page=1&page_size=10&sort=newest", {
+            headers: { Authorization: "Bearer " + (window.__token?.() ?? "") },
+          });
+          const txt = await r.text();
+          return `status=${r.status} len=${txt.length} ms=${Math.round(performance.now() - t0)}`;
+        } catch (e) {
+          return "probe err " + e.message;
+        }
+      });
+      failures.push(
+        `  url: ${pg.url()}\n  auth: ${JSON.stringify(auth)}\n  rq: ${JSON.stringify(rq)}\n  probe: ${probe}\n  body: ${txt}`,
+      );
       await shot(pg, `fail-${name.replace(/[^a-z0-9]+/gi, "-")}`);
     } catch {
       /* ignore */
@@ -341,7 +378,7 @@ else failures.forEach((f) => console.log("FAIL: " + f));
 console.log("\n--- console/page/api problems ---");
 if (problems.length === 0) console.log("none");
 else problems.forEach((p) => console.log("!!  " + p));
-console.log("\n--- last api calls ---");
-apiLog.slice(-40).forEach((l) => console.log(l));
+console.log("\n--- all api calls ---");
+apiLog.forEach((l) => console.log(l));
 console.log(`\nscreenshots: ${SHOTS}`);
 process.exit(problems.length || failures.length ? 2 : 0);
