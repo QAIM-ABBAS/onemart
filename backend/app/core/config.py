@@ -10,7 +10,7 @@ class Settings(BaseSettings):
     environment: str = "development"
 
     database_url: str = "postgresql+psycopg://onemart:onemart@localhost:5433/onemart"
-    redis_url: str = "redis://localhost:6379/0"
+    redis_url: str = "redis://localhost:7500/0"
     redis_disabled: bool = False
 
     jwt_secret: str = "dev-only-secret-change-me-0123456789abcdef0123456789abcdef"
