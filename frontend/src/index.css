@@ -13,8 +13,19 @@
   --color-brick: #a63a2b;
   --color-amber: #96681a;
 
+  --color-sale: #a63a2b;
+  --color-price: #2e7350;
+  --color-star: #96681a;
+  --color-accent-soft: #f1e7d8;
+  --color-accent-tint: #eaf0e5;
+
   --font-display: "Fraunces", Georgia, "Times New Roman", serif;
   --font-sans: "IBM Plex Sans", system-ui, -apple-system, "Segoe UI", sans-serif;
+
+  --shadow-card: 0 12px 32px rgba(22, 33, 27, 0.12);
+  --shadow-panel: 0 18px 48px rgba(22, 33, 27, 0.18);
+
+  --container-page: 1320px;
 
   --radius-xs: 0px;
   --radius-sm: 2px;
@@ -93,4 +104,56 @@
 @utility prose-basic {
   line-height: 1.65;
   color: var(--color-ink-soft);
+}
+
+@utility hide-scrollbar {
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+  &::-webkit-scrollbar {
+    display: none;
+  }
+}
+
+@layer components {
+  .page {
+    margin-inline: auto;
+    width: 100%;
+    max-inline-size: var(--container-page);
+    padding-inline: 1.25rem;
+  }
+
+  @media (min-width: 768px) {
+    .page {
+      padding-inline: 2rem;
+    }
+  }
+
+  .section-block {
+    padding-block: 1.75rem;
+  }
+
+  @media (min-width: 1024px) {
+    .section-block {
+      padding-block: 1.75rem;
+    }
+  }
+
+  .no-scrollbar::-webkit-scrollbar {
+    display: none;
+  }
+
+  .no-scrollbar {
+    scrollbar-width: none;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
 }
