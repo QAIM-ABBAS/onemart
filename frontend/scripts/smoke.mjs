@@ -135,12 +135,12 @@ await run("home renders hero + categories + featured", async () => {
   await goto(page, "/");
   await page.waitForFunction(
     () =>
-      document.body.innerText.includes("SHOP BY CATEGORY") &&
-      document.querySelectorAll('a[href*="/products?category="]').length > 0,
+      document.body.innerText.includes("Shop by category") &&
+      document.querySelectorAll('a[href*="/products?category="]').length > 4,
     { timeout: 30000 },
   );
   const t = await bodyText(page);
-  check(t.includes("Groceries"), "hero copy missing");
+  check(t.includes("Fruit, vegetables"), "hero copy missing");
   await page.waitForFunction(
     () => document.querySelectorAll('a[href^="/p/"]').length > 0,
     { timeout: 30000 },
@@ -188,7 +188,7 @@ await run("product detail add to cart updates header badge", async () => {
   check(clicked, "add to cart button missing");
   await page.waitForFunction(
     () =>
-      (document.querySelector('a[aria-label^="Cart"]')?.getAttribute("aria-label") || "").includes(
+      (document.querySelector('button[aria-label^="Open cart"]')?.getAttribute("aria-label") || "").includes(
         "1 item",
       ),
     { timeout: 15000 },
