@@ -3,6 +3,7 @@ import { Link, useParams } from "react-router-dom";
 
 import { useAddToCart } from "@/hooks/queries/cart";
 import { useProduct } from "@/hooks/queries/catalog";
+import { pushRecent } from "@/hooks/useRecentlyViewed";
 import { cn } from "@/lib/cn";
 import { ApiError } from "@/lib/api";
 
@@ -39,6 +40,18 @@ export function ProductPage() {
     setError(null);
     setVariantId(null);
   }, [slug]);
+
+  useEffect(() => {
+    const data = product.data;
+    if (!data) return;
+    pushRecent({
+      id: data.id,
+      slug: data.slug,
+      name: data.name,
+      thumbnail: data.images[0]?.url ?? null,
+      price: data.price,
+    });
+  }, [product.data]);
 
   useEffect(() => {
     if (!added) return;
