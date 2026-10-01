@@ -4,6 +4,7 @@ import { Navigate, useLocation } from "react-router-dom";
 import { isStaff, useAuth } from "@/stores/auth";
 
 import { EmptyState, Skeleton, SkeletonText } from "@/components/ui/States";
+import { Toaster } from "@/components/ui/Toaster";
 
 import { Footer } from "./Footer";
 import { Header } from "./Header";
@@ -14,6 +15,7 @@ export function Shell({ children }: { children: ReactNode }) {
       <Header />
       <main className="flex-1">{children}</main>
       <Footer />
+      <Toaster />
     </div>
   );
 }
