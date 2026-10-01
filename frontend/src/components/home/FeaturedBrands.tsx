@@ -1,0 +1,59 @@
+import { Link } from "react-router-dom";
+
+import { BRAND_OFFERS } from "@/content/home";
+
+import { Carousel, useCarousel } from "@/components/ui/Carousel";
+import { SectionHeader } from "@/components/ui/SectionHeader";
+
+const CARD_WIDTH =
+  "w-[78%] shrink-0 snap-start sm:w-[46%] md:w-[31%] lg:w-[calc((100%-3*1rem)/4)]";
+
+export function FeaturedBrands() {
+  const { ref, scrollBy, canPrev, canNext } = useCarousel<HTMLDivElement>();
+
+  return (
+    <section aria-labelledby="brands-heading" className="section-block pt-0">
+      <SectionHeader
+        id="brands-heading"
+        title="Featured offers"
+        href="/products"
+        linkLabel="All offers"
+        onPrev={() => scrollBy(-1)}
+        onNext={() => scrollBy(1)}
+        canPrev={canPrev}
+        canNext={canNext}
+      />
+
+      <div className="mt-5">
+        <Carousel containerRef={ref} ariaLabel="Featured offers">
+          {BRAND_OFFERS.map((offer) => (
+            <Link
+              key={offer.id}
+              to={offer.href}
+              className={`${CARD_WIDTH} group block focus-visible:outline-none`}
+            >
+              <span
+                className="block aspect-[16/10] overflow-hidden rounded-md transition-shadow group-hover:shadow-card group-focus-visible:shadow-card"
+                style={{ backgroundColor: offer.tint }}
+              >
+                <img
+                  src={offer.image}
+                  alt=""
+                  width={480}
+                  height={300}
+                  loading="lazy"
+                  decoding="async"
+                  className="h-full w-full object-contain transition-transform duration-300 group-hover:scale-[1.04]"
+                />
+              </span>
+              <span className="label mt-3 block text-ink-soft">{offer.label}</span>
+              <span className="mt-1.5 block text-sm leading-snug font-semibold text-ink transition-colors group-hover:text-leaf">
+                {offer.title}
+              </span>
+            </Link>
+          ))}
+        </Carousel>
+      </div>
+    </section>
+  );
+}
