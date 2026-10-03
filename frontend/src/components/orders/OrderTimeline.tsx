@@ -10,13 +10,13 @@ export function OrderTimeline({ status, history }: { status: OrderStatus; histor
   if (status === "cancelled") {
     const cancelEvent = [...history].reverse().find((e) => e.status === "cancelled");
     return (
-      <div className="border border-brick/40 bg-brick/5 px-4 py-4">
-        <p className="label text-brick">Order cancelled</p>
+      <div className="border border-danger/40 bg-danger/5 px-4 py-4">
+        <p className="label text-danger">Order cancelled</p>
         <p className="mt-1.5 text-sm text-ink">
           {cancelEvent?.note || "This order was cancelled."}
         </p>
         {cancelEvent ? (
-          <p className="num mt-1 text-[0.8125rem] text-ink-soft">
+          <p className="num mt-1 text-[0.8125rem] text-ink-muted">
             {formatDateTime(cancelEvent.created_at)}
           </p>
         ) : null}
@@ -45,27 +45,27 @@ export function OrderTimeline({ status, history }: { status: OrderStatus; histor
               className={cn(
                 "relative z-10 mt-1 size-4 shrink-0 rounded-full border-2 sm:absolute sm:left-0 sm:top-0 sm:mt-0",
                 done
-                  ? "border-leaf bg-leaf"
+                  ? "border-brand-600 bg-brand-600"
                   : current
-                    ? "border-forest bg-paper"
-                    : "border-line-strong bg-paper",
+                    ? "border-brand-700 bg-canvas"
+                    : "border-line bg-canvas",
               )}
             />
             <div className="pb-5 sm:pb-0 sm:pr-4">
               <p
                 className={cn(
                   "label",
-                  done ? "text-leaf" : current ? "text-forest" : "text-ink-soft",
+                  done ? "text-brand-600" : current ? "text-brand-700" : "text-ink-muted",
                 )}
               >
                 {ORDER_STATUS_LABELS[step]}
               </p>
               {event ? (
-                <p className="num mt-0.5 text-[0.75rem] text-ink-soft">
+                <p className="num mt-0.5 text-[0.75rem] text-ink-muted">
                   {formatDateTime(event.created_at)}
                 </p>
               ) : current ? (
-                <p className="mt-0.5 text-[0.75rem] text-ink-soft">In progress</p>
+                <p className="mt-0.5 text-[0.75rem] text-ink-muted">In progress</p>
               ) : null}
             </div>
           </li>

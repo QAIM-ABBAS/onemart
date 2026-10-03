@@ -52,9 +52,9 @@ export function AdminOrdersPage() {
   return (
     <div>
       <div className="border-b border-ink/15 pb-4">
-        <p className="label text-leaf">Fulfilment</p>
+        <p className="label text-brand-600">Fulfilment</p>
         <h1 className="mt-1.5 text-2xl sm:text-3xl">Orders</h1>
-        <p className="mt-1 text-sm text-ink-soft num" aria-live="polite">
+        <p className="mt-1 text-sm text-ink-muted num" aria-live="polite">
           {orders.data ? `${orders.data.total} orders` : "Loading…"}
         </p>
       </div>
@@ -107,9 +107,9 @@ export function AdminOrdersPage() {
 
       <div className="mt-5">
         {orders.isLoading ? (
-          <div className="space-y-px bg-line">
+          <div className="divide-y divide-line overflow-hidden rounded-md bg-surface-2 shadow-pressed">
             {Array.from({ length: 6 }, (_, i) => (
-              <div key={i} className="flex items-center gap-4 bg-surface px-4 py-4">
+              <div key={i} className="flex items-center gap-4 px-4 py-4">
                 <Skeleton className="h-5 w-40" />
                 <Skeleton className="h-5 w-24" />
                 <Skeleton className="ml-auto h-5 w-24" />
@@ -120,24 +120,24 @@ export function AdminOrdersPage() {
           <ErrorState error={orders.error} onRetry={() => void orders.refetch()} />
         ) : orders.data && orders.data.items.length > 0 ? (
           <>
-            <div className="overflow-x-auto border border-line bg-surface">
+            <div className="overflow-x-auto rounded-md bg-surface-2 shadow-pressed">
               <table className="w-full min-w-[820px] text-sm">
                 <thead>
-                  <tr className="border-b border-line bg-paper/70 text-left">
-                    <th className="label px-4 py-2.5 text-ink-soft">Order</th>
-                    <th className="label px-4 py-2.5 text-ink-soft">Placed</th>
-                    <th className="label px-4 py-2.5 text-right text-ink-soft">Items</th>
-                    <th className="label px-4 py-2.5 text-right text-ink-soft">Total</th>
-                    <th className="label px-4 py-2.5 text-ink-soft">Payment</th>
-                    <th className="label px-4 py-2.5 text-ink-soft">Status</th>
-                    <th className="label px-4 py-2.5 text-right text-ink-soft">Action</th>
+                  <tr className="bg-surface-2 text-left shadow-pressed">
+                    <th className="label px-4 py-2.5 text-ink-muted">Order</th>
+                    <th className="label px-4 py-2.5 text-ink-muted">Placed</th>
+                    <th className="label px-4 py-2.5 text-right text-ink-muted">Items</th>
+                    <th className="label px-4 py-2.5 text-right text-ink-muted">Total</th>
+                    <th className="label px-4 py-2.5 text-ink-muted">Payment</th>
+                    <th className="label px-4 py-2.5 text-ink-muted">Status</th>
+                    <th className="label px-4 py-2.5 text-right text-ink-muted">Action</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-line">
                   {orders.data.items.map((order) => (
-                    <tr key={order.id} className="transition-colors hover:bg-mist/40">
+                    <tr key={order.id} className="transition-colors hover:bg-surface">
                       <td className="num px-4 py-3 font-medium">{order.order_number}</td>
-                      <td className="num px-4 py-3 text-ink-soft">{formatDate(order.created_at)}</td>
+                      <td className="num px-4 py-3 text-ink-muted">{formatDate(order.created_at)}</td>
                       <td className="num px-4 py-3 text-right">{order.item_count}</td>
                       <td className="num px-4 py-3 text-right font-semibold">
                         {money(order.total)}

@@ -34,16 +34,16 @@ export function MiniCart({ open, onClose }: { open: boolean; onClose: () => void
         type="button"
         aria-label="Close cart"
         onClick={onClose}
-        className="absolute inset-0 bg-ink/45"
+        className="absolute inset-0 bg-overlay/50 backdrop-blur-sm"
       />
       <aside
         role="dialog"
         aria-label="Shopping cart"
         className="absolute inset-y-0 end-0 flex w-full max-w-md flex-col border-s border-line bg-surface shadow-panel"
       >
-        <header className="flex items-center justify-between border-b border-line px-5 py-4">
+        <header className="flex items-center justify-between px-5 pb-4 pt-5">
           <div>
-            <p className="label text-ink-soft">Your basket</p>
+            <p className="label text-ink-muted">Your basket</p>
             <p className="mt-1 font-display text-xl font-semibold">
               {data ? `${data.item_count} item${data.item_count === 1 ? "" : "s"}` : "Cart"}
             </p>
@@ -52,7 +52,7 @@ export function MiniCart({ open, onClose }: { open: boolean; onClose: () => void
             type="button"
             onClick={onClose}
             aria-label="Close cart"
-            className="grid size-9 place-items-center border border-line-strong transition-colors hover:border-ink"
+            className="grid size-9 place-items-center rounded-md border border-line bg-surface transition hover:bg-surface-2"
           >
             <CloseIcon width={16} height={16} />
           </button>
@@ -93,7 +93,7 @@ export function MiniCart({ open, onClose }: { open: boolean; onClose: () => void
                   <Link
                     to={`/p/${item.product_slug}`}
                     onClick={onClose}
-                    className="grid size-16 shrink-0 place-items-center overflow-hidden bg-mist text-center text-[0.6rem] font-semibold text-forest"
+                    className="grid size-16 shrink-0 place-items-center overflow-hidden bg-surface-2 text-center text-[0.6rem] font-semibold text-brand-700"
                   >
                     {item.image_url ? (
                       <img src={item.image_url} alt="" className="h-full w-full object-cover" loading="lazy" />
@@ -105,11 +105,11 @@ export function MiniCart({ open, onClose }: { open: boolean; onClose: () => void
                     <Link
                       to={`/p/${item.product_slug}`}
                       onClick={onClose}
-                      className="block truncate text-sm font-medium hover:text-leaf"
+                      className="block truncate text-sm font-medium hover:text-brand-600"
                     >
                       {item.product_name}
                     </Link>
-                    <p className="mt-0.5 truncate text-[0.6875rem] text-ink-soft">
+                    <p className="mt-0.5 truncate text-[0.6875rem] text-ink-muted">
                       {item.variant_name} · {money(item.unit_price)}
                     </p>
                     <div className="mt-2 flex items-center justify-between gap-2">
@@ -125,7 +125,7 @@ export function MiniCart({ open, onClose }: { open: boolean; onClose: () => void
                         type="button"
                         aria-label={`Remove ${item.product_name} from cart`}
                         onClick={() => remove.mutate(item.id)}
-                        className="text-ink-soft transition-colors hover:text-brick"
+                        className="text-ink-muted transition-colors hover:text-danger"
                       >
                         <TrashIcon width={16} height={16} />
                       </button>
@@ -138,19 +138,19 @@ export function MiniCart({ open, onClose }: { open: boolean; onClose: () => void
         </div>
 
         {data && data.items.length > 0 ? (
-          <footer className="border-t border-line bg-paper px-5 py-4">
+          <footer className="bg-surface-2/50 px-5 py-4 ">
             <dl className="space-y-1.5 text-sm">
               <div className="flex items-center justify-between">
-                <dt className="text-ink-soft">Subtotal</dt>
+                <dt className="text-ink-muted">Subtotal</dt>
                 <dd className="num font-medium">{money(data.subtotal)}</dd>
               </div>
               <div className="flex items-center justify-between">
-                <dt className="text-ink-soft">Delivery</dt>
+                <dt className="text-ink-muted">Delivery</dt>
                 <dd className="num font-medium">
                   {data.delivery_fee === 0 ? "Free" : money(data.delivery_fee)}
                 </dd>
               </div>
-              <div className="flex items-center justify-between border-t border-line pt-2">
+              <div className="flex items-center justify-between pt-2">
                 <dt className="font-medium">Total</dt>
                 <dd className="num text-lg font-semibold">{money(data.total)}</dd>
               </div>

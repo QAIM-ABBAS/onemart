@@ -45,7 +45,7 @@ export function CountdownPill({
   return (
     <span
       className={cn(
-        "inline-flex h-8 items-center gap-2 bg-sale px-3 text-paper",
+        "inline-flex h-8 items-center gap-2 rounded-full bg-deal px-3.5 text-surface shadow-button",
         className,
       )}
       aria-live="off"

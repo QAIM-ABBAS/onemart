@@ -55,12 +55,12 @@ export function OrdersPage() {
 
   return (
     <div className="mx-auto max-w-5xl px-4 py-8 lg:py-12">
-      <div className="flex flex-wrap items-end justify-between gap-4 border-b border-ink/15 pb-4">
+      <div className="flex flex-wrap items-end justify-between gap-4">
         <div>
-          <p className="label text-leaf">Your account</p>
+          <p className="label text-brand-600">Your account</p>
           <h1 className="mt-1.5 text-3xl">My orders</h1>
         </div>
-        <div className="flex flex-wrap items-center gap-2">
+        <div className="flex flex-wrap items-center gap-2 rounded-md bg-surface p-1 border border-line">
           <Select
             value={params.status ?? ""}
             onChange={(e) => update({ status: e.target.value || undefined })}
@@ -99,16 +99,16 @@ export function OrdersPage() {
           <ErrorState error={orders.error} onRetry={() => void orders.refetch()} />
         ) : orders.data && orders.data.items.length > 0 ? (
           <>
-            <ul className="divide-y divide-line border border-line bg-surface">
+            <ul className="space-y-3">
               {orders.data.items.map((order) => (
                 <li key={order.id}>
                   <Link
                     to={`/orders/${order.id}`}
-                    className="grid gap-3 px-4 py-4 transition-colors hover:bg-mist/50 sm:grid-cols-[1.2fr_1fr_auto_auto] sm:items-center sm:gap-5"
+                    className="grid gap-3 rounded-md bg-surface px-4 py-4 border border-line transition hover:-translate-y-0.5 hover:shadow-lift sm:grid-cols-[1.2fr_1fr_auto_auto] sm:items-center sm:gap-5"
                   >
                     <div>
                       <p className="num font-display text-lg font-semibold">{order.order_number}</p>
-                      <p className="mt-0.5 text-[0.8125rem] text-ink-soft">
+                      <p className="mt-0.5 text-[0.8125rem] text-ink-muted">
                         {formatDate(order.created_at)} · {order.item_count} item
                         {order.item_count === 1 ? "" : "s"}
                       </p>
@@ -122,7 +122,7 @@ export function OrdersPage() {
                     <p className="num text-base font-semibold sm:text-right">
                       {money(order.total)}
                     </p>
-                    <span className="label text-leaf sm:justify-self-end">View →</span>
+                    <span className="label text-brand-600 sm:justify-self-end">View →</span>
                   </Link>
                 </li>
               ))}
@@ -189,7 +189,7 @@ export function OrderDetailPage() {
       <div className="mx-auto max-w-3xl px-4 py-16">
         <ErrorState error={order.error} onRetry={() => void order.refetch()} />
         <div className="mt-6 text-center">
-          <Link to="/orders" className="text-sm text-leaf underline-offset-4 hover:underline">
+          <Link to="/orders" className="text-sm text-brand-600 underline-offset-4 hover:underline">
             Back to my orders
           </Link>
         </div>
@@ -203,7 +203,7 @@ export function OrderDetailPage() {
     <div className="mx-auto max-w-4xl px-4 py-8 lg:py-12">
       <Link
         to="/orders"
-        className="label text-ink-soft transition-colors hover:text-ink"
+        className="label text-ink-muted transition-colors hover:text-ink"
       >
         ← All orders
       </Link>
@@ -215,11 +215,11 @@ export function OrderDetailPage() {
         </Notice>
       ) : null}
 
-      <div className="mt-5 flex flex-wrap items-start justify-between gap-4 border-b border-ink/15 pb-5">
+      <div className="mt-5 flex flex-wrap items-start justify-between gap-4">
         <div>
-          <p className="label text-leaf">Order</p>
+          <p className="label text-brand-600">Order</p>
           <h1 className="num mt-1.5 text-3xl">{o.order_number}</h1>
-          <p className="mt-1.5 text-sm text-ink-soft">
+          <p className="mt-1.5 text-sm text-ink-muted">
             Placed on {formatDateTime(o.placed_at)}
           </p>
         </div>
@@ -234,18 +234,18 @@ export function OrderDetailPage() {
 
       <section className="mt-7">
         <h2 className="text-lg">Status timeline</h2>
-        <div className="mt-4 border border-line bg-surface px-4 py-5 sm:px-6">
+        <div className="mt-4 rounded-md bg-surface-2 px-4 py-5 shadow-pressed sm:px-6">
           <OrderTimeline status={o.status} history={sortedHistory} />
         </div>
         {sortedHistory.length > 0 ? (
-          <ul className="mt-4 divide-y divide-line border border-line bg-surface text-sm">
+          <ul className="mt-4 divide-y divide-line rounded-md bg-surface text-sm border border-line">
             {sortedHistory.map((event) => (
               <li key={event.id} className="flex flex-wrap items-baseline gap-x-4 gap-y-1 px-4 py-3">
-                <span className="num w-40 shrink-0 text-ink-soft">
+                <span className="num w-40 shrink-0 text-ink-muted">
                   {formatDateTime(event.created_at)}
                 </span>
                 <span className="font-medium">{ORDER_STATUS_LABELS[event.status]}</span>
-                {event.note ? <span className="text-ink-soft">— {event.note}</span> : null}
+                {event.note ? <span className="text-ink-muted">— {event.note}</span> : null}
               </li>
             ))}
           </ul>
@@ -254,10 +254,10 @@ export function OrderDetailPage() {
 
       <section className="mt-8">
         <h2 className="text-lg">Items</h2>
-        <ul className="mt-4 divide-y divide-line border border-line bg-surface">
+        <ul className="mt-4 divide-y divide-line rounded-md bg-surface-2 shadow-pressed">
           {o.items.map((item) => (
             <li key={item.id} className="flex items-start gap-4 px-4 py-4">
-              <div className="size-16 shrink-0 overflow-hidden border border-line bg-mist">
+              <div className="size-16 shrink-0 overflow-hidden rounded-md bg-surface-2">
                 {item.image_url ? (
                   <img
                     src={item.image_url}
@@ -265,7 +265,7 @@ export function OrderDetailPage() {
                     className="h-full w-full object-cover"
                   />
                 ) : (
-                  <div className="grid h-full w-full place-items-center font-display text-lg text-forest/25">
+                  <div className="grid h-full w-full place-items-center font-display text-lg text-brand-700/25">
                     {item.product_name[0]}
                   </div>
                 )}
@@ -273,14 +273,14 @@ export function OrderDetailPage() {
               <div className="min-w-0 flex-1">
                 <Link
                   to={`/p/${item.product_slug}`}
-                  className="font-medium hover:text-leaf hover:underline underline-offset-2"
+                  className="font-medium hover:text-brand-600 hover:underline underline-offset-2"
                 >
                   {item.product_name}
                 </Link>
-                <p className="mt-0.5 text-[0.8125rem] text-ink-soft">
+                <p className="mt-0.5 text-[0.8125rem] text-ink-muted">
                   {item.variant_name} · SKU <span className="num">{item.sku}</span>
                 </p>
-                <p className="num mt-1 text-[0.8125rem] text-ink-soft">
+                <p className="num mt-1 text-[0.8125rem] text-ink-muted">
                   {money(item.unit_price)} × {item.quantity}
                 </p>
               </div>
@@ -291,49 +291,49 @@ export function OrderDetailPage() {
       </section>
 
       <div className="mt-8 grid gap-6 sm:grid-cols-2">
-        <section className="border border-line bg-surface px-4 py-4">
+        <section className="rounded-md bg-surface px-4 py-4 border border-line">
           <h2 className="flex items-center gap-2 text-lg">
-            <BanknoteIcon width={17} height={17} className="text-leaf" />
+            <BanknoteIcon width={17} height={17} className="text-brand-600" />
             Payment
           </h2>
           <dl className="mt-3 space-y-2 text-sm">
             <div className="flex justify-between">
-              <dt className="text-ink-soft">Method</dt>
+              <dt className="text-ink-muted">Method</dt>
               <dd>Cash on delivery</dd>
             </div>
             <div className="flex justify-between">
-              <dt className="text-ink-soft">Status</dt>
+              <dt className="text-ink-muted">Status</dt>
               <dd>{o.payment_status.replace(/_/g, " ")}</dd>
             </div>
-            <div className="flex justify-between border-t border-line pt-2">
-              <dt className="text-ink-soft">Subtotal</dt>
+            <div className="flex justify-between pt-3">
+              <dt className="text-ink-muted">Subtotal</dt>
               <dd className="num">{money(o.subtotal)}</dd>
             </div>
             <div className="flex justify-between">
-              <dt className="text-ink-soft">Delivery</dt>
+              <dt className="text-ink-muted">Delivery</dt>
               <dd className="num">{o.delivery_fee === 0 ? "Free" : money(o.delivery_fee)}</dd>
             </div>
-            <div className="flex justify-between border-t border-line pt-2 text-base font-semibold">
+            <div className="flex justify-between pt-3 text-base font-semibold">
               <dt>Total</dt>
               <dd className="num">{money(o.total)}</dd>
             </div>
           </dl>
         </section>
 
-        <section className="border border-line bg-surface px-4 py-4">
+        <section className="rounded-md bg-surface px-4 py-4 border border-line">
           <h2 className="text-lg">Delivery address</h2>
           <div className="mt-3 text-sm">
             <p className="font-medium">{o.recipient_name}</p>
-            <p className="num mt-0.5 text-ink-soft">{o.phone}</p>
-            <p className="mt-1.5 text-ink-soft">
+            <p className="num mt-0.5 text-ink-muted">{o.phone}</p>
+            <p className="mt-1.5 text-ink-muted">
               {o.line1}
               {o.line2 ? `, ${o.line2}` : ""}, {o.city}, {o.state}{" "}
               <span className="num">{o.postal_code}</span>, {o.country}
             </p>
           </div>
           {o.customer_note ? (
-            <div className="mt-4 border-t border-line pt-3">
-              <p className="label text-ink-soft">Your note</p>
+            <div className="mt-4 rounded-md bg-surface-2/50 px-3 py-2.5 ">
+              <p className="label text-ink-muted">Your note</p>
               <p className="mt-1 text-sm">{o.customer_note}</p>
             </div>
           ) : null}

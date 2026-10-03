@@ -95,7 +95,7 @@ export function ProductPage() {
           onRetry={is404 ? undefined : () => void product.refetch()}
         />
         <div className="mt-6 text-center">
-          <Link to="/products" className="text-sm text-leaf underline-offset-4 hover:underline">
+          <Link to="/products" className="text-sm text-brand-600 underline-offset-4 hover:underline">
             Browse all products
           </Link>
         </div>
@@ -126,7 +126,7 @@ export function ProductPage() {
 
   return (
     <div className="mx-auto max-w-6xl px-4 py-6 lg:py-10">
-      <nav aria-label="Breadcrumb" className="text-[0.8125rem] text-ink-soft">
+      <nav aria-label="Breadcrumb" className="text-[0.8125rem] text-ink-muted">
         <ol className="flex flex-wrap items-center gap-1.5">
           <li>
             <Link to="/" className="hover:text-ink hover:underline underline-offset-2">
@@ -149,7 +149,7 @@ export function ProductPage() {
 
       <div className="mt-6 grid gap-8 lg:grid-cols-2 lg:gap-14">
         <div>
-          <div className="relative aspect-square overflow-hidden border border-line bg-mist">
+          <div className="relative aspect-square overflow-hidden rounded-md bg-surface-2 border border-line">
             {activeImage ? (
               <img
                 src={activeImage}
@@ -158,7 +158,7 @@ export function ProductPage() {
               />
             ) : (
               <div className="grid h-full w-full place-items-center">
-                <span className="font-display text-6xl font-semibold text-forest/25">
+                <span className="font-display text-6xl font-semibold text-brand-700/25">
                   {p.name
                     .split(/\s+/)
                     .map((w) => w[0])
@@ -169,7 +169,7 @@ export function ProductPage() {
               </div>
             )}
             {p.compare_at_price && p.compare_at_price > p.price ? (
-              <span className="label absolute left-0 top-0 bg-forest px-2.5 py-1.5 text-paper">
+              <span className="label absolute left-3 top-3 inline-flex items-center rounded-full bg-deal px-3 py-1 text-surface shadow-button">
                 Save {Math.round(((p.compare_at_price - p.price) / p.compare_at_price) * 100)}%
               </span>
             ) : null}
@@ -183,8 +183,10 @@ export function ProductPage() {
                   onClick={() => setImageIndex(i)}
                   aria-label={`View image ${i + 1}`}
                   className={cn(
-                    "size-20 shrink-0 overflow-hidden border bg-mist transition-colors",
-                    i === imageIndex ? "border-forest" : "border-line hover:border-line-strong",
+                    "size-20 shrink-0 overflow-hidden rounded-md bg-surface-2 transition",
+                    i === imageIndex
+                      ? "shadow-card ring-2 ring-brand-600/40"
+                      : "shadow-pressed hover:shadow-card",
                   )}
                 >
                   <img src={img.url} alt={img.alt ?? ""} className="h-full w-full object-cover" />
@@ -196,7 +198,7 @@ export function ProductPage() {
 
         <div>
           <div className="flex flex-wrap items-center gap-2.5">
-            <p className="label text-ink-soft">{p.brand?.name ?? p.category.name}</p>
+            <p className="label text-ink-muted">{p.brand?.name ?? p.category.name}</p>
             {p.is_featured ? <Badge tone="info">Featured</Badge> : null}
           </div>
           <h1 className="mt-2 text-3xl sm:text-[2.4rem]">{p.name}</h1>
@@ -218,7 +220,7 @@ export function ProductPage() {
 
           {variants.length > 0 ? (
             <div className="mt-6">
-              <p className="label text-ink-soft">
+              <p className="label text-ink-muted">
                 {Object.keys(selected?.attributes ?? {}).length > 0
                   ? Object.keys(selected!.attributes)[0].replace(/\b\w/g, (c) => c.toUpperCase())
                   : "Size / pack"}
@@ -234,15 +236,22 @@ export function ProductPage() {
                       onClick={() => setVariantId(v.id)}
                       aria-pressed={active}
                       className={cn(
-                        "relative flex min-w-28 flex-col items-start gap-0.5 rounded-sm border px-3.5 py-2.5 text-left transition-colors",
+                        "relative flex min-w-28 flex-col items-start gap-0.5 rounded-md border border-line px-3.5 py-2.5 text-left transition",
                         active
-                          ? "border-forest bg-forest/5"
-                          : "border-line-strong bg-surface hover:border-ink",
+                          ? "bg-surface ring-2 ring-brand-600/40"
+                          : "bg-surface hover:bg-surface-2",
                         vAvailable <= 0 && "opacity-55",
                       )}
                     >
-                      <span className="text-sm font-medium">{v.name}</span>
-                      <span className="num text-[0.8125rem] text-ink-soft">
+                      <span
+                        className={cn(
+                          "text-sm",
+                          active ? "font-semibold text-ink" : "font-medium text-ink-muted",
+                        )}
+                      >
+                        {v.name}
+                      </span>
+                      <span className="num text-[0.8125rem] text-ink-muted">
                         {new Intl.NumberFormat("en-IN", {
                           style: "currency",
                           currency: "INR",
@@ -250,7 +259,7 @@ export function ProductPage() {
                         }).format(v.price)}
                       </span>
                       {vAvailable <= 0 ? (
-                        <span className="label mt-0.5 text-brick">Sold out</span>
+                        <span className="label mt-0.5 text-danger">Sold out</span>
                       ) : null}
                     </button>
                   );
@@ -289,7 +298,7 @@ export function ProductPage() {
 
           {error ? <InlineError className="mt-3">{error}</InlineError> : null}
           {added ? (
-            <p className="mt-3 text-sm text-leaf">
+            <p className="mt-3 text-sm text-brand-600">
               Added to your cart.{" "}
               <Link to="/cart" className="underline underline-offset-2">
                 Go to cart →
@@ -297,23 +306,23 @@ export function ProductPage() {
             </p>
           ) : null}
 
-          <dl className="mt-7 divide-y divide-line border-y border-line text-sm">
+          <dl className="mt-7 divide-y divide-line rounded-md bg-surface px-5 py-1 text-sm border border-line">
             <div className="flex gap-4 py-3">
-              <dt className="label w-32 shrink-0 pt-0.5 text-ink-soft">SKU</dt>
+              <dt className="label w-32 shrink-0 pt-0.5 text-ink-muted">SKU</dt>
               <dd className="num">{selected?.sku ?? "—"}</dd>
             </div>
             <div className="flex gap-4 py-3">
-              <dt className="label w-32 shrink-0 pt-0.5 text-ink-soft">Delivery</dt>
+              <dt className="label w-32 shrink-0 pt-0.5 text-ink-muted">Delivery</dt>
               <dd>
                 Cash on delivery. Free over ₹999, otherwise ₹40. Usually delivered in 1–2 days.
               </dd>
             </div>
             <div className="flex gap-4 py-3">
-              <dt className="label w-32 shrink-0 pt-0.5 text-ink-soft">Category</dt>
+              <dt className="label w-32 shrink-0 pt-0.5 text-ink-muted">Category</dt>
               <dd>
                 <Link
                   to={`/products?category=${p.category.slug}`}
-                  className="text-leaf underline-offset-2 hover:underline"
+                  className="text-brand-600 underline-offset-2 hover:underline"
                 >
                   {p.category.name}
                 </Link>
@@ -322,7 +331,7 @@ export function ProductPage() {
           </dl>
 
           {p.description ? (
-            <div className="mt-7">
+            <div className="mt-5 rounded-md bg-surface px-5 py-4 border border-line">
               <h2 className="text-lg">Description</h2>
               <p className="prose-basic mt-2.5 whitespace-pre-line text-sm">{p.description}</p>
             </div>

@@ -9,12 +9,13 @@ import {
 import { cn } from "@/lib/cn";
 
 export const fieldBase =
-  "w-full rounded-sm border bg-surface px-3.5 text-[0.9375rem] text-ink placeholder:text-ink-soft/70 " +
-  "transition-colors focus:outline-none focus:border-leaf focus:ring-1 focus:ring-leaf/40 " +
-  "disabled:bg-mist disabled:text-ink-soft";
+  "w-full rounded-md border border-line bg-surface px-4 text-[0.9375rem] text-ink placeholder:text-ink-faint " +
+  "transition focus:outline-none focus:border-brand-600 focus:ring-2 focus:ring-brand-600/30 " +
+  "disabled:bg-surface-2 disabled:text-ink-muted";
 
-export const fieldIdle = "border-line-strong";
-export const fieldError = "border-brick focus:border-brick focus:ring-brick/30";
+export const fieldIdle = "";
+export const fieldError =
+  "bg-danger/5 border-danger/50 ring-1 ring-danger/40 focus:ring-danger/60 focus:border-danger";
 
 interface FieldProps {
   label: string;
@@ -28,14 +29,14 @@ interface FieldProps {
 export function Field({ label, htmlFor, error, hint, children, className }: FieldProps) {
   return (
     <div className={cn("flex flex-col gap-1.5", className)}>
-      <label htmlFor={htmlFor} className="label text-ink-soft">
+      <label htmlFor={htmlFor} className="label text-ink-muted">
         {label}
       </label>
       {children}
       {error ? (
-        <p className="text-[0.8125rem] text-brick">{error}</p>
+        <p className="text-[0.8125rem] text-danger">{error}</p>
       ) : hint ? (
-        <p className="text-[0.8125rem] text-ink-soft">{hint}</p>
+        <p className="text-[0.8125rem] text-ink-muted">{hint}</p>
       ) : null}
     </div>
   );
@@ -90,7 +91,7 @@ export const Select = forwardRef<HTMLSelectElement, SelectProps>(function Select
       className={cn(
         fieldBase,
         invalid ? fieldError : fieldIdle,
-        "h-11 appearance-none pr-9 bg-[url('data:image/svg+xml;utf8,<svg xmlns=%22http://www.w3.org/2000/svg%22 width=%2216%22 height=%2216%22 fill=%22none%22 stroke=%22%235f6b63%22 stroke-width=%221.7%22><path d=%22m4 6 4 4 4-4%22/></svg>')] bg-[length:16px] bg-[right_0.75rem_center] bg-no-repeat",
+        "h-11 appearance-none pr-9 bg-[url('data:image/svg+xml;utf8,<svg xmlns=%22http://www.w3.org/2000/svg%22 width=%2216%22 height=%2216%22 fill=%22none%22 stroke=%22%236b6f68%22 stroke-width=%221.7%22><path d=%22m4 6 4 4 4-4%22/></svg>')] bg-[length:16px] bg-[right_0.75rem_center] bg-no-repeat",
         className,
       )}
       {...rest}
@@ -113,7 +114,7 @@ export const Checkbox = forwardRef<HTMLInputElement, CheckboxProps>(function Che
       <input
         ref={ref}
         type="checkbox"
-        className="size-4 rounded-[1px] accent-[#1F3D2B] cursor-pointer"
+        className="size-4 rounded-[1px] accent-brand-700 cursor-pointer"
         {...rest}
       />
       <span>{label}</span>

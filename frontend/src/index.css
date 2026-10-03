@@ -1,39 +1,86 @@
 @import "tailwindcss";
+@config "../tailwind.config.ts";
+
+/* ═══════════════════════════════════════════════════════════════════════
+   ONEMART DESIGN SYSTEM — one light theme, no dark mode.
+
+   Colours: ~70% neutrals · ~20% brand green · ~10% deal.
+   Deal red-orange is ONLY for sale prices, discount badges and flash-deal
+   elements — generic buttons and errors use `--danger`.
+   Yellow `--highlight` appears at most once per screen (coupon chip or
+   promo strip), never on buttons.
+
+   Raw values live here on `:root`; `tailwind.config.ts` maps them onto
+   Tailwind colour names (brand / deal / highlight / canvas / surface / line
+   / ink / success / warning / danger / info). Components must only ever
+   use those names — never a hardcoded colour.
+   ═══════════════════════════════════════════════════════════════════════ */
+
+:root {
+  /* ── Brand green ── */
+  --brand-50: #edf6f0;
+  --brand-100: #d3e9db;
+  --brand-200: #a7d3b8;
+  --brand-400: #4fa277;
+  --brand-600: #167a4a;
+  --brand-700: #0f5c3a;
+  --brand-800: #0b4a2f;
+  --brand-900: #073322;
+
+  /* ── Deal (sale prices · discount badges · flash deals only) ── */
+  --deal-50: #fdeee9;
+  --deal-600: #d63a12;
+  --deal-700: #b52e0c;
+
+  /* ── Highlight (yellow, max once per screen) ── */
+  --highlight: #ffd84d;
+  --highlight-ink: #4a3a00;
+
+  /* ── Neutrals ── */
+  --bg: #faf8f4; /* page canvas */
+  --surface: #ffffff; /* cards */
+  --surface-2: #f3f0e9; /* wells, hover fills, secondary surfaces */
+  --border: #e7e3da;
+
+  --text: #1a1d1a;
+  --text-muted: #6b6f68;
+  --text-faint: #9a9e96;
+
+  /* ── Semantic ── */
+  --success: #1f8a4c;
+  --warning: #e9a100;
+  --danger: #c62f2f;
+  --info: #2563a8;
+
+  /* Modal / dropdown scrim (not a palette colour — a neutral veil) */
+  --overlay: rgb(7 51 34 / 0.45);
+
+  color-scheme: light;
+}
 
 @theme {
-  --color-paper: #f5f4ee;
-  --color-surface: #ffffff;
-  --color-ink: #16211b;
-  --color-ink-soft: #5f6b63;
-  --color-forest: #1f3d2b;
-  --color-leaf: #2e7350;
-  --color-mist: #e8ede8;
-  --color-line: #d9d5c9;
-  --color-line-strong: #b9b5a6;
-  --color-brick: #a63a2b;
-  --color-amber: #96681a;
+  /* Type: Inter only — one family, one scale (Tailwind's default ramp). */
+  --font-sans: "Inter", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  --font-display: "Inter", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
 
-  --color-sale: #a63a2b;
-  --color-price: #2e7350;
-  --color-star: #96681a;
-  --color-accent-soft: #f1e7d8;
-  --color-accent-tint: #eaf0e5;
+  /* Radius: small — 6/8px everywhere, never rounded-2xl on big boxes. */
+  --radius-xs: 4px;
+  --radius-sm: 6px;
+  --radius-md: 8px;
+  --radius-lg: 8px;
+  --radius-xl: 10px;
+  --radius-2xl: 12px;
+  --radius-3xl: 16px;
 
-  --font-display: "Fraunces", Georgia, "Times New Roman", serif;
-  --font-sans: "IBM Plex Sans", system-ui, -apple-system, "Segoe UI", sans-serif;
-
-  --shadow-card: 0 12px 32px rgba(22, 33, 27, 0.12);
-  --shadow-panel: 0 18px 48px rgba(22, 33, 27, 0.18);
+  /* Shadows: quiet. Cards carry a 1px line, not a heavy shadow. */
+  --shadow-card: 0 1px 2px rgb(26 29 26 / 0.06);
+  --shadow-panel: 0 8px 24px -8px rgb(26 29 26 / 0.18), 0 2px 6px rgb(26 29 26 / 0.06);
+  --shadow-lift: 0 4px 12px -4px rgb(26 29 26 / 0.16);
+  --shadow-pressed: inset 0 1px 2px rgb(26 29 26 / 0.07);
+  --shadow-button: 0 1px 2px rgb(26 29 26 / 0.08);
+  --shadow-glow: none;
 
   --container-page: 1320px;
-
-  --radius-xs: 0px;
-  --radius-sm: 2px;
-  --radius-md: 2px;
-  --radius-lg: 3px;
-  --radius-xl: 3px;
-  --radius-2xl: 3px;
-  --radius-3xl: 3px;
 
   --text-2xs: 0.6875rem;
   --text-2xs--line-height: 1rem;
@@ -42,8 +89,6 @@
 @layer base {
   html {
     font-family: var(--font-sans);
-    color: var(--color-ink);
-    background-color: var(--color-paper);
     -webkit-font-smoothing: antialiased;
     text-rendering: optimizeLegibility;
   }
@@ -51,6 +96,8 @@
   body {
     margin: 0;
     min-height: 100vh;
+    color: var(--text);
+    background-color: var(--bg);
   }
 
   h1,
@@ -61,7 +108,7 @@
     font-optical-sizing: auto;
     font-weight: 600;
     letter-spacing: -0.015em;
-    line-height: 1.12;
+    line-height: 1.15;
     text-wrap: balance;
   }
 
@@ -79,12 +126,12 @@
   }
 
   ::selection {
-    background: var(--color-forest);
-    color: var(--color-paper);
+    background: var(--brand-100);
+    color: var(--brand-900);
   }
 
   :focus-visible {
-    outline: 2px solid var(--color-leaf);
+    outline: 2px solid var(--brand-600);
     outline-offset: 2px;
   }
 }
@@ -103,7 +150,7 @@
 
 @utility prose-basic {
   line-height: 1.65;
-  color: var(--color-ink-soft);
+  color: var(--text-muted);
 }
 
 @utility hide-scrollbar {
@@ -114,7 +161,13 @@
   }
 }
 
+/* Product photography floating on a light card — one soft shadow, no glow. */
+@utility photo-lift {
+  filter: drop-shadow(0 6px 16px rgb(26 29 26 / 0.14));
+}
+
 @layer components {
+  /* ── Page box: the widest box every section is poured into ── */
   .page {
     margin-inline: auto;
     width: 100%;
@@ -122,28 +175,32 @@
     padding-inline: 1.25rem;
   }
 
-  @media (min-width: 768px) {
-    .page {
-      padding-inline: 2rem;
-    }
-  }
-
   .section-block {
     padding-block: 1.75rem;
   }
 
-  @media (min-width: 1024px) {
-    .section-block {
-      padding-block: 1.75rem;
-    }
+  /* ── Responsive card row: one rule covers phone → 4K ── */
+  .card-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 13rem), 1fr));
+    gap: 1rem;
+    align-items: stretch;
   }
 
-  .no-scrollbar::-webkit-scrollbar {
-    display: none;
+  /* ── Card: white surface + hairline border, flat (no heavy shadow) ── */
+  .card {
+    background-color: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-md);
   }
+}
 
-  .no-scrollbar {
-    scrollbar-width: none;
+/* ═════════════════════════ MEDIA QUERIES ═════════════════════════
+   Kept at the end so nothing above can be silently overwritten. */
+
+@media (min-width: 768px) {
+  .page {
+    padding-inline: 2rem;
   }
 }
 

@@ -99,9 +99,9 @@ export function AdminStockPage() {
     <div>
       <div className="flex flex-wrap items-end justify-between gap-4 border-b border-ink/15 pb-4">
         <div>
-          <p className="label text-leaf">Inventory</p>
+          <p className="label text-brand-600">Inventory</p>
           <h1 className="mt-1.5 text-2xl sm:text-3xl">Stock</h1>
-          <p className="mt-1 text-sm text-ink-soft num" aria-live="polite">
+          <p className="mt-1 text-sm text-ink-muted num" aria-live="polite">
             {inventory.data ? `${inventory.data.total} variants` : "Loading…"}
           </p>
         </div>
@@ -133,7 +133,11 @@ export function AdminStockPage() {
           </Button>
         </form>
 
-        <div className="flex overflow-hidden border border-line-strong" role="group" aria-label="Stock filters">
+        <div
+          className="flex rounded-md bg-surface p-1 border border-line"
+          role="group"
+          aria-label="Stock filters"
+        >
           {[
             { value: "", label: "All" },
             { value: "low", label: "Low stock" },
@@ -144,10 +148,10 @@ export function AdminStockPage() {
               type="button"
               onClick={() => update({ filter: opt.value || undefined })}
               className={cn(
-                "label h-9 border-r border-line-strong px-3 transition-colors last:border-r-0",
+                "label h-9 rounded-lg px-3 transition-colors",
                 filter === opt.value
-                  ? "bg-forest text-paper"
-                  : "bg-surface text-ink-soft hover:text-ink",
+                  ? "bg-surface text-brand-700 border border-line"
+                  : "text-ink-muted hover:bg-surface-2 hover:text-ink",
               )}
             >
               {opt.label}
@@ -173,9 +177,9 @@ export function AdminStockPage() {
 
       <div className="mt-5">
         {inventory.isLoading ? (
-          <div className="space-y-px bg-line">
+          <div className="divide-y divide-line overflow-hidden rounded-md bg-surface-2 shadow-pressed">
             {Array.from({ length: 8 }, (_, i) => (
-              <div key={i} className="flex items-center gap-4 bg-surface px-4 py-3.5">
+              <div key={i} className="flex items-center gap-4 px-4 py-3.5">
                 <Skeleton className="h-4 w-1/3" />
                 <Skeleton className="h-4 w-24" />
                 <Skeleton className="ml-auto h-8 w-24" />
@@ -186,18 +190,18 @@ export function AdminStockPage() {
           <ErrorState error={inventory.error} onRetry={() => void inventory.refetch()} />
         ) : rows.length > 0 ? (
           <>
-            <div className="overflow-x-auto border border-line bg-surface">
+            <div className="overflow-x-auto rounded-md bg-surface-2 shadow-pressed">
               <table className="w-full min-w-[860px] text-sm">
                 <thead>
-                  <tr className="border-b border-line bg-paper/70 text-left">
-                    <th className="label px-4 py-2.5 text-ink-soft">Product</th>
-                    <th className="label px-4 py-2.5 text-ink-soft">Variant / SKU</th>
-                    <th className="label px-4 py-2.5 text-right text-ink-soft">Price</th>
-                    <th className="label px-4 py-2.5 text-right text-ink-soft">Quantity</th>
-                    <th className="label px-4 py-2.5 text-right text-ink-soft">Reserved</th>
-                    <th className="label px-4 py-2.5 text-right text-ink-soft">Available</th>
-                    <th className="label px-4 py-2.5 text-ink-soft">Updated</th>
-                    <th className="label px-4 py-2.5 text-right text-ink-soft">Action</th>
+                  <tr className="bg-surface-2 text-left shadow-pressed">
+                    <th className="label px-4 py-2.5 text-ink-muted">Product</th>
+                    <th className="label px-4 py-2.5 text-ink-muted">Variant / SKU</th>
+                    <th className="label px-4 py-2.5 text-right text-ink-muted">Price</th>
+                    <th className="label px-4 py-2.5 text-right text-ink-muted">Quantity</th>
+                    <th className="label px-4 py-2.5 text-right text-ink-muted">Reserved</th>
+                    <th className="label px-4 py-2.5 text-right text-ink-muted">Available</th>
+                    <th className="label px-4 py-2.5 text-ink-muted">Updated</th>
+                    <th className="label px-4 py-2.5 text-right text-ink-muted">Action</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-line">
@@ -205,24 +209,24 @@ export function AdminStockPage() {
                     const out = row.available <= 0;
                     const low = !out && row.available <= row.low_stock_threshold;
                     return (
-                      <tr key={row.variant_id} className="transition-colors hover:bg-mist/40">
+                      <tr key={row.variant_id} className="transition-colors hover:bg-surface">
                         <td className="px-4 py-3">
                           <Link
                             to={`/admin/products/${row.product_id}/edit`}
-                            className="font-medium hover:text-leaf hover:underline underline-offset-2"
+                            className="font-medium hover:text-brand-600 hover:underline underline-offset-2"
                           >
                             {row.product_name}
                           </Link>
                         </td>
                         <td className="px-4 py-3">
-                          <p className="text-ink-soft">{row.variant_name}</p>
-                          <p className="num text-[0.75rem] text-ink-soft">{row.sku}</p>
+                          <p className="text-ink-muted">{row.variant_name}</p>
+                          <p className="num text-[0.75rem] text-ink-muted">{row.sku}</p>
                         </td>
                         <td className="num px-4 py-3 text-right">{money(row.price)}</td>
                         <td className="num px-4 py-3 text-right">{row.quantity}</td>
-                        <td className="num px-4 py-3 text-right text-ink-soft">{row.reserved}</td>
+                        <td className="num px-4 py-3 text-right text-ink-muted">{row.reserved}</td>
                         <td className="num px-4 py-3 text-right font-semibold">
-                          <span className={out ? "text-brick" : low ? "text-amber" : ""}>
+                          <span className={out ? "text-danger" : low ? "text-warning" : ""}>
                             {row.available}
                           </span>
                           {out ? (
@@ -235,7 +239,7 @@ export function AdminStockPage() {
                             </Badge>
                           ) : null}
                         </td>
-                        <td className="num px-4 py-3 text-[0.8125rem] text-ink-soft">
+                        <td className="num px-4 py-3 text-[0.8125rem] text-ink-muted">
                           {formatDateTime(row.updated_at)}
                         </td>
                         <td className="px-4 py-3 text-right">
@@ -291,16 +295,16 @@ export function AdminStockPage() {
       >
         {target ? (
           <form onSubmit={submitAdjust} className="space-y-4" noValidate>
-            <div className="flex items-center justify-between border border-line bg-paper/60 px-4 py-3 text-sm">
-              <span className="text-ink-soft">
+            <div className="flex items-center justify-between rounded-md bg-surface-2 px-4 py-3 text-sm shadow-pressed">
+              <span className="text-ink-muted">
                 Current quantity: <span className="num font-semibold text-ink">{target.quantity}</span>
               </span>
-              <span className="num text-ink-soft">SKU {target.sku}</span>
+              <span className="num text-ink-muted">SKU {target.sku}</span>
             </div>
 
             <fieldset>
-              <legend className="label mb-2 text-ink-soft">Change type</legend>
-              <div className="flex overflow-hidden border border-line-strong">
+              <legend className="label mb-2 text-ink-muted">Change type</legend>
+              <div className="flex rounded-md bg-surface p-1 border border-line">
                 {(
                   [
                     { value: "add", label: "Add" },
@@ -313,8 +317,10 @@ export function AdminStockPage() {
                     type="button"
                     onClick={() => setMode(opt.value)}
                     className={cn(
-                      "label h-10 flex-1 border-r border-line-strong transition-colors last:border-r-0",
-                      mode === opt.value ? "bg-forest text-paper" : "bg-surface hover:bg-mist",
+                      "label h-9 flex-1 rounded-lg px-3 transition-colors",
+                      mode === opt.value
+                        ? "bg-surface text-brand-700 border border-line"
+                        : "text-ink-muted hover:bg-surface-2",
                     )}
                   >
                     {opt.label}
@@ -352,7 +358,7 @@ export function AdminStockPage() {
               />
             </Field>
 
-            <div className="flex justify-end gap-3 border-t border-line pt-4">
+            <div className="flex justify-end gap-3 pt-1">
               <Button variant="secondary" onClick={() => setTarget(null)}>
                 Cancel
               </Button>

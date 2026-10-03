@@ -74,8 +74,8 @@ export function SearchBar({ className, autoFocus, onComplete }: SearchBarProps) 
 
   return (
     <div ref={wrapRef} className={cn("relative w-full", className)}>
-      <form onSubmit={onSubmit} role="search" className="flex w-full items-stretch bg-mist">
-        <label className="relative hidden shrink-0 items-center border-e border-line-strong lg:flex">
+      <form onSubmit={onSubmit} role="search" className="flex w-full items-stretch rounded-md bg-surface border border-line transition focus-within:shadow-lift">
+        <label className="relative hidden shrink-0 items-center lg:flex">
           <span className="sr-only">Search within a category</span>
           <select
             value={scope}
@@ -90,18 +90,18 @@ export function SearchBar({ className, autoFocus, onComplete }: SearchBarProps) 
               </option>
             ))}
           </select>
-          <span className="pointer-events-none absolute end-3 text-ink-soft">
+          <span className="pointer-events-none absolute end-3 text-ink-muted">
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
               <path d="m6 9 6 6 6-6" />
             </svg>
           </span>
         </label>
 
-        <div className="relative flex min-w-0 flex-1 items-center">
+        <div className="relative m-1 flex min-w-0 flex-1 items-center rounded-lg bg-surface-2 shadow-pressed">
           <SearchIcon
             width={16}
             height={16}
-            className="pointer-events-none absolute start-3.5 text-ink-soft"
+            className="pointer-events-none absolute start-3 text-ink-muted"
           />
           <input
             type="search"
@@ -118,14 +118,14 @@ export function SearchBar({ className, autoFocus, onComplete }: SearchBarProps) 
             aria-controls="search-suggestions"
             role="combobox"
             aria-autocomplete="list"
-            className="h-11 w-full bg-transparent pe-3 ps-10 text-sm text-ink placeholder:text-ink-soft/70 focus:outline-none"
+            className="h-9 w-full bg-transparent pe-3 ps-9 text-sm text-ink placeholder:text-ink-muted/70 focus:outline-none"
           />
         </div>
 
         <button
           type="submit"
           aria-label="Search"
-          className="grid w-11 shrink-0 place-items-center bg-forest text-paper transition-colors hover:bg-ink"
+          className="grid w-11 shrink-0 place-items-center rounded-md bg-brand-700 text-surface shadow-button transition hover:bg-brand-800"
         >
           <SearchIcon width={17} height={17} />
         </button>
@@ -135,7 +135,7 @@ export function SearchBar({ className, autoFocus, onComplete }: SearchBarProps) 
         <div
           id="search-suggestions"
           role="listbox"
-          className="absolute inset-x-0 top-[calc(100%+6px)] z-50 max-h-96 overflow-y-auto border border-line bg-surface shadow-panel"
+          className="absolute inset-x-0 top-[calc(100%+6px)] z-50 max-h-96 overflow-y-auto rounded-md border border-line bg-surface shadow-panel"
         >
           {suggest.loading ? (
             <div className="space-y-2 p-3">
@@ -146,8 +146,8 @@ export function SearchBar({ className, autoFocus, onComplete }: SearchBarProps) 
           ) : (
             <>
               {suggest.categories.length > 0 ? (
-                <div className="border-b border-line py-2">
-                  <p className="label px-3.5 pb-1.5 text-ink-soft">Categories</p>
+                <div className="bg-surface py-2">
+                  <p className="label px-3.5 pb-1.5 text-ink-muted">Categories</p>
                   {suggest.categories.map((cat) => (
                     <button
                       key={cat.id}
@@ -155,10 +155,10 @@ export function SearchBar({ className, autoFocus, onComplete }: SearchBarProps) 
                       role="option"
                       aria-selected={false}
                       onClick={() => go(`/products?category=${cat.slug}`)}
-                      className="flex w-full items-center justify-between px-3.5 py-2 text-start text-sm transition-colors hover:bg-mist"
+                      className="flex w-full items-center justify-between px-3.5 py-2 text-start text-sm transition-colors hover:bg-surface-2"
                     >
                       <span>{cat.name}</span>
-                      <span className="num text-[0.6875rem] text-ink-soft">
+                      <span className="num text-[0.6875rem] text-ink-muted">
                         {typeof cat.product_count === "number" ? cat.product_count : ""}
                       </span>
                     </button>
@@ -167,7 +167,7 @@ export function SearchBar({ className, autoFocus, onComplete }: SearchBarProps) 
               ) : null}
               {suggest.products.length > 0 ? (
                 <div className="py-2">
-                  <p className="label px-3.5 pb-1.5 text-ink-soft">Products</p>
+                  <p className="label px-3.5 pb-1.5 text-ink-muted">Products</p>
                   {suggest.products.map((product) => (
                     <button
                       key={product.id}
@@ -175,9 +175,9 @@ export function SearchBar({ className, autoFocus, onComplete }: SearchBarProps) 
                       role="option"
                       aria-selected={false}
                       onClick={() => go(`/p/${product.slug}`)}
-                      className="flex w-full items-center gap-3 px-3.5 py-2 text-start transition-colors hover:bg-mist"
+                      className="flex w-full items-center gap-3 px-3.5 py-2 text-start transition-colors hover:bg-surface-2"
                     >
-                      <span className="grid size-9 shrink-0 place-items-center overflow-hidden bg-mist text-[0.65rem] font-semibold text-forest">
+                      <span className="grid size-9 shrink-0 place-items-center overflow-hidden bg-surface-2 text-[0.65rem] font-semibold text-brand-700">
                         {product.thumbnail ? (
                           <img src={product.thumbnail} alt="" className="h-full w-full object-cover" loading="lazy" />
                         ) : (
@@ -186,7 +186,7 @@ export function SearchBar({ className, autoFocus, onComplete }: SearchBarProps) 
                       </span>
                       <span className="min-w-0 flex-1">
                         <span className="block truncate text-sm">{product.name}</span>
-                        <span className="block text-[0.6875rem] text-ink-soft">{product.brand ?? product.category}</span>
+                        <span className="block text-[0.6875rem] text-ink-muted">{product.brand ?? product.category}</span>
                       </span>
                       <Price value={product.price} compareAt={product.compare_at_price} size="sm" />
                     </button>

@@ -34,3 +34,8 @@ docker-compose.override.yml
 # Tool artifacts
 .playwright-mcp/
 home-*.png
+
+# Design-review screenshots dropped at the repo root
+/step0/
+/card-*.png
+/design-*.png

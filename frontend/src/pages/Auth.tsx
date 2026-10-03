@@ -23,25 +23,25 @@ function AuthAside({ mode }: { mode: "login" | "register" }) {
           "Order history and statuses in one place",
         ];
   return (
-    <aside className="hidden bg-forest px-10 py-12 text-paper lg:flex lg:flex-col lg:justify-between">
+    <aside className="hidden bg-brand-700 px-10 py-12 text-surface lg:flex lg:flex-col lg:justify-between">
       <div>
         <p className="font-display text-2xl font-semibold tracking-tight">OneMart</p>
-        <p className="label mt-1 text-paper/50">Everything you need, in one place.</p>
+        <p className="label mt-1 text-surface/50">Everything you need, in one place.</p>
       </div>
       <div>
-        <h2 className="text-3xl leading-tight text-paper">
+        <h2 className="text-3xl leading-tight text-surface">
           {mode === "login" ? "Welcome back to your hypermarket." : "Your daily shop, sorted."}
         </h2>
         <ul className="mt-7 space-y-4">
           {points.map((point) => (
-            <li key={point} className="flex items-start gap-3 text-sm text-paper/75">
-              <CheckIcon width={17} height={17} className="mt-0.5 shrink-0 text-paper" />
+            <li key={point} className="flex items-start gap-3 text-sm text-surface/75">
+              <CheckIcon width={17} height={17} className="mt-0.5 shrink-0 text-surface" />
               {point}
             </li>
           ))}
         </ul>
       </div>
-      <p className="text-[0.8125rem] text-paper/50">
+      <p className="text-[0.8125rem] text-surface/50">
         Groceries · Home care · Personal care · Daily essentials
       </p>
     </aside>
@@ -88,12 +88,12 @@ export function LoginPage() {
 
   return (
     <div className="mx-auto max-w-5xl px-4 py-10 lg:py-14">
-      <div className="grid border border-line bg-surface lg:grid-cols-2">
+      <div className="grid overflow-hidden rounded-md bg-surface border border-line lg:grid-cols-2">
         <AuthAside mode="login" />
         <div className="px-6 py-10 sm:px-10">
-          <p className="label text-leaf">Sign in</p>
+          <p className="label text-brand-600">Sign in</p>
           <h1 className="mt-2 text-3xl">Welcome back</h1>
-          <p className="mt-2 text-sm text-ink-soft">
+          <p className="mt-2 text-sm text-ink-muted">
             Sign in to your account to track orders and check out faster.
           </p>
 
@@ -126,19 +126,19 @@ export function LoginPage() {
             </Button>
           </form>
 
-          <p className="mt-6 text-sm text-ink-soft">
+          <p className="mt-6 text-sm text-ink-muted">
             New to OneMart?{" "}
             <Link
               to={`/register${window.location.search}`}
-              className="font-medium text-leaf underline-offset-4 hover:underline"
+              className="font-medium text-brand-600 underline-offset-4 hover:underline"
             >
               Create an account
             </Link>
           </p>
 
-          <div className="mt-6 border-t border-line pt-5">
-            <p className="label text-ink-soft">Demo accounts</p>
-            <div className="mt-2 space-y-1 text-[0.8125rem] text-ink-soft">
+          <div className="mt-6 rounded-md bg-surface-2/50 px-4 py-4 ">
+            <p className="label text-ink-muted">Demo accounts</p>
+            <div className="mt-2 space-y-1 text-[0.8125rem] text-ink-muted">
               <p>
                 Customer: <span className="num">demo@onemart.test</span> ·{" "}
                 <span className="num">Demo@1234</span>
@@ -205,12 +205,12 @@ export function RegisterPage() {
 
   return (
     <div className="mx-auto max-w-5xl px-4 py-10 lg:py-14">
-      <div className="grid border border-line bg-surface lg:grid-cols-2">
+      <div className="grid overflow-hidden rounded-md bg-surface border border-line lg:grid-cols-2">
         <AuthAside mode="register" />
         <div className="px-6 py-10 sm:px-10">
-          <p className="label text-leaf">Create account</p>
+          <p className="label text-brand-600">Create account</p>
           <h1 className="mt-2 text-3xl">Join OneMart</h1>
-          <p className="mt-2 text-sm text-ink-soft">
+          <p className="mt-2 text-sm text-ink-muted">
             One account for orders, addresses and delivery updates.
           </p>
 
@@ -270,11 +270,11 @@ export function RegisterPage() {
             </Button>
           </form>
 
-          <p className="mt-6 text-sm text-ink-soft">
+          <p className="mt-6 text-sm text-ink-muted">
             Already have an account?{" "}
             <Link
               to={`/login${window.location.search}`}
-              className="font-medium text-leaf underline-offset-4 hover:underline"
+              className="font-medium text-brand-600 underline-offset-4 hover:underline"
             >
               Sign in
             </Link>

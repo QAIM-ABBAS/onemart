@@ -58,24 +58,6 @@ export const NEXT_STATUSES: Record<OrderStatus, OrderStatus[]> = {
   cancelled: [],
 };
 
-export type Tone = "neutral" | "info" | "positive" | "warning" | "negative";
-
-export function orderStatusTone(status: OrderStatus): Tone {
-  switch (status) {
-    case "pending":
-      return "warning";
-    case "confirmed":
-    case "packed":
-      return "info";
-    case "shipped":
-      return "info";
-    case "delivered":
-      return "positive";
-    case "cancelled":
-      return "negative";
-  }
-}
-
 export function paymentStatusLabel(status: PaymentStatus): string {
   return titleCase(status);
 }

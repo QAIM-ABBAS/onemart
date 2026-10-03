@@ -65,14 +65,18 @@ function FilterPanel({ params, update, clearAll }: FilterPanelProps) {
             update({ category: cat.slug, brand: undefined });
           }}
           className={cn(
-            "flex items-center justify-between rounded-sm px-2 py-1.5 text-sm transition-colors",
-            active ? "bg-forest text-paper" : depth === 0 ? "font-medium text-ink hover:bg-mist" : "text-ink-soft hover:bg-mist",
+            "flex items-center justify-between rounded-lg px-2 py-1.5 text-sm transition",
+            active
+              ? "bg-surface font-semibold text-brand-700 "
+              : depth === 0
+                ? "font-medium text-ink hover:bg-surface-2"
+                : "text-ink-muted hover:bg-surface-2",
           )}
           style={depth > 0 ? { paddingLeft: `${0.5 + depth * 0.85}rem` } : undefined}
         >
           <span>{cat.name}</span>
           {typeof cat.product_count === "number" ? (
-            <span className={cn("num text-[0.6875rem]", active ? "text-paper/70" : "text-ink-soft")}>
+            <span className={cn("num text-[0.6875rem]", active ? "text-brand-600" : "text-ink-muted")}>
               {cat.product_count}
             </span>
           ) : null}
@@ -92,13 +96,13 @@ function FilterPanel({ params, update, clearAll }: FilterPanelProps) {
   return (
     <div className="space-y-7">
       <div>
-        <div className="flex items-center justify-between border-b border-ink/15 pb-2">
+        <div className="flex items-center justify-between pb-2">
           <p className="label text-ink">Categories</p>
           {params.category ? (
             <button
               type="button"
               onClick={() => update({ category: undefined })}
-              className="text-[0.75rem] text-ink-soft underline-offset-2 hover:text-ink hover:underline"
+              className="text-[0.75rem] text-ink-muted underline-offset-2 hover:text-ink hover:underline"
             >
               Clear
             </button>
@@ -110,8 +114,10 @@ function FilterPanel({ params, update, clearAll }: FilterPanelProps) {
               type="button"
               onClick={() => update({ category: undefined })}
               className={cn(
-                "flex w-full items-center rounded-sm px-2 py-1.5 text-left text-sm transition-colors",
-                !params.category ? "bg-forest text-paper" : "font-medium text-ink hover:bg-mist",
+                "flex w-full items-center rounded-lg px-2 py-1.5 text-left text-sm transition",
+                !params.category
+                  ? "bg-surface font-semibold text-brand-700 "
+                  : "font-medium text-ink hover:bg-surface-2",
               )}
             >
               All categories
@@ -131,13 +137,13 @@ function FilterPanel({ params, update, clearAll }: FilterPanelProps) {
 
       {facets.data?.brands && facets.data.brands.length > 0 ? (
         <div>
-          <div className="flex items-center justify-between border-b border-ink/15 pb-2">
+          <div className="flex items-center justify-between pb-2">
             <p className="label text-ink">Brands</p>
             {params.brand ? (
               <button
                 type="button"
                 onClick={() => update({ brand: undefined })}
-                className="text-[0.75rem] text-ink-soft underline-offset-2 hover:text-ink hover:underline"
+                className="text-[0.75rem] text-ink-muted underline-offset-2 hover:text-ink hover:underline"
               >
                 Clear
               </button>
@@ -152,10 +158,10 @@ function FilterPanel({ params, update, clearAll }: FilterPanelProps) {
                     type="button"
                     onClick={() => update({ brand: active ? undefined : brand.slug })}
                     className={cn(
-                      "rounded-sm border px-2.5 py-1 text-[0.8125rem] transition-colors",
+                      "rounded-full px-2.5 py-1 text-[0.8125rem] transition",
                       active
-                        ? "border-forest bg-forest text-paper"
-                        : "border-line-strong bg-surface text-ink hover:border-ink",
+                        ? "bg-surface font-semibold text-brand-700 border border-line"
+                        : "bg-surface-2 text-ink-muted hover:bg-surface",
                     )}
                   >
                     {brand.name}
@@ -168,7 +174,7 @@ function FilterPanel({ params, update, clearAll }: FilterPanelProps) {
       ) : null}
 
       <div>
-        <p className="label border-b border-ink/15 pb-2 text-ink">Price</p>
+        <p className="label pb-2 text-ink">Price</p>
         <form onSubmit={applyPrice} className="mt-3 flex items-center gap-2">
           <Input
             type="number"
@@ -180,7 +186,7 @@ function FilterPanel({ params, update, clearAll }: FilterPanelProps) {
             onChange={(e) => setMinInput(e.target.value)}
             className="h-9 text-sm"
           />
-          <span className="text-ink-soft">–</span>
+          <span className="text-ink-muted">–</span>
           <Input
             type="number"
             min={0}
@@ -196,7 +202,7 @@ function FilterPanel({ params, update, clearAll }: FilterPanelProps) {
           </Button>
         </form>
         {facets.data ? (
-          <p className="mt-2 text-[0.75rem] text-ink-soft num">
+          <p className="mt-2 text-[0.75rem] text-ink-muted num">
             {typeof facets.data.min_price === "number"
               ? `Listed from ${new Intl.NumberFormat("en-IN", { style: "currency", currency: "INR", maximumFractionDigits: 0 }).format(facets.data.min_price)}`
               : ""}
@@ -204,7 +210,7 @@ function FilterPanel({ params, update, clearAll }: FilterPanelProps) {
         ) : null}
       </div>
 
-      <div className="border-b border-ink/15 pb-3">
+      <div>
         <Checkbox
           label="In stock only"
           checked={Boolean(params.in_stock)}
@@ -286,11 +292,11 @@ export function BrowsePage() {
 
   return (
     <div className="mx-auto max-w-7xl px-4 py-6 lg:py-10">
-      <div className="flex flex-wrap items-end justify-between gap-4 border-b border-ink/15 pb-4">
+      <div className="flex flex-wrap items-end justify-between gap-4">
         <div>
-          <p className="label text-leaf">{params.q ? "Search" : "Catalogue"}</p>
+          <p className="label text-brand-600">{params.q ? "Search" : "Catalogue"}</p>
           <h1 className="mt-1.5 text-3xl sm:text-[2.25rem]">{title}</h1>
-          <p className="mt-1.5 text-sm text-ink-soft num" aria-live="polite">
+          <p className="mt-1.5 text-sm text-ink-muted num" aria-live="polite">
             {products.data
               ? `${products.data.total} product${products.data.total === 1 ? "" : "s"}`
               : "Loading products…"}
@@ -306,7 +312,7 @@ export function BrowsePage() {
             Filters
           </Button>
           <label className="flex items-center gap-2 text-sm">
-            <span className="label hidden text-ink-soft sm:inline">Sort</span>
+            <span className="label hidden text-ink-muted sm:inline">Sort</span>
             <Select
               value={params.sort ?? "newest"}
               onChange={(e) => update({ sort: e.target.value })}
@@ -323,14 +329,18 @@ export function BrowsePage() {
         </div>
       </div>
 
-      <div className="mt-6 grid gap-8 lg:grid-cols-[240px_minmax(0,1fr)]">
-        <aside className="hidden lg:block">
-          <div className="sticky top-36">
+      {/* Results row: parent is a flex row, the filter sidebar and the results
+          are its two child boxes. Below lg the sidebar box leaves the flow
+          entirely and the Filters button opens it as a dialog instead; at lg it
+          holds its own width and the results box grows into the rest. */}
+      <div className="mt-6 flex flex-col gap-8 lg:flex-row">
+        <aside className="hidden lg:block lg:w-60 lg:shrink-0">
+          <div className="sticky top-36 rounded-md bg-surface p-5 border border-line">
             <FilterPanel params={params} update={update} clearAll={clearAll} />
           </div>
         </aside>
 
-        <div>
+        <div className="min-w-0 flex-1">
           {products.isLoading ? (
             <ProductGridSkeleton count={8} />
           ) : products.isError ? (

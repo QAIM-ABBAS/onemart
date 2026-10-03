@@ -9,6 +9,20 @@ import { Toaster } from "@/components/ui/Toaster";
 import { Footer } from "./Footer";
 import { Header } from "./Header";
 
+/**
+ * Page shell — the top of the box family tree (practice: build a layout
+ * hierarchy first, then fix boxes against it):
+ *
+ *   shell                 column flex, min height = viewport
+ *   ├─ header             sticky row stack (its own hierarchy, see Header)
+ *   ├─ main               grows to fill whatever the header/footer leave
+ *   │   └─ page           centred box, max width + inline padding
+ *   │       └─ section    one row or one grid of columns per screen size
+ *   └─ footer             column of rows: newsletter · link columns · legal
+ *
+ * Every page only ever fills `main`; nothing below it needs to know how tall
+ * the header or footer is.
+ */
 export function Shell({ children }: { children: ReactNode }) {
   return (
     <div className="flex min-h-dvh flex-col">

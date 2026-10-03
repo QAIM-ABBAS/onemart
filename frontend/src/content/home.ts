@@ -5,7 +5,7 @@ export interface BannerSlide {
   subtitle: string;
   cta_label: string;
   cta_url: string;
-  tone: "paper" | "forest";
+  tone: "light" | "brand";
 }
 
 export interface PromoBanner {
@@ -68,7 +68,7 @@ export const HERO_BANNERS: BannerSlide[] = [
     subtitle: "Fruit, vegetables and daily essentials — priced for the everyday shop.",
     cta_label: "Shop now",
     cta_url: "/products?category=fresh-produce",
-    tone: "paper",
+    tone: "light",
   },
   {
     id: "dairy-breakfast",
@@ -77,7 +77,7 @@ export const HERO_BANNERS: BannerSlide[] = [
     subtitle: "Milk, eggs, bread and butter from the brands you already buy.",
     cta_label: "Shop now",
     cta_url: "/products?category=dairy-bakery",
-    tone: "forest",
+    tone: "brand",
   },
   {
     id: "pantry-stockup",
@@ -86,7 +86,7 @@ export const HERO_BANNERS: BannerSlide[] = [
     subtitle: "Snacks, staples and household refills with cash on delivery.",
     cta_label: "Shop now",
     cta_url: "/products?sort=bestselling",
-    tone: "paper",
+    tone: "light",
   },
 ];
 

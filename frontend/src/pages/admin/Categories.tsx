@@ -126,9 +126,9 @@ export function AdminCategoriesPage() {
     <div>
       <div className="flex flex-wrap items-end justify-between gap-4 border-b border-ink/15 pb-4">
         <div>
-          <p className="label text-leaf">Catalogue</p>
+          <p className="label text-brand-600">Catalogue</p>
           <h1 className="mt-1.5 text-2xl sm:text-3xl">Categories</h1>
-          <p className="mt-1 text-sm text-ink-soft num" aria-live="polite">
+          <p className="mt-1 text-sm text-ink-muted num" aria-live="polite">
             {categories.data ? `${rows.length} categories` : "Loading…"}
           </p>
         </div>
@@ -137,9 +137,9 @@ export function AdminCategoriesPage() {
 
       <div className="mt-5">
         {categories.isLoading ? (
-          <div className="space-y-px bg-line">
+          <div className="divide-y divide-line overflow-hidden rounded-md bg-surface border border-line">
             {Array.from({ length: 7 }, (_, i) => (
-              <div key={i} className="flex items-center gap-4 bg-surface px-4 py-3.5">
+              <div key={i} className="flex items-center gap-4 px-4 py-3.5">
                 <Skeleton className="h-4 w-40" />
                 <Skeleton className="h-4 w-20" />
                 <Skeleton className="ml-auto h-8 w-28" />
@@ -155,31 +155,31 @@ export function AdminCategoriesPage() {
             action={<Button onClick={() => setModal({ mode: "create" })}>New category</Button>}
           />
         ) : (
-          <div className="border border-line bg-surface">
-            <div className="hidden border-b border-line bg-paper/70 px-4 py-2.5 sm:grid sm:grid-cols-[1fr_120px_110px_230px] sm:gap-4">
-              <span className="label text-ink-soft">Category</span>
-              <span className="label text-ink-soft">Products</span>
-              <span className="label text-ink-soft">Status</span>
-              <span className="label text-right text-ink-soft">Actions</span>
+          <div className="overflow-hidden rounded-md bg-surface border border-line">
+            <div className="hidden bg-surface-2 px-4 py-2.5 sm:grid sm:grid-cols-[1fr_120px_110px_230px] sm:gap-4">
+              <span className="label text-ink-muted">Category</span>
+              <span className="label text-ink-muted">Products</span>
+              <span className="label text-ink-muted">Status</span>
+              <span className="label text-right text-ink-muted">Actions</span>
             </div>
             <ul className="divide-y divide-line">
               {rows.map(({ node, depth }) => (
                 <li
                   key={node.id}
-                  className="flex flex-wrap items-center gap-x-4 gap-y-2 px-4 py-3 transition-colors hover:bg-mist/40 sm:grid sm:grid-cols-[1fr_120px_110px_230px]"
+                  className="flex flex-wrap items-center gap-x-4 gap-y-2 px-4 py-3 transition-colors hover:bg-surface-2 sm:grid sm:grid-cols-[1fr_120px_110px_230px]"
                 >
                   <div className="flex min-w-0 items-center gap-2" style={{ paddingLeft: depth * 18 }}>
                     {depth > 0 ? (
-                      <span aria-hidden="true" className="text-line-strong">
+                      <span aria-hidden="true" className="text-line">
                         └
                       </span>
                     ) : null}
                     <div className="min-w-0">
                       <p className="truncate font-medium">{node.name}</p>
-                      <p className="num truncate text-[0.75rem] text-ink-soft">/{node.slug}</p>
+                      <p className="num truncate text-[0.75rem] text-ink-muted">/{node.slug}</p>
                     </div>
                   </div>
-                  <p className="num text-sm text-ink-soft">
+                  <p className="num text-sm text-ink-muted">
                     {typeof node.product_count === "number" ? node.product_count : "—"}
                   </p>
                   <div>

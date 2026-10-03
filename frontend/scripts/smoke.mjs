@@ -1,9 +1,11 @@
 import { mkdirSync } from "node:fs";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
 import puppeteer from "puppeteer-core";
 
 const BASE = "http://127.0.0.1:5173";
 const CHROME = "C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe";
-const SHOTS = "C:\\Users\\qaima\\AppData\\Local\\Temp\\opencode\\shots";
+const SHOTS = process.env.ONEMART_SHOTS ?? join(tmpdir(), "opencode", "onemart-shots");
 mkdirSync(SHOTS, { recursive: true });
 
 const problems = [];

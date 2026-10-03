@@ -4,9 +4,9 @@ import { cn } from "@/lib/cn";
 import { CloseIcon } from "./Icon";
 
 const toneClasses = {
-  positive: "border-leaf/40 bg-leaf text-paper",
-  negative: "border-brick/50 bg-brick text-paper",
-  info: "border-line-strong bg-ink text-paper",
+  positive: "bg-brand-600 text-surface",
+  negative: "bg-danger text-surface",
+  info: "bg-brand-700 text-surface",
 } as const;
 
 export function Toaster() {
@@ -23,7 +23,7 @@ export function Toaster() {
           key={item.id}
           role="status"
           className={cn(
-            "pointer-events-auto flex w-full max-w-sm items-center gap-3 border px-4 py-3 text-sm shadow-panel",
+            "pointer-events-auto flex w-full max-w-sm items-center gap-3 rounded-md px-4 py-3 text-sm shadow-button",
             toneClasses[item.tone ?? "info"],
           )}
         >
@@ -35,7 +35,7 @@ export function Toaster() {
                 item.action?.onClick();
                 dismiss(item.id);
               }}
-              className="label shrink-0 border-b border-current pb-0.5"
+              className="label shrink-0 rounded-full bg-canvas/20 px-2.5 py-1 transition hover:bg-canvas/30"
             >
               {item.action.label}
             </button>

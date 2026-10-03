@@ -5,8 +5,9 @@ import { ApiError } from "@/lib/api";
 
 import { Button } from "./Button";
 
+/** Loading placeholder — flat surface-2 block, no shadow, no colour. */
 export function Skeleton({ className }: { className?: string }) {
-  return <div className={cn("animate-pulse bg-mist rounded-sm", className)} aria-hidden="true" />;
+  return <div className={cn("animate-pulse rounded-md bg-surface-2", className)} aria-hidden="true" />;
 }
 
 export function SkeletonText({ lines = 3, className }: { lines?: number; className?: string }) {
@@ -19,6 +20,7 @@ export function SkeletonText({ lines = 3, className }: { lines?: number; classNa
   );
 }
 
+/** Real empty state: white card, hairline border, one clear action. */
 export function EmptyState({
   title,
   body,
@@ -33,18 +35,19 @@ export function EmptyState({
   return (
     <div
       className={cn(
-        "border border-dashed border-line-strong bg-surface/60 px-6 py-14 text-center",
+        "rounded-md border border-line bg-surface px-6 py-14 text-center",
         className,
       )}
     >
-      <p className="label text-ink-soft">Nothing here</p>
+      <p className="label text-ink-faint">Nothing here</p>
       <h3 className="mt-3 text-xl">{title}</h3>
-      {body ? <p className="mt-2 text-sm text-ink-soft max-w-md mx-auto">{body}</p> : null}
+      {body ? <p className="mt-2 text-sm text-ink-muted max-w-md mx-auto">{body}</p> : null}
       {action ? <div className="mt-6 flex justify-center">{action}</div> : null}
     </div>
   );
 }
 
+/** Real error state: danger tint + hairline border + retry. */
 export function ErrorState({
   error,
   onRetry,
@@ -61,8 +64,8 @@ export function ErrorState({
         ? error.message
         : "Something went wrong while loading this section.";
   return (
-    <div className={cn("border border-brick/40 bg-brick/5 px-6 py-10 text-center", className)}>
-      <p className="label text-brick">Could not load</p>
+    <div className={cn("rounded-md border border-danger/20 bg-danger/5 px-6 py-10 text-center", className)}>
+      <p className="label text-danger">Could not load</p>
       <p className="mt-3 text-sm text-ink max-w-md mx-auto">{message}</p>
       {onRetry ? (
         <div className="mt-5 flex justify-center">
@@ -80,7 +83,7 @@ export function InlineError({ children, className }: { children: ReactNode; clas
     <p
       role="alert"
       className={cn(
-        "border border-brick/40 bg-brick/5 px-3.5 py-2.5 text-[0.8125rem] text-brick",
+        "rounded-md border border-danger/20 bg-danger/5 px-3.5 py-2.5 text-[0.8125rem] text-danger",
         className,
       )}
     >
@@ -99,11 +102,11 @@ export function Notice({
   className?: string;
 }) {
   const tones = {
-    positive: "border-leaf/40 bg-leaf/8 text-leaf",
-    info: "border-forest/30 bg-forest/8 text-forest",
-    warning: "border-amber/40 bg-amber/8 text-amber",
+    positive: "bg-success/8 border-success/25 text-success",
+    info: "bg-info/8 border-info/25 text-info",
+    warning: "bg-warning/15 border-warning/40 text-ink",
   } as const;
   return (
-    <div className={cn("border px-4 py-3 text-sm", tones[tone], className)}>{children}</div>
+    <div className={cn("rounded-md border px-4 py-3 text-sm", tones[tone], className)}>{children}</div>
   );
 }

@@ -38,22 +38,22 @@ export function Pagination({
       aria-label="Pagination"
       className={cn("flex flex-wrap items-center justify-between gap-4", className)}
     >
-      <p className="text-[0.8125rem] text-ink-soft num">
+      <p className="text-[0.8125rem] text-ink-muted num">
         Showing {from}–{to} of {total}
       </p>
-      <div className="flex items-center gap-1">
+      <div className="flex items-center gap-1 rounded-md bg-surface p-1.5 border border-line">
         <button
           type="button"
           aria-label="Previous page"
           disabled={page <= 1}
           onClick={() => onChange(page - 1)}
-          className="grid size-9 place-items-center border border-line-strong bg-surface text-ink transition-colors hover:border-ink disabled:opacity-35 disabled:hover:border-line-strong"
+          className="grid size-9 place-items-center rounded-lg text-ink transition hover:bg-surface-2 disabled:opacity-35"
         >
           <ChevronLeftIcon width={16} height={16} />
         </button>
         {pageWindow(page, pages).map((entry, i) =>
           entry === "gap" ? (
-            <span key={`gap-${i}`} className="px-1.5 text-ink-soft text-sm select-none">
+            <span key={`gap-${i}`} className="px-1.5 text-ink-muted text-sm select-none">
               …
             </span>
           ) : (
@@ -63,10 +63,10 @@ export function Pagination({
               aria-current={entry === page ? "page" : undefined}
               onClick={() => onChange(entry)}
               className={cn(
-                "num min-w-9 h-9 px-2 border text-sm transition-colors",
+                "num min-w-9 h-9 px-2 rounded-lg text-sm transition",
                 entry === page
-                  ? "border-forest bg-forest text-paper"
-                  : "border-line-strong bg-surface hover:border-ink",
+                  ? "bg-surface font-semibold text-brand-700 border border-line"
+                  : "text-ink-muted hover:bg-surface-2 hover:text-ink",
               )}
             >
               {entry}
@@ -78,7 +78,7 @@ export function Pagination({
           aria-label="Next page"
           disabled={page >= pages}
           onClick={() => onChange(page + 1)}
-          className="grid size-9 place-items-center border border-line-strong bg-surface text-ink transition-colors hover:border-ink disabled:opacity-35 disabled:hover:border-line-strong"
+          className="grid size-9 place-items-center rounded-lg text-ink transition hover:bg-surface-2 disabled:opacity-35"
         >
           <ChevronRightIcon width={16} height={16} />
         </button>

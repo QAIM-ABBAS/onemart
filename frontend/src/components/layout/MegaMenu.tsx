@@ -43,7 +43,7 @@ export function MegaMenu({
     <div
       ref={panelRef}
       className={cn(
-        "absolute inset-x-0 top-full z-50 border-y border-line bg-surface shadow-panel",
+        "absolute inset-x-0 top-[calc(100%+8px)] z-50 overflow-hidden rounded-md border border-line bg-surface shadow-panel",
         className,
       )}
     >
@@ -62,7 +62,7 @@ export function MegaMenu({
                 <Link
                   to={`/products?category=${root.slug}`}
                   onClick={onClose}
-                  className="label inline-flex items-center gap-1.5 text-forest transition-colors hover:text-leaf"
+                  className="label inline-flex items-center gap-1.5 text-brand-700 transition-colors hover:text-brand-600"
                 >
                   <GridIcon width={14} height={14} />
                   {root.name}
@@ -73,7 +73,7 @@ export function MegaMenu({
                       <Link
                         to={`/products?category=${child.slug}`}
                         onClick={onClose}
-                        className="group flex items-center justify-between py-1 text-[0.8125rem] text-ink-soft transition-colors hover:text-ink"
+                        className="group flex items-center justify-between rounded-lg px-2 py-1 text-[0.8125rem] text-ink-muted transition-colors hover:bg-surface-2 hover:text-ink"
                       >
                         <span>{child.name}</span>
                         <ChevronRightIcon
@@ -85,7 +85,7 @@ export function MegaMenu({
                     </li>
                   ))}
                   {(root.children ?? []).length === 0 ? (
-                    <li className="py-1 text-[0.8125rem] text-ink-soft">No subcategories</li>
+                    <li className="py-1 text-[0.8125rem] text-ink-muted">No subcategories</li>
                   ) : null}
                 </ul>
               </div>
@@ -94,7 +94,7 @@ export function MegaMenu({
           <Link
             to="/products"
             onClick={onClose}
-            className="label inline-flex items-center gap-2 border-b border-ink/30 pb-0.5 transition-colors hover:border-leaf hover:text-leaf"
+            className="label inline-flex items-center gap-2 rounded-lg px-2 py-1 text-brand-700 transition-colors hover:bg-surface-2 hover:text-brand-600"
           >
             Browse the full catalogue
             <ChevronRightIcon width={14} height={14} />

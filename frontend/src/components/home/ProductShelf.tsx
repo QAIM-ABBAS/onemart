@@ -62,7 +62,7 @@ export function ProductShelf({
   return (
     <section
       aria-labelledby={`shelf-${title.replace(/\s+/g, "-").toLowerCase()}`}
-      className={cn(strip && "border-y border-line bg-mist/60")}
+      className={cn(strip && "bg-surface-2/60")}
     >
       <div className="page section-block">
         <SectionHeader
@@ -78,7 +78,7 @@ export function ProductShelf({
             <div
               role="tablist"
               aria-label={`${title} categories`}
-              className="order-3 flex w-full items-center gap-1.5 overflow-x-auto hide-scrollbar sm:order-none sm:w-auto"
+              className="order-3 flex w-full items-center gap-1.5 overflow-x-auto hide-scrollbar rounded-md bg-surface p-1 border border-line sm:order-none sm:w-auto"
             >
               {tabs.map((tab, i) => (
                 <button
@@ -88,10 +88,10 @@ export function ProductShelf({
                   aria-selected={i === active}
                   onClick={() => setActive(i)}
                   className={cn(
-                    "label h-8 shrink-0 border px-3 transition-colors",
+                    "label h-8 shrink-0 rounded-lg px-3 transition-colors",
                     i === active
-                      ? "border-forest bg-forest text-paper"
-                      : "border-line-strong bg-surface text-ink-soft hover:border-ink hover:text-ink",
+                      ? "bg-surface border border-line text-brand-700 font-semibold"
+                      : "text-ink-muted hover:bg-surface-2",
                   )}
                 >
                   {tab.label}
@@ -114,9 +114,9 @@ export function ProductShelf({
               ))}
             </div>
           ) : items.length === 0 ? (
-            <div className="border border-dashed border-line-strong bg-surface/70 px-6 py-12 text-center">
-              <p className="label text-ink-soft">Nothing here yet</p>
-              <p className="mt-2 text-sm text-ink-soft">
+            <div className="rounded-md bg-surface-2/50 px-6 py-12 text-center shadow-pressed">
+              <p className="label text-ink-muted">Nothing here yet</p>
+              <p className="mt-2 text-sm text-ink-muted">
                 No products in this shelf right now — try another category.
               </p>
             </div>

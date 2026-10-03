@@ -15,16 +15,16 @@ interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
 
 const variantClasses: Record<ButtonVariant, string> = {
   primary:
-    "bg-forest text-paper border border-forest hover:bg-ink hover:border-ink active:translate-y-px",
+    "bg-brand-700 text-surface shadow-button hover:bg-brand-800 hover:-translate-y-px",
   secondary:
-    "bg-surface text-ink border border-line-strong hover:border-ink hover:bg-mist active:translate-y-px",
-  ghost: "bg-transparent text-ink-soft border border-transparent hover:text-ink hover:bg-mist",
+    "bg-surface text-ink border border-line hover:bg-surface-2",
+  ghost: "bg-transparent text-ink-muted hover:text-ink hover:bg-surface-2",
   danger:
-    "bg-surface text-brick border border-brick/50 hover:bg-brick hover:text-surface hover:border-brick active:translate-y-px",
+    "bg-surface text-danger border border-danger/40 hover:bg-danger hover:text-surface hover:-translate-y-px",
 };
 
 const sizeClasses: Record<ButtonSize, string> = {
-  sm: "h-9 px-3 text-[0.8125rem] gap-1.5",
+  sm: "h-9 px-3.5 text-[0.8125rem] gap-1.5",
   md: "h-11 px-5 text-sm gap-2",
   lg: "h-12 px-7 text-[0.9375rem] gap-2",
 };
@@ -39,8 +39,8 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(function Button
       type={type}
       disabled={disabled || loading}
       className={cn(
-        "inline-flex items-center justify-center rounded-sm font-medium tracking-[0.01em] transition-colors select-none",
-        "disabled:opacity-45 disabled:pointer-events-none",
+        "inline-flex items-center justify-center rounded-md font-semibold tracking-[0.01em] transition select-none",
+        "disabled:opacity-45 disabled:pointer-events-none disabled:translate-y-0",
         variantClasses[variant],
         sizeClasses[size],
         block && "w-full",

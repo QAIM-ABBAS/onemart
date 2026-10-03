@@ -30,10 +30,10 @@ export function FeaturedBrands() {
             <Link
               key={offer.id}
               to={offer.href}
-              className={`${CARD_WIDTH} group block focus-visible:outline-none`}
+              className={`${CARD_WIDTH} group block overflow-hidden rounded-md bg-surface border border-line transition duration-200 hover:-translate-y-0.5 hover:shadow-lift focus-visible:outline-none focus-visible:shadow-lift`}
             >
               <span
-                className="block aspect-[16/10] overflow-hidden rounded-md transition-shadow group-hover:shadow-card group-focus-visible:shadow-card"
+                className="block aspect-[16/10] overflow-hidden"
                 style={{ backgroundColor: offer.tint }}
               >
                 <img
@@ -46,8 +46,8 @@ export function FeaturedBrands() {
                   className="h-full w-full object-contain transition-transform duration-300 group-hover:scale-[1.04]"
                 />
               </span>
-              <span className="label mt-3 block text-ink-soft">{offer.label}</span>
-              <span className="mt-1.5 block text-sm leading-snug font-semibold text-ink transition-colors group-hover:text-leaf">
+              <span className="label mt-3 block px-3 text-ink-muted">{offer.label}</span>
+              <span className="mt-1.5 block px-3 pb-3 text-sm leading-snug font-semibold text-ink transition-colors group-hover:text-brand-600">
                 {offer.title}
               </span>
             </Link>

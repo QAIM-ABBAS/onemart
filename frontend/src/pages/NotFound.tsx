@@ -10,7 +10,7 @@ export function NotFoundPage() {
         action={
           <Link
             to="/"
-            className="inline-flex h-11 items-center rounded-sm border border-forest bg-forest px-5 text-sm font-medium text-paper transition-colors hover:border-ink hover:bg-ink"
+            className="inline-flex h-11 items-center rounded-md bg-brand-700 px-5 text-sm font-semibold text-surface shadow-button transition hover:bg-brand-800 hover:-translate-y-px"
           >
             Back to home
           </Link>

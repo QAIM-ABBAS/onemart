@@ -64,6 +64,11 @@ export interface ProductListItem {
   variant_count: number;
   is_featured?: boolean;
   created_at: string;
+  description?: string;
+  unit?: string | null;
+  rating?: number;
+  review_count?: number;
+  features?: string[];
 }
 
 export interface VariantOut {

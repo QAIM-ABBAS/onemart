@@ -45,7 +45,7 @@ export function CategoryCarousel() {
         {categories.isLoading ? (
           <div className="flex gap-4 overflow-hidden">
             {Array.from({ length: 8 }, (_, i) => (
-              <Skeleton key={i} className="h-[124px] w-[108px] shrink-0" />
+              <Skeleton key={i} className="h-[124px] w-[108px] shrink-0 rounded-md" />
             ))}
           </div>
         ) : (
@@ -54,13 +54,13 @@ export function CategoryCarousel() {
               <Link
                 key={cat.id}
                 to={`/products?category=${cat.slug}`}
-                className="group flex h-[124px] w-[108px] shrink-0 snap-start flex-col items-center justify-center gap-2.5 rounded-md bg-mist px-2 text-center transition-all duration-200 hover:-translate-y-1 hover:bg-surface hover:shadow-card focus-visible:-translate-y-1 focus-visible:bg-surface focus-visible:shadow-card"
+                className="group flex h-[124px] w-[108px] shrink-0 snap-start flex-col items-center justify-center gap-2.5 rounded-md bg-surface px-2 text-center border border-line transition duration-200 hover:-translate-y-0.5 hover:shadow-lift focus-visible:-translate-y-0.5 focus-visible:shadow-lift"
               >
                 <CategoryIcon
                   slug={cat.slug}
                   name={cat.name}
                   size={42}
-                  className="text-forest transition-colors group-hover:text-leaf"
+                  className="text-brand-700 transition-colors group-hover:text-brand-600"
                 />
                 <span className="line-clamp-2 text-[0.6875rem] leading-tight font-medium text-ink">
                   {cat.name}
@@ -69,10 +69,10 @@ export function CategoryCarousel() {
             ))}
             <Link
               to="/products"
-              className="flex h-[124px] w-[108px] shrink-0 snap-start flex-col items-center justify-center gap-2 rounded-md border border-dashed border-line-strong text-center transition-colors hover:border-forest hover:bg-surface"
+              className="flex h-[124px] w-[108px] shrink-0 snap-start flex-col items-center justify-center gap-2 rounded-md bg-surface-2/70 text-center shadow-pressed transition duration-200 hover:-translate-y-0.5 hover:bg-surface hover:shadow-lift"
             >
-              <span className="label text-ink-soft">See all</span>
-              <ChevronRightIcon width={16} height={16} className="text-ink-soft" />
+              <span className="label text-ink-muted">See all</span>
+              <ChevronRightIcon width={16} height={16} className="text-ink-muted" />
             </Link>
           </Carousel>
         )}

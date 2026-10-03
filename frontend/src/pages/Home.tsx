@@ -74,15 +74,12 @@ export function HomePage() {
       </Suspense>
 
       <div className="page">
-        <section className="border-y border-line py-10">
+        <section className="rounded-md bg-surface px-6 py-9 border border-line">
           <div className="grid gap-8 sm:grid-cols-3">
             {PROMISES.map((item) => (
-              <div
-                key={item.title}
-                className="sm:border-l sm:border-line sm:pl-6 first:sm:border-0 first:sm:pl-0"
-              >
-                <p className="label text-leaf">{item.title}</p>
-                <p className="mt-2 text-sm leading-relaxed text-ink-soft">{item.body}</p>
+              <div key={item.title}>
+                <p className="label text-brand-600">{item.title}</p>
+                <p className="mt-2 text-sm leading-relaxed text-ink-muted">{item.body}</p>
               </div>
             ))}
           </div>

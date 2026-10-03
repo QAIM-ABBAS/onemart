@@ -266,13 +266,13 @@ export function AdminProductFormPage() {
   return (
     <div className="max-w-4xl">
       <div className="border-b border-ink/15 pb-4">
-        <Link to="/admin/products" className="label text-ink-soft hover:text-ink">
+        <Link to="/admin/products" className="label text-ink-muted hover:text-ink">
           ← Products
         </Link>
         <h1 className="mt-2 text-2xl sm:text-3xl">
           {isEdit ? `Edit ${form.name || "product"}` : "New product"}
         </h1>
-        <p className="mt-1 text-sm text-ink-soft">
+        <p className="mt-1 text-sm text-ink-muted">
           Every product needs at least one variant with its own SKU, price and stock.
         </p>
       </div>
@@ -290,9 +290,9 @@ export function AdminProductFormPage() {
           </InlineError>
         ) : null}
 
-        <section className="border border-line bg-surface">
-          <h2 className="border-b border-line px-5 py-3.5 text-lg">Basics</h2>
-          <div className="grid gap-4 px-5 py-5 sm:grid-cols-2">
+        <section className="rounded-md bg-surface border border-line">
+          <h2 className="px-5 pt-5 text-lg">Basics</h2>
+          <div className="grid gap-4 px-5 pb-5 pt-4 sm:grid-cols-2">
             <Field label="Product name" htmlFor="p-name" error={fieldErrors.name} className="sm:col-span-2">
               <Input
                 id="p-name"
@@ -356,11 +356,11 @@ export function AdminProductFormPage() {
           </div>
         </section>
 
-        <section className="border border-line bg-surface">
-          <div className="flex flex-wrap items-center justify-between gap-3 border-b border-line px-5 py-3.5">
+        <section className="rounded-md bg-surface border border-line">
+          <div className="flex flex-wrap items-center justify-between gap-3 px-5 pt-5 pb-1">
             <div>
               <h2 className="text-lg">Variants</h2>
-              <p className="text-[0.8125rem] text-ink-soft">
+              <p className="text-[0.8125rem] text-ink-muted">
                 Size, weight or pack — one must be the default.
               </p>
             </div>
@@ -388,19 +388,19 @@ export function AdminProductFormPage() {
                         onChange={() =>
                           patchVariant(v.uid, { isDefault: true })
                         }
-                        className="size-4 accent-[#1F3D2B]"
+                        className="size-4 accent-brand-700"
                       />
                       Default variant
                     </label>
                     {v.id ? <Badge tone="neutral">Existing</Badge> : <Badge tone="info">New</Badge>}
                   </div>
                   <div className="flex items-center gap-3">
-                    <label className="inline-flex items-center gap-2 text-sm text-ink-soft">
+                    <label className="inline-flex items-center gap-2 text-sm text-ink-muted">
                       <input
                         type="checkbox"
                         checked={v.active}
                         onChange={(e) => patchVariant(v.uid, { active: e.target.checked })}
-                        className="size-4 accent-[#1F3D2B]"
+                        className="size-4 accent-brand-700"
                       />
                       Active
                     </label>
@@ -409,7 +409,7 @@ export function AdminProductFormPage() {
                         type="button"
                         onClick={() => removeVariant(v.uid)}
                         aria-label="Remove variant"
-                        className="text-ink-soft transition-colors hover:text-brick"
+                        className="text-ink-muted transition-colors hover:text-danger"
                       >
                         <TrashIcon width={16} height={16} />
                       </button>
@@ -468,8 +468,8 @@ export function AdminProductFormPage() {
 
                 <div className="mt-4 grid gap-4 sm:grid-cols-2">
                   <div>
-                    <p className="label text-ink-soft">Attributes</p>
-                    <div className="mt-2 space-y-2">
+                    <p className="label text-ink-muted">Attributes</p>
+                    <div className="mt-2 space-y-2 rounded-md bg-surface-2/50 p-3 shadow-pressed">
                       {v.attrs.map((attr) => (
                         <div key={attr.uid} className="flex gap-2">
                           <Input
@@ -506,7 +506,7 @@ export function AdminProductFormPage() {
                                 attrs: v.attrs.filter((a) => a.uid !== attr.uid),
                               })
                             }
-                            className="grid size-9 shrink-0 place-items-center border border-line-strong text-ink-soft transition-colors hover:border-brick/50 hover:text-brick"
+                            className="grid size-9 shrink-0 place-items-center rounded-md bg-surface text-ink-muted border border-line transition hover:shadow-lift hover:text-danger"
                           >
                             <TrashIcon width={15} height={15} />
                           </button>
@@ -544,9 +544,9 @@ export function AdminProductFormPage() {
                       />
                     </Field>
                   ) : (
-                    <div className="self-end pb-1 text-[0.8125rem] text-ink-soft">
+                    <div className="self-end pb-1 text-[0.8125rem] text-ink-muted">
                       Existing variant — stock is managed from the{" "}
-                      <Link to="/admin/stock" className="text-leaf underline underline-offset-2">
+                      <Link to="/admin/stock" className="text-brand-600 underline underline-offset-2">
                         Stock page
                       </Link>
                       .
@@ -559,11 +559,11 @@ export function AdminProductFormPage() {
           {fieldErrors.variants ? <InlineError className="mx-5 mb-4">{fieldErrors.variants}</InlineError> : null}
         </section>
 
-        <section className="border border-line bg-surface">
-          <div className="flex flex-wrap items-center justify-between gap-3 border-b border-line px-5 py-3.5">
+        <section className="rounded-md bg-surface border border-line">
+          <div className="flex flex-wrap items-center justify-between gap-3 px-5 pt-5 pb-1">
             <div>
               <h2 className="text-lg">Images</h2>
-              <p className="text-[0.8125rem] text-ink-soft">
+              <p className="text-[0.8125rem] text-ink-muted">
                 First image becomes the catalogue thumbnail.
               </p>
             </div>
@@ -581,14 +581,14 @@ export function AdminProductFormPage() {
           <div className="px-5 py-5">
             {fieldErrors.images ? <InlineError className="mb-3">{fieldErrors.images}</InlineError> : null}
             {form.images.length === 0 ? (
-              <p className="text-sm text-ink-soft">
+              <p className="text-sm text-ink-muted">
                 No images yet — the storefront shows the product's initials instead.
               </p>
             ) : (
               <div className="space-y-3">
                 {form.images.map((img) => (
                   <div key={img.uid} className="flex items-start gap-3">
-                    <div className="size-14 shrink-0 overflow-hidden border border-line bg-mist">
+                    <div className="size-14 shrink-0 overflow-hidden rounded-lg bg-surface-2">
                       {img.url ? (
                         <img src={img.url} alt="" className="h-full w-full object-cover" />
                       ) : null}
@@ -627,7 +627,7 @@ export function AdminProductFormPage() {
                       onClick={() =>
                         patch({ images: form.images.filter((im) => im.uid !== img.uid) })
                       }
-                      className="grid size-10 shrink-0 place-items-center border border-line-strong text-ink-soft transition-colors hover:border-brick/50 hover:text-brick"
+                      className="grid size-10 shrink-0 place-items-center rounded-md bg-surface text-ink-muted border border-line transition hover:shadow-lift hover:text-danger"
                     >
                       <TrashIcon width={16} height={16} />
                     </button>
@@ -640,7 +640,7 @@ export function AdminProductFormPage() {
 
         <div
           className={cn(
-            "flex flex-wrap items-center gap-3 border-t border-ink/15 pt-5",
+            "flex flex-wrap items-center gap-3 rounded-md bg-surface px-5 py-4 border border-line",
           )}
         >
           <Button type="submit" size="lg" loading={save.isPending}>
@@ -652,7 +652,7 @@ export function AdminProductFormPage() {
             </Button>
           </Link>
           {isEdit && productQuery.data ? (
-            <span className="ml-auto hidden text-[0.8125rem] text-ink-soft sm:block">
+            <span className="ml-auto hidden text-[0.8125rem] text-ink-muted sm:block">
               From {money(productQuery.data.price)} ·{" "}
               <span className="num">{productQuery.data.available}</span> in stock
             </span>

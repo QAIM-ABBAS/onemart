@@ -32,7 +32,7 @@ export function AccountMenu() {
     return (
       <NavLink
         to="/login"
-        className="hidden h-10 items-center gap-2 whitespace-nowrap border border-line-strong bg-surface px-3 text-sm font-medium text-ink transition-colors hover:border-ink sm:inline-flex"
+        className="inline-flex h-10 items-center gap-2 whitespace-nowrap rounded-md border border-brand-700 bg-brand-800 px-3 text-sm font-medium text-brand-50 transition hover:bg-brand-700 sm:inline-flex"
       >
         <UserIcon width={17} height={17} />
         Sign in
@@ -54,29 +54,33 @@ export function AccountMenu() {
         onClick={() => setOpen((v) => !v)}
         aria-expanded={open}
         aria-haspopup="menu"
-        className="inline-flex h-10 items-center gap-2 border border-line-strong bg-surface px-2.5 text-sm transition-colors hover:border-ink"
+        className="inline-flex h-10 items-center gap-2 rounded-md border border-brand-700 bg-brand-800 px-2.5 text-sm text-brand-50 transition hover:bg-brand-700"
       >
-        <span className="grid size-6 place-items-center bg-forest text-[0.65rem] font-semibold text-paper">
+        <span className="grid size-6 place-items-center rounded-full bg-surface text-[0.65rem] font-semibold text-brand-900">
           {initials}
         </span>
         <span className="hidden max-w-28 truncate sm:inline">{user.full_name.split(" ")[0]}</span>
-        <ChevronDownIcon width={14} height={14} className="text-ink-soft" />
+        <ChevronDownIcon
+          width={14}
+          height={14}
+          className="hidden text-brand-200 sm:block"
+        />
       </button>
       {open ? (
         <div
           role="menu"
-          className="absolute end-0 top-[calc(100%+6px)] w-56 border border-line bg-surface shadow-panel"
+          className="absolute end-0 top-[calc(100%+6px)] w-56 overflow-hidden rounded-md border border-line bg-surface shadow-panel"
         >
-          <div className="border-b border-line px-4 py-3">
+          <div className="border-b border-line bg-surface px-4 pb-3 pt-3.5">
             <p className="truncate text-sm font-medium">{user.full_name}</p>
-            <p className="truncate text-[0.8125rem] text-ink-soft">{user.email}</p>
-            <p className={cn("label mt-1.5 text-ink-soft")}>{roleName(user.role)}</p>
+            <p className="truncate text-[0.8125rem] text-ink-muted">{user.email}</p>
+            <p className={cn("label mt-1.5 text-ink-muted")}>{roleName(user.role)}</p>
           </div>
           <div className="py-1">
             <Link
               to="/orders"
               onClick={() => setOpen(false)}
-              className="block px-4 py-2.5 text-sm hover:bg-mist"
+              className="block px-4 py-2.5 text-sm transition-colors hover:bg-surface-2"
               role="menuitem"
             >
               My orders
@@ -85,7 +89,7 @@ export function AccountMenu() {
               <Link
                 to="/admin/products"
                 onClick={() => setOpen(false)}
-                className="block px-4 py-2.5 text-sm hover:bg-mist"
+                className="block px-4 py-2.5 text-sm transition-colors hover:bg-surface-2"
                 role="menuitem"
               >
                 Admin console
@@ -98,7 +102,7 @@ export function AccountMenu() {
                 setOpen(false);
                 void logout();
               }}
-              className="block w-full px-4 py-2.5 text-left text-sm text-brick hover:bg-brick/5"
+              className="block w-full px-4 py-2.5 text-left text-sm text-danger transition-colors hover:bg-danger/5"
             >
               Sign out
             </button>

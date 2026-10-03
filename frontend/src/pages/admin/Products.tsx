@@ -38,9 +38,9 @@ function flattenCategories(nodes: CategoryNode[], depth = 0): { node: CategoryNo
 
 function SkeletonRows() {
   return (
-    <div className="space-y-px bg-line">
+    <div className="divide-y divide-line overflow-hidden rounded-md bg-surface-2 shadow-pressed">
       {Array.from({ length: 6 }, (_, i) => (
-        <div key={i} className="flex items-center gap-4 bg-surface px-4 py-3.5">
+        <div key={i} className="flex items-center gap-4 px-4 py-3.5">
           <Skeleton className="h-11 w-11" />
           <div className="flex-1 space-y-2">
             <Skeleton className="h-4 w-1/2" />
@@ -87,9 +87,9 @@ export function AdminProductsPage() {
     <div>
       <div className="flex flex-wrap items-end justify-between gap-4 border-b border-ink/15 pb-4">
         <div>
-          <p className="label text-leaf">Catalogue</p>
+          <p className="label text-brand-600">Catalogue</p>
           <h1 className="mt-1.5 text-2xl sm:text-3xl">Products</h1>
-          <p className="mt-1 text-sm text-ink-soft num" aria-live="polite">
+          <p className="mt-1 text-sm text-ink-muted num" aria-live="polite">
             {products.data ? `${products.data.total} products` : "Loading…"}
           </p>
         </div>
@@ -163,24 +163,24 @@ export function AdminProductsPage() {
           <ErrorState error={products.error} onRetry={() => void products.refetch()} />
         ) : products.data && products.data.items.length > 0 ? (
           <>
-            <div className="overflow-x-auto border border-line bg-surface">
+            <div className="overflow-x-auto rounded-md bg-surface-2 shadow-pressed">
               <table className="w-full min-w-[780px] text-sm">
                 <thead>
-                  <tr className="border-b border-line bg-paper/70 text-left">
-                    <th className="label px-4 py-2.5 text-ink-soft">Product</th>
-                    <th className="label px-4 py-2.5 text-ink-soft">Category</th>
-                    <th className="label px-4 py-2.5 text-ink-soft">Price</th>
-                    <th className="label px-4 py-2.5 text-ink-soft">Stock</th>
-                    <th className="label px-4 py-2.5 text-ink-soft">Status</th>
-                    <th className="label px-4 py-2.5 text-right text-ink-soft">Actions</th>
+                  <tr className="bg-surface-2 text-left shadow-pressed">
+                    <th className="label px-4 py-2.5 text-ink-muted">Product</th>
+                    <th className="label px-4 py-2.5 text-ink-muted">Category</th>
+                    <th className="label px-4 py-2.5 text-ink-muted">Price</th>
+                    <th className="label px-4 py-2.5 text-ink-muted">Stock</th>
+                    <th className="label px-4 py-2.5 text-ink-muted">Status</th>
+                    <th className="label px-4 py-2.5 text-right text-ink-muted">Actions</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-line">
                   {products.data.items.map((p) => (
-                    <tr key={p.id} className="transition-colors hover:bg-mist/40">
+                    <tr key={p.id} className="transition-colors hover:bg-surface">
                       <td className="px-4 py-3">
                         <div className="flex items-center gap-3">
-                          <div className="size-11 shrink-0 overflow-hidden border border-line bg-mist">
+                          <div className="size-11 shrink-0 overflow-hidden rounded-lg bg-surface-2">
                             {p.thumbnail ? (
                               <img
                                 src={p.thumbnail}
@@ -188,25 +188,25 @@ export function AdminProductsPage() {
                                 className="h-full w-full object-cover"
                               />
                             ) : (
-                              <div className="grid h-full w-full place-items-center font-display text-sm text-forest/30">
+                              <div className="grid h-full w-full place-items-center font-display text-sm text-brand-700/30">
                                 {p.name[0]}
                               </div>
                             )}
                           </div>
                           <div className="min-w-0">
                             <p className="truncate font-medium">{p.name}</p>
-                            <p className="num text-[0.75rem] text-ink-soft">
+                            <p className="num text-[0.75rem] text-ink-muted">
                               {p.variant_count} variant{p.variant_count === 1 ? "" : "s"}
                               {p.brand ? ` · ${p.brand}` : ""}
                             </p>
                           </div>
                         </div>
                       </td>
-                      <td className="px-4 py-3 text-ink-soft">{p.category}</td>
+                      <td className="px-4 py-3 text-ink-muted">{p.category}</td>
                       <td className="num px-4 py-3 font-medium">{money(p.price)}</td>
                       <td className="num px-4 py-3">
                         {p.available === 0 ? (
-                          <span className="text-brick">0</span>
+                          <span className="text-danger">0</span>
                         ) : (
                           p.available
                         )}

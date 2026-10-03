@@ -19,10 +19,10 @@ export function CartPage() {
     return (
       <div className="mx-auto max-w-5xl px-4 py-10">
         <Skeleton className="h-8 w-40" />
-        <div className="mt-8 grid gap-8 lg:grid-cols-[minmax(0,1fr)_320px]">
-          <div className="space-y-4">
+        <div className="mt-8 flex flex-col gap-8 lg:flex-row">
+          <div className="min-w-0 flex-1 space-y-4">
             {Array.from({ length: 3 }, (_, i) => (
-              <div key={i} className="flex gap-4 border border-line bg-surface p-4">
+              <div key={i} className="flex gap-4 rounded-md bg-surface p-4 border border-line">
                 <Skeleton className="size-20" />
                 <div className="flex-1 space-y-2.5">
                   <Skeleton className="h-4 w-2/3" />
@@ -32,7 +32,7 @@ export function CartPage() {
               </div>
             ))}
           </div>
-          <Skeleton className="h-64 w-full" />
+          <Skeleton className="h-64 w-full lg:w-[320px] lg:shrink-0" />
         </div>
       </div>
     );
@@ -71,16 +71,18 @@ export function CartPage() {
 
   return (
     <div className="mx-auto max-w-6xl px-4 py-8 lg:py-12">
-      <div className="border-b border-ink/15 pb-4">
-        <p className="label text-leaf">Your basket</p>
+      <div className="pb-1">
+        <p className="label text-brand-600">Your basket</p>
         <h1 className="mt-1.5 text-3xl">Cart</h1>
-        <p className="mt-1.5 text-sm text-ink-soft num">
+        <p className="mt-1.5 text-sm text-ink-muted num">
           {data.item_count} item{data.item_count === 1 ? "" : "s"}
         </p>
       </div>
 
-      <div className="mt-8 grid gap-8 lg:grid-cols-[minmax(0,1fr)_340px]">
-        <div className="space-y-4">
+      {/* Items + summary: a flex row of two boxes. The item list grows, the
+          summary keeps a fixed basis; on small screens they stack. */}
+      <div className="mt-8 flex flex-col gap-8 lg:flex-row">
+        <div className="min-w-0 flex-1 space-y-4">
           {updateItem.isError ? (
             <InlineError>
               {updateItem.error instanceof Error
@@ -96,17 +98,18 @@ export function CartPage() {
             </InlineError>
           ) : null}
 
-          {data.items.map((item) => {
+          <div className="divide-y divide-line overflow-hidden rounded-md bg-surface-2 shadow-pressed">
+            {data.items.map((item) => {
             const missing = item.available <= 0;
             const exceeds = item.quantity > item.available && item.available > 0;
             return (
               <article
                 key={item.id}
-                className="flex flex-col gap-4 border border-line bg-surface p-4 sm:flex-row sm:items-start"
+                className="flex flex-col gap-4 p-4 sm:flex-row sm:items-start"
               >
                 <Link
                   to={`/p/${item.product_slug}`}
-                  className="size-24 shrink-0 overflow-hidden border border-line bg-mist"
+                  className="size-24 shrink-0 overflow-hidden rounded-md bg-surface-2"
                 >
                   {item.image_url ? (
                     <img
@@ -115,7 +118,7 @@ export function CartPage() {
                       className="h-full w-full object-cover"
                     />
                   ) : (
-                    <div className="grid h-full w-full place-items-center font-display text-xl text-forest/25">
+                    <div className="grid h-full w-full place-items-center font-display text-xl text-brand-700/25">
                       {item.product_name[0]}
                     </div>
                   )}
@@ -124,23 +127,23 @@ export function CartPage() {
                 <div className="min-w-0 flex-1">
                   <Link
                     to={`/p/${item.product_slug}`}
-                    className="font-medium leading-snug hover:text-leaf hover:underline underline-offset-2"
+                    className="font-medium leading-snug hover:text-brand-600 hover:underline underline-offset-2"
                   >
                     {item.product_name}
                   </Link>
-                  <p className="mt-1 text-[0.8125rem] text-ink-soft">
+                  <p className="mt-1 text-[0.8125rem] text-ink-muted">
                     {item.variant_name} · SKU <span className="num">{item.sku}</span>
                   </p>
-                  <p className="num mt-1 text-[0.8125rem] text-ink-soft">
+                  <p className="num mt-1 text-[0.8125rem] text-ink-muted">
                     {money(item.unit_price)} each
                   </p>
 
                   {missing ? (
-                    <p className="mt-2 text-[0.8125rem] font-medium text-brick">
+                    <p className="mt-2 text-[0.8125rem] font-medium text-danger">
                       Out of stock — remove this item to continue.
                     </p>
                   ) : exceeds ? (
-                    <p className="mt-2 text-[0.8125rem] font-medium text-amber">
+                    <p className="mt-2 text-[0.8125rem] font-medium text-warning">
                       Only {item.available} available. Reduce the quantity to check out.
                     </p>
                   ) : null}
@@ -160,7 +163,7 @@ export function CartPage() {
                       type="button"
                       onClick={() => removeItem.mutate(item.id)}
                       disabled={removeItem.isPending}
-                      className="inline-flex h-9 items-center gap-1.5 rounded-sm border border-transparent px-2 text-[0.8125rem] text-ink-soft transition-colors hover:border-brick/40 hover:text-brick disabled:opacity-40"
+                      className="inline-flex h-9 items-center gap-1.5 rounded-lg px-2 text-[0.8125rem] text-ink-muted transition hover:bg-danger/10 hover:text-danger disabled:opacity-40"
                     >
                       <TrashIcon width={15} height={15} />
                       Remove
@@ -173,45 +176,48 @@ export function CartPage() {
                 </div>
               </article>
             );
-          })}
+            })}
+          </div>
         </div>
 
-        <aside className="lg:sticky lg:top-36 lg:self-start">
-          <div className="border border-line bg-surface">
-            <div className="border-b border-line px-5 py-4">
+        {/* fixed basis so the summary never shares space with the item list;
+            self-start keeps a sticky box from being stretched by the row */}
+        <aside className="lg:sticky lg:top-36 lg:w-[340px] lg:shrink-0 lg:self-start">
+          <div className="rounded-md bg-surface border border-line">
+            <div className="px-5 py-4">
               <h2 className="text-lg">Order summary</h2>
             </div>
             <dl className="space-y-3 px-5 py-4 text-sm">
               <div className="flex justify-between">
-                <dt className="text-ink-soft">Subtotal</dt>
+                <dt className="text-ink-muted">Subtotal</dt>
                 <dd className="num font-medium">{money(data.subtotal)}</dd>
               </div>
               <div className="flex justify-between">
-                <dt className="text-ink-soft">Delivery</dt>
+                <dt className="text-ink-muted">Delivery</dt>
                 <dd className="num font-medium">
                   {data.delivery_fee === 0 ? (
-                    <span className="text-leaf">Free</span>
+                    <span className="text-brand-600">Free</span>
                   ) : (
                     money(data.delivery_fee)
                   )}
                 </dd>
               </div>
-              <div className="flex justify-between border-t border-line pt-3 text-base">
+              <div className="flex justify-between pt-3 text-base">
                 <dt className="font-medium">Total</dt>
                 <dd className="num font-semibold">{money(data.total)}</dd>
               </div>
             </dl>
             {freeDeliveryGap > 0 ? (
-              <p className="border-t border-line bg-mist/60 px-5 py-3 text-[0.8125rem] text-ink-soft">
+              <p className="bg-surface-2/50 px-5 py-3 text-[0.8125rem] text-ink-muted ">
                 Add <span className="num font-medium text-ink">{money(freeDeliveryGap)}</span> more
                 for free delivery.
               </p>
             ) : (
-              <p className="border-t border-line bg-leaf/8 px-5 py-3 text-[0.8125rem] text-leaf">
+              <p className="bg-brand-600/8 px-5 py-3 text-[0.8125rem] text-brand-600 ">
                 You have unlocked free delivery.
               </p>
             )}
-            <div className="space-y-2.5 border-t border-line px-5 py-4">
+            <div className="space-y-2.5 px-5 py-4">
               <Button
                 block
                 size="lg"
@@ -226,7 +232,7 @@ export function CartPage() {
                 </Button>
               </Link>
             </div>
-            <div className="border-t border-line px-5 py-3">
+            <div className="bg-surface-2/50 px-5 py-3 ">
               <Badge tone="neutral">Cash on delivery</Badge>
             </div>
           </div>
