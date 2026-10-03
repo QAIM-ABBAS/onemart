@@ -460,6 +460,19 @@ export function CheckoutPage() {
                 <dt className="text-ink-muted">Subtotal</dt>
                 <dd className="num font-medium">{money(cartSummary.subtotal)}</dd>
               </div>
+              {cartSummary.discount > 0 ? (
+                <div className="flex items-center justify-between gap-3">
+                  <dt className="text-ink-muted">
+                    Coupon{" "}
+                    <span className="rounded-md bg-highlight px-1.5 py-0.5 text-[0.6875rem] font-semibold text-highlight-ink">
+                      {cartSummary.coupon?.code}
+                    </span>
+                  </dt>
+                  <dd className="num shrink-0 font-medium text-deal">
+                    −{money(cartSummary.discount)}
+                  </dd>
+                </div>
+              ) : null}
               <div className="flex justify-between">
                 <dt className="text-ink-muted">Delivery</dt>
                 <dd className="num font-medium">

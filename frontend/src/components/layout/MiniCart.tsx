@@ -59,7 +59,7 @@ export function MiniCart({ open, onClose }: { open: boolean; onClose: () => void
         </header>
 
         <div className="flex-1 overflow-y-auto">
-          {cart.isLoading ? (
+          {cart.isPending ? (
             <div className="space-y-3 p-5">
               {Array.from({ length: 3 }, (_, i) => (
                 <Skeleton key={i} className="h-20 w-full" />
@@ -144,6 +144,12 @@ export function MiniCart({ open, onClose }: { open: boolean; onClose: () => void
                 <dt className="text-ink-muted">Subtotal</dt>
                 <dd className="num font-medium">{money(data.subtotal)}</dd>
               </div>
+              {data.discount > 0 ? (
+                <div className="flex items-center justify-between">
+                  <dt className="text-ink-muted">Coupon {data.coupon?.code}</dt>
+                  <dd className="num font-medium text-deal">−{money(data.discount)}</dd>
+                </div>
+              ) : null}
               <div className="flex items-center justify-between">
                 <dt className="text-ink-muted">Delivery</dt>
                 <dd className="num font-medium">

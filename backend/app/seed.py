@@ -10,6 +10,7 @@ from sqlalchemy.orm import Session
 from app.core.db import SessionLocal
 from app.core.security import hash_password
 from app.modules.catalog.models import Brand, Category, Product, ProductImage, ProductVariant
+from app.modules.discounts.models import Coupon, CouponKind
 from app.modules.inventory.models import Inventory
 from app.modules.orders.models import (
     Order,
@@ -268,7 +269,43 @@ def _slug(name: str) -> str:
     return out.strip("-")
 
 
+DEMO_COUPONS: list[dict] = [
+    {
+        "code": "WELCOME10",
+        "kind": CouponKind.PERCENT,
+        "value": Decimal("10"),
+        "min_subtotal": Decimal("499"),
+        "max_discount": Decimal("200"),
+        "description": "10% off orders over ₹499, up to ₹200",
+    },
+    {
+        "code": "FLAT100",
+        "kind": CouponKind.FIXED,
+        "value": Decimal("100"),
+        "min_subtotal": Decimal("999"),
+        "description": "₹100 off orders over ₹999",
+    },
+]
+
+
+def ensure_demo_coupons(db: Session) -> None:
+    """Insert the demo codes if they are missing. Idempotent: existing rows are
+    left alone so a hand-edited coupon survives a re-seed."""
+    added = False
+    for spec in DEMO_COUPONS:
+        exists = db.scalar(select(Coupon.id).where(Coupon.code == spec["code"]))
+        if exists is None:
+            db.add(Coupon(**spec, is_active=True))
+            added = True
+    if added:
+        db.commit()
+
+
 def seed(db: Session) -> None:
+    # Coupons first: they must exist even when the catalog is already seeded,
+    # otherwise an existing dev database has no code to try at checkout.
+    ensure_demo_coupons(db)
+
     if db.scalar(select(Product.id).limit(1)) is not None:
         return
 

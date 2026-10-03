@@ -19,6 +19,9 @@ from app.core.db import Base
 from app.core.exceptions import AppError
 from app.core.types import TimestampMixin, string_enum
 
+# Registers the Coupon/CouponRedemption mappers (referenced by Order and Cart)
+from app.modules.discounts import models as discounts_models  # noqa: F401
+
 
 class OrderStatus(enum.StrEnum):
     PENDING = "pending"
@@ -77,8 +80,15 @@ class Order(TimestampMixin, Base):
     country: Mapped[str] = mapped_column(String(2), default="IN", nullable=False)
 
     subtotal: Mapped[Decimal] = mapped_column(Numeric(12, 2), nullable=False)
+    discount_total: Mapped[Decimal] = mapped_column(Numeric(12, 2), default=0, nullable=False)
     delivery_fee: Mapped[Decimal] = mapped_column(Numeric(12, 2), default=0, nullable=False)
     total: Mapped[Decimal] = mapped_column(Numeric(12, 2), nullable=False)
+    # Coupon snapshot: the code is copied onto the order so history survives the
+    # coupon row being edited or deleted later; SET NULL keeps the order intact.
+    coupon_id: Mapped[int | None] = mapped_column(
+        ForeignKey("coupons.id", ondelete="SET NULL"), index=True
+    )
+    coupon_code: Mapped[str | None] = mapped_column(String(40))
     customer_note: Mapped[str | None] = mapped_column(Text)
 
     placed_at: Mapped[datetime] = mapped_column(

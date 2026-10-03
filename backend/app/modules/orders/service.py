@@ -1,4 +1,3 @@
-from decimal import Decimal
 
 from sqlalchemy import delete, func, select
 from sqlalchemy.orm import Session, selectinload
@@ -6,8 +5,8 @@ from sqlalchemy.orm import Session, selectinload
 from app.core.exceptions import AppError, ConflictError, NotFoundError
 from app.core.pagination import Page, PaginationParams
 from app.modules.cart.models import Cart, CartItem
-from app.modules.cart.schemas import price
-from app.modules.cart.service import DELIVERY_FEE, FREE_DELIVERY_OVER
+from app.modules.discounts import service as discounts_service
+from app.modules.discounts.pricing import price_cart
 from app.modules.inventory.models import Inventory
 from app.modules.inventory.service import ensure_inventory
 from app.modules.orders.models import (
@@ -24,16 +23,13 @@ from app.modules.orders.schemas import CheckoutIn, OrderDetail, OrderListItem, S
 from app.modules.users.models import Address, User
 
 
-def _delivery_fee(subtotal: float) -> float:
-    return 0.0 if subtotal >= FREE_DELIVERY_OVER else DELIVERY_FEE
-
-
 def checkout(db: Session, user: User, cart: Cart, payload: CheckoutIn) -> Order:
     """Create an order from the user's cart.
 
     Inventory rows are locked with SELECT ... FOR UPDATE and the order is written in
     the very same transaction: stock is never checked in a separate step from the
-    order insert.
+    order insert. The coupon's usage limit is claimed in that same transaction too,
+    so a coupon can never be redeemed more times than it allows.
     """
     if not cart.items:
         raise AppError("Your cart is empty")
@@ -75,9 +71,14 @@ def checkout(db: Session, user: User, cart: Cart, payload: CheckoutIn) -> Order:
             details={"shortages": shortages},
         )
 
-    subtotal = round(sum(price(item.unit_price) * item.quantity for item in cart.items), 2)
-    delivery = _delivery_fee(subtotal)
-    total = round(subtotal + delivery, 2)
+    # Re-validate the applied coupon against the cart as it stands right now and
+    # price it with the shared engine: the order total must be exactly the total
+    # the customer saw in the cart (and in /checkout/summary).
+    coupon = discounts_service.active_coupon(db, cart, strict=True)
+    pricing = price_cart(
+        discounts_service.cart_lines(cart),
+        discounts_service.spec_for(coupon) if coupon is not None else None,
+    )
 
     order = Order(
         order_number="PENDING",
@@ -92,9 +93,12 @@ def checkout(db: Session, user: User, cart: Cart, payload: CheckoutIn) -> Order:
         state=address["state"],
         postal_code=address["postal_code"],
         country=address["country"],
-        subtotal=Decimal(str(subtotal)),
-        delivery_fee=Decimal(str(delivery)),
-        total=Decimal(str(total)),
+        subtotal=pricing.subtotal,
+        discount_total=pricing.discount,
+        delivery_fee=pricing.delivery,
+        total=pricing.total,
+        coupon_id=pricing.coupon_id,
+        coupon_code=pricing.coupon_code,
         customer_note=payload.note,
     )
     db.add(order)
@@ -102,6 +106,11 @@ def checkout(db: Session, user: User, cart: Cart, payload: CheckoutIn) -> Order:
     from datetime import UTC, datetime
 
     order.order_number = f"OM-{datetime.now(UTC):%Y%m%d}-{order.id:06d}"
+
+    if pricing.has_coupon and coupon is not None:
+        # Atomic conditional UPDATE: of two customers racing for the last
+        # redemption exactly one wins; the loser gets 409 and nothing is written.
+        discounts_service.claim_usage(db, coupon)
 
     for item in cart.items:
         variant = item.variant
@@ -124,7 +133,12 @@ def checkout(db: Session, user: User, cart: Cart, payload: CheckoutIn) -> Order:
         row = inventory[variant.id]
         row.quantity -= item.quantity
 
-    result = provider.authorize(order, Decimal(str(total)))
+    if pricing.has_coupon and coupon is not None:
+        discounts_service.record_redemption(
+            db, coupon, user_id=user.id, order_id=order.id, discount=pricing.discount
+        )
+
+    result = provider.authorize(order, pricing.total)
     order.payment_status = result.status
 
     db.add(
@@ -136,6 +150,8 @@ def checkout(db: Session, user: User, cart: Cart, payload: CheckoutIn) -> Order:
         )
     )
     db.execute(delete(CartItem).where(CartItem.cart_id == cart.id))
+    # The cart is empty now: don't leave the redeemed code pinned to it.
+    cart.coupon_id = None
     db.commit()
     return order
 

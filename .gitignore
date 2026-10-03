@@ -33,6 +33,10 @@ docker-compose.override.yml
 
 # Tool artifacts
 .playwright-mcp/
+test-results/
+playwright-report/
+blob-report/
+playwright/.cache/
 home-*.png
 
 # Design-review screenshots dropped at the repo root

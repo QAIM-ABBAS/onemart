@@ -16,7 +16,7 @@ Modular monolith, not microservices: one FastAPI app with clear module boundarie
 | Cache     | Redis 7 (Docker Compose, internal only — not published; falls back to an in-process cache when unreachable) |
 | Frontend  | React 19, Vite 6, TypeScript (strict), Tailwind CSS v4, React Router 7 |
 | Data/Auth | TanStack Query (server state), Zustand (auth state), JWT access token + httpOnly refresh cookie |
-| Tooling   | Ruff, pytest, Docker Compose, puppeteer-core for E2E smoke |
+| Tooling   | Ruff, pytest, Docker Compose, puppeteer-core + Playwright for E2E |
 
 ## Feature scope (Phase 1)
 
@@ -104,7 +104,7 @@ npm run dev                                 # http://localhost:5173, proxies /ap
 ```powershell
 # backend
 cd backend
-.\.venv\Scripts\python -m pytest -q          # 27 tests (auth, catalog, cart merge, checkout race, orders, admin)
+.\.venv\Scripts\python -m pytest -q          # 45 tests (auth, catalog, cart merge, checkout race, orders, admin, pricing + coupons)
 .\.venv\Scripts\python -m ruff check app tests
 .\.venv\Scripts\python -m app.seed           # seed demo data (no-op if already seeded)
 
@@ -115,6 +115,7 @@ npm run build                                # tsc --noEmit + vite build
 npx tsc --noEmit                             # typecheck only
 node scripts/smoke.mjs                       # full E2E smoke (needs dev servers running)
 node scripts/responsive.mjs                  # mobile/tablet screenshots
+npm run test:e2e                             # Playwright flow (needs dev servers running)
 ```
 
 `scripts/smoke.mjs` drives Chrome (puppeteer-core) through the entire slice on both sides:
@@ -122,6 +123,12 @@ home → browse → sort → product → add to cart → checkout → login → 
 history → admin login → product list/edit → stock → orders → status update → customer
 timeline. It screenshots every step (temp dir path printed at the end) and exits non-zero
 on any failure or console/API error.
+
+`tests/e2e/checkout-coupon-flow.spec.ts` is the Phase 2 pricing flow in one Playwright test:
+a signed-in customer adds a product, applies a coupon, checks out at the discounted total;
+an admin confirms the order with a note; the customer's own order payload and timeline show
+both. It runs against the same running stack and uses the installed Chrome
+(`channel: "chrome"`, no browser download).
 
 ## API conventions
 
@@ -145,6 +152,7 @@ backend/
     cart/             cart resolution (guest cookie ↔ account), merge, items
     inventory/        per-variant stock, admin adjustments
     orders/           checkout (FOR UPDATE), status history, payment registry, admin ops
+    discounts/        pricing engine (Decimals), coupons + redemptions, auto-clear
   app/seed.py         demo catalogue + accounts
   tests/              pytest suite (uses onemart_test DB, REDIS_DISABLED)
 frontend/
@@ -154,6 +162,7 @@ frontend/
   src/components/     ui primitives, layout shells, catalog/orders components
   src/pages/          customer pages + admin pages
   scripts/            E2E smoke + responsive screenshot tools
+  tests/e2e/          Playwright flow test (pricing + coupons end to end)
 ```
 
 ## Design system

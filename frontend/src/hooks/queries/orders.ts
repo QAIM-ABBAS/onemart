@@ -20,7 +20,9 @@ export function useOrders(params: OrderQueryParams) {
 
 export function useOrder(orderId: number | string | undefined) {
   return useQuery({
-    queryKey: ["order", orderId],
+    // String(...) so a caller passing a number still hits the same entry that
+    // useUpdateOrderStatus writes to (see admin.ts).
+    queryKey: ["order", orderId == null ? "" : String(orderId)],
     queryFn: () => api.get<OrderDetail>(`/orders/${orderId}`),
     enabled: orderId !== undefined && orderId !== "",
   });

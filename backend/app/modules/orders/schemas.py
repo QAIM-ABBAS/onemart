@@ -91,6 +91,8 @@ class OrderDetail(BaseModel):
     postal_code: str
     country: str
     subtotal: float
+    discount_total: float = 0.0
+    coupon_code: str | None = None
     delivery_fee: float
     total: float
     customer_note: str | None
@@ -104,7 +106,7 @@ class OrderDetail(BaseModel):
     def _cast(cls, data):
         if isinstance(data, dict):
             data = dict(data)
-            for key in ("subtotal", "delivery_fee", "total"):
+            for key in ("subtotal", "discount_total", "delivery_fee", "total"):
                 if isinstance(data.get(key), Decimal):
                     data[key] = float(data[key])
         return data

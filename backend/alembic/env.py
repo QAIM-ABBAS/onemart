@@ -7,6 +7,7 @@ from app.core.config import settings
 from app.core.db import Base
 from app.modules.cart import models as cart_models  # noqa: F401
 from app.modules.catalog import models as catalog_models  # noqa: F401
+from app.modules.discounts import models as discounts_models  # noqa: F401
 from app.modules.inventory import models as inventory_models  # noqa: F401
 from app.modules.orders import models as orders_models  # noqa: F401
 from app.modules.users import models as users_models  # noqa: F401

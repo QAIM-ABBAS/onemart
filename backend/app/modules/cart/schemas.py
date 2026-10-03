@@ -2,6 +2,8 @@ from decimal import Decimal
 
 from pydantic import BaseModel, Field
 
+from app.modules.discounts.schemas import CouponOut
+
 
 class CartItemOut(BaseModel):
     id: int
@@ -23,6 +25,8 @@ class CartOut(BaseModel):
     id: int
     items: list[CartItemOut]
     subtotal: float
+    discount: float = 0.0
+    coupon: CouponOut | None = None
     delivery_fee: float
     total: float
     item_count: int

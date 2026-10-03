@@ -155,24 +155,33 @@ export function useAdminOrders(params: AdminOrderQueryParams) {
   });
 }
 
+// Route params arrive as strings and callers as numbers — normalise both, or the
+// cache write lands under a key the query never reads ("8" !== 8) and an update
+// looks like it silently didn't happen.
+const orderKey = (orderId: number | string | undefined) => [
+  "order",
+  orderId == null ? "" : String(orderId),
+];
+
 export function useAdminOrder(orderId: number | string | undefined) {
   return useQuery({
-    queryKey: ["admin", "order", orderId],
+    queryKey: ["admin", ...orderKey(orderId)],
     queryFn: () => api.get<OrderDetail>(`/admin/orders/${orderId}`),
     enabled: orderId !== undefined && orderId !== "",
   });
 }
 
-export function useUpdateOrderStatus(orderId: number) {
+export function useUpdateOrderStatus(orderId: number | string) {
   const qc = useQueryClient();
+  const id = String(orderId);
   return useMutation({
     mutationFn: (payload: StatusUpdateIn) =>
-      api.patch<OrderDetail>(`/admin/orders/${orderId}/status`, payload),
+      api.patch<OrderDetail>(`/admin/orders/${id}/status`, payload),
     onSuccess: (order) => {
-      qc.setQueryData(["admin", "order", orderId], order);
+      qc.setQueryData(["admin", ...orderKey(id)], order);
       void qc.invalidateQueries({ queryKey: ["admin", "orders"] });
       void qc.invalidateQueries({ queryKey: ["orders"] });
-      void qc.invalidateQueries({ queryKey: ["order", orderId] });
+      void qc.invalidateQueries({ queryKey: orderKey(id) });
     },
   });
 }

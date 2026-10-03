@@ -14,6 +14,9 @@ from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.core.db import Base
 
+# Registers the Coupon mapper referenced by Cart.coupon
+from app.modules.discounts import models as discounts_models  # noqa: F401
+
 
 class Cart(Base):
     __tablename__ = "carts"
@@ -25,6 +28,10 @@ class Cart(Base):
     session_key: Mapped[str | None] = mapped_column(
         String(64), unique=True, index=True, default=lambda: uuid4().hex
     )
+    # Applied discount code. SET NULL: deleting a coupon must not delete a cart.
+    coupon_id: Mapped[int | None] = mapped_column(
+        ForeignKey("coupons.id", ondelete="SET NULL"), index=True
+    )
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), server_default=func.now(), nullable=False
     )
@@ -35,6 +42,7 @@ class Cart(Base):
     items: Mapped[list["CartItem"]] = relationship(
         back_populates="cart", cascade="all, delete-orphan", lazy="selectin"
     )
+    coupon = relationship("Coupon", lazy="selectin")
 
 
 class CartItem(Base):

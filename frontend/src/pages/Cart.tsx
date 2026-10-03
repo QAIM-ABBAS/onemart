@@ -1,10 +1,18 @@
+import { useState, type FormEvent } from "react";
 import { Link, useNavigate } from "react-router-dom";
 
-import { useCart, useRemoveCartItem, useUpdateCartItem } from "@/hooks/queries/cart";
+import {
+  useApplyCoupon,
+  useCart,
+  useRemoveCartItem,
+  useRemoveCoupon,
+  useUpdateCartItem,
+} from "@/hooks/queries/cart";
 import { money } from "@/lib/format";
 
 import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
+import { Input } from "@/components/ui/Form";
 import { BagIcon, TrashIcon } from "@/components/ui/Icon";
 import { Price, QuantityStepper } from "@/components/ui/Price";
 import { EmptyState, ErrorState, InlineError, Skeleton } from "@/components/ui/States";
@@ -13,9 +21,12 @@ export function CartPage() {
   const cart = useCart();
   const updateItem = useUpdateCartItem();
   const removeItem = useRemoveCartItem();
+  const applyCoupon = useApplyCoupon();
+  const removeCoupon = useRemoveCoupon();
+  const [couponCode, setCouponCode] = useState("");
   const navigate = useNavigate();
 
-  if (cart.isLoading) {
+  if (cart.isPending) {
     return (
       <div className="mx-auto max-w-5xl px-4 py-10">
         <Skeleton className="h-8 w-40" />
@@ -67,7 +78,16 @@ export function CartPage() {
     );
   }
 
-  const freeDeliveryGap = data.subtotal >= 999 ? 0 : Math.max(0, 999 - data.subtotal);
+  // Free delivery is judged on the discounted amount, exactly like the backend.
+  const payable = data.subtotal - data.discount;
+  const freeDeliveryGap = payable >= 999 ? 0 : Math.max(0, 999 - payable);
+
+  const onApplyCoupon = (event: FormEvent) => {
+    event.preventDefault();
+    const code = couponCode.trim();
+    if (!code) return;
+    applyCoupon.mutate(code, { onSuccess: () => setCouponCode("") });
+  };
 
   return (
     <div className="mx-auto max-w-6xl px-4 py-8 lg:py-12">
@@ -187,11 +207,69 @@ export function CartPage() {
             <div className="px-5 py-4">
               <h2 className="text-lg">Order summary</h2>
             </div>
+
+            {/* Coupon: one input while none is applied, one chip once it is.
+                The highlight yellow is spent here and nowhere else on the page. */}
+            <div className="border-t border-line px-5 py-4">
+              {data.coupon ? (
+                <div className="flex flex-wrap items-center justify-between gap-2">
+                  <span className="inline-flex items-center gap-2 rounded-md bg-highlight px-2.5 py-1.5 text-xs font-semibold text-highlight-ink">
+                    {data.coupon.code}
+                    <span className="font-normal opacity-80">applied</span>
+                  </span>
+                  <button
+                    type="button"
+                    onClick={() => removeCoupon.mutate()}
+                    disabled={removeCoupon.isPending}
+                    className="text-[0.8125rem] text-ink-muted underline underline-offset-2 transition hover:text-ink disabled:opacity-40"
+                  >
+                    Remove
+                  </button>
+                </div>
+              ) : (
+                <form onSubmit={onApplyCoupon} className="flex gap-2">
+                  <Input
+                    id="coupon-code"
+                    value={couponCode}
+                    onChange={(e) => setCouponCode(e.target.value)}
+                    placeholder="Coupon code"
+                    aria-label="Coupon code"
+                    autoComplete="off"
+                    className="h-9 flex-1 uppercase"
+                  />
+                  <Button
+                    type="submit"
+                    size="sm"
+                    variant="secondary"
+                    loading={applyCoupon.isPending}
+                    disabled={!couponCode.trim()}
+                  >
+                    Apply
+                  </Button>
+                </form>
+              )}
+              {applyCoupon.isError ? (
+                <InlineError className="mt-2">
+                  {applyCoupon.error instanceof Error
+                    ? applyCoupon.error.message
+                    : "Could not apply that code."}
+                </InlineError>
+              ) : null}
+            </div>
+
             <dl className="space-y-3 px-5 py-4 text-sm">
               <div className="flex justify-between">
                 <dt className="text-ink-muted">Subtotal</dt>
                 <dd className="num font-medium">{money(data.subtotal)}</dd>
               </div>
+              {data.discount > 0 ? (
+                <div className="flex justify-between">
+                  <dt className="text-ink-muted">
+                    Coupon <span className="font-medium text-ink">{data.coupon?.code}</span>
+                  </dt>
+                  <dd className="num font-medium text-deal">−{money(data.discount)}</dd>
+                </div>
+              ) : null}
               <div className="flex justify-between">
                 <dt className="text-ink-muted">Delivery</dt>
                 <dd className="num font-medium">

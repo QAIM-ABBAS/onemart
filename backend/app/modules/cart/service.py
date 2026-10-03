@@ -6,11 +6,12 @@ from app.core.config import settings
 from app.core.exceptions import AppError, ConflictError, NotFoundError
 from app.modules.cart.models import Cart, CartItem
 from app.modules.cart.schemas import CartItemOut, CartOut, price
+from app.modules.discounts import service as discounts_service
+from app.modules.discounts.pricing import money
+from app.modules.discounts.schemas import CouponOut
 from app.modules.inventory.models import Inventory
 from app.modules.users.models import User
 
-DELIVERY_FEE = 40.0
-FREE_DELIVERY_OVER = 999.0
 CART_COOKIE_MAX_AGE = 60 * 60 * 24 * 30
 
 
@@ -45,6 +46,10 @@ def resolve_cart(db: Session, request: Request, response: Response, user: User |
                 cart.user_id = user.id
                 cart.session_key = None
             else:
+                # Carry the guest's coupon across; the guest row is deleted
+                # below, and losing the code on login would be a nasty surprise.
+                if (source_coupon := guest.coupon) and cart.coupon is None:
+                    cart.coupon = source_coupon
                 _merge_items(db, source=guest, target=cart)
                 db.delete(guest)
             db.flush()
@@ -104,17 +109,20 @@ def _inventory_map(db: Session, variant_ids: list[int]) -> dict[int, Inventory]:
     return {row.variant_id: row for row in rows}
 
 
-def serialize_cart(cart: Cart) -> CartOut:
+def serialize_cart(db: Session, cart: Cart) -> CartOut:
+    """Cart contents plus totals from the shared pricing engine.
+
+    ``price_for_cart`` also re-validates the applied coupon, so a code that has
+    stopped qualifying (items removed, window closed, usage exhausted) is cleared
+    here rather than showing a discount the checkout would refuse.
+    """
     inventory = {i.variant_id: i for i in (item.variant.inventory for item in cart.items) if i}
     items: list[CartItemOut] = []
-    subtotal = 0.0
     count = 0
     for item in cart.items:
         variant = item.variant
         product = variant.product
         available = inventory[item.variant_id].available if item.variant_id in inventory else 0
-        line = price(item.unit_price) * item.quantity
-        subtotal += line
         count += item.quantity
         items.append(
             CartItemOut(
@@ -128,18 +136,32 @@ def serialize_cart(cart: Cart) -> CartOut:
                 image_url=product.images[0].url if product.images else None,
                 unit_price=price(variant.price),
                 quantity=item.quantity,
-                line_total=round(line, 2),
+                line_total=float(money(item.unit_price) * item.quantity),
                 available=available,
                 in_stock=available > 0,
             )
         )
-    delivery = 0.0 if subtotal >= FREE_DELIVERY_OVER or subtotal == 0 else DELIVERY_FEE
+
+    pricing = discounts_service.price_for_cart(db, cart)
+    coupon = cart.coupon if pricing.has_coupon else None
     return CartOut(
         id=cart.id,
         items=items,
-        subtotal=round(subtotal, 2),
-        delivery_fee=delivery,
-        total=round(subtotal + delivery, 2),
+        subtotal=float(pricing.subtotal),
+        discount=float(pricing.discount),
+        coupon=(
+            CouponOut(
+                code=coupon.code,
+                kind=coupon.kind.value,
+                value=float(coupon.value),
+                description=coupon.description,
+                discount=float(pricing.discount),
+            )
+            if coupon is not None
+            else None
+        ),
+        delivery_fee=float(pricing.delivery),
+        total=float(pricing.total),
         item_count=count,
     )
 

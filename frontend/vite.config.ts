@@ -13,6 +13,13 @@ export default defineConfig({
   },
   server: {
     port: 5173,
+    // The stack runs in Docker on a bind mount, where inotify events from the
+    // Windows side are unreliable — without polling the dev server keeps serving
+    // modules it never saw change (edits look like they "didn't take").
+    watch: {
+      usePolling: true,
+      interval: 300,
+    },
     proxy: {
       "/api": {
         target: process.env.VITE_API_BASE_URL || "http://localhost:8000",

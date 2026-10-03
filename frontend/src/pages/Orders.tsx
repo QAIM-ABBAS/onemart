@@ -309,6 +309,14 @@ export function OrderDetailPage() {
               <dt className="text-ink-muted">Subtotal</dt>
               <dd className="num">{money(o.subtotal)}</dd>
             </div>
+            {o.discount_total > 0 ? (
+              <div className="flex justify-between">
+                <dt className="text-ink-muted">
+                  Coupon <span className="font-medium text-ink">{o.coupon_code}</span>
+                </dt>
+                <dd className="num text-deal">−{money(o.discount_total)}</dd>
+              </div>
+            ) : null}
             <div className="flex justify-between">
               <dt className="text-ink-muted">Delivery</dt>
               <dd className="num">{o.delivery_fee === 0 ? "Free" : money(o.delivery_fee)}</dd>

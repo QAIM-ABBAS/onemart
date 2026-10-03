@@ -9,8 +9,11 @@ class Settings(BaseSettings):
     app_name: str = "OneMart API"
     environment: str = "development"
 
-    database_url: str = "postgresql+psycopg://onemart:onemart@localhost:5433/onemart"
-    redis_url: str = "redis://localhost:7500/0"
+    # 127.0.0.1 rather than "localhost": Docker publishes the DB on the IPv4
+    # loopback only, and a "localhost" lookup tries ::1 first and stalls for
+    # ~2 minutes before falling back. Port stays 5433 (compose + README).
+    database_url: str = "postgresql+psycopg://onemart:onemart@127.0.0.1:5433/onemart"
+    redis_url: str = "redis://127.0.0.1:7500/0"
     redis_disabled: bool = False
 
     jwt_secret: str = "dev-only-secret-change-me-0123456789abcdef0123456789abcdef"

@@ -21,18 +21,27 @@ import { ErrorState, InlineError, Notice, Skeleton } from "@/components/ui/State
 export function AdminOrderDetailPage() {
   const { orderId } = useParams<{ orderId: string }>();
   const order = useAdminOrder(orderId);
-  const updateStatus = useUpdateOrderStatus(Number(orderId));
+  const updateStatus = useUpdateOrderStatus(orderId ?? "");
 
   const [nextStatus, setNextStatus] = useState<OrderStatus | "">("");
   const [note, setNote] = useState("");
   const [formError, setFormError] = useState<string | null>(null);
 
+  // Switching to a different order: clear everything, including the mutation's
+  // own state, so a success notice from the previous order can't carry over.
+  useEffect(() => {
+    updateStatus.reset();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [orderId]);
+
+  // The status moved (or the data reloaded): reset the form — but not the
+  // mutation. Its isSuccess is what the "Status updated to …" notice is keyed
+  // on, and this effect fires precisely when a move succeeds.
   useEffect(() => {
     if (order.data) {
       setNextStatus("");
       setNote("");
       setFormError(null);
-      updateStatus.reset();
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [order.data?.status, order.data?.id]);
@@ -241,6 +250,17 @@ export function AdminOrderDetailPage() {
                 <dt className="text-ink-muted">Subtotal</dt>
                 <dd className="num">{money(o.subtotal)}</dd>
               </div>
+              {o.discount_total > 0 ? (
+                <div className="flex justify-between">
+                  <dt className="text-ink-muted">
+                    Discount{" "}
+                    <span className="font-medium text-ink">
+                      {o.coupon_code ? `· ${o.coupon_code}` : ""}
+                    </span>
+                  </dt>
+                  <dd className="num text-deal">−{money(o.discount_total)}</dd>
+                </div>
+              ) : null}
               <div className="flex justify-between">
                 <dt className="text-ink-muted">Delivery</dt>
                 <dd className="num">{o.delivery_fee === 0 ? "Free" : money(o.delivery_fee)}</dd>

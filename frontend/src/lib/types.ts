@@ -136,10 +136,21 @@ export interface CartItemOut {
   in_stock: boolean;
 }
 
+export interface CouponOut {
+  code: string;
+  kind: string;
+  value: number;
+  description?: string | null;
+  /** What this coupon removes from the current cart */
+  discount: number;
+}
+
 export interface CartOut {
   id: number;
   items: CartItemOut[];
   subtotal: number;
+  discount: number;
+  coupon: CouponOut | null;
   delivery_fee: number;
   total: number;
   item_count: number;
@@ -153,6 +164,8 @@ export interface PaymentMethodInfo {
 export interface CheckoutSummary {
   items: CartItemOut[];
   subtotal: number;
+  discount: number;
+  coupon: CouponOut | null;
   delivery_fee: number;
   total: number;
   item_count: number;
@@ -229,6 +242,8 @@ export interface OrderDetail {
   postal_code: string;
   country: string;
   subtotal: number;
+  discount_total: number;
+  coupon_code?: string | null;
   delivery_fee: number;
   total: number;
   customer_note?: string | null;

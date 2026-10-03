@@ -1,6 +1,7 @@
 import os
 
-os.environ["DATABASE_URL"] = "postgresql+psycopg://onemart:onemart@localhost:5433/onemart_test"
+# 127.0.0.1, not "localhost": ::1 is not published by Docker and stalls ~130s
+os.environ["DATABASE_URL"] = "postgresql+psycopg://onemart:onemart@127.0.0.1:5433/onemart_test"
 os.environ["REDIS_DISABLED"] = "true"
 os.environ["SEED_ON_STARTUP"] = "false"
 os.environ["COOKIE_SECURE"] = "false"
