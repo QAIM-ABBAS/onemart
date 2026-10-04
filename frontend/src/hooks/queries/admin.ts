@@ -10,6 +10,7 @@ import type {
   Page,
   ProductAdminOut,
   ProductWrite,
+  ReviewOut,
   StatusUpdateIn,
   StockAdjustment,
 } from "@/lib/types";
@@ -183,5 +184,51 @@ export function useUpdateOrderStatus(orderId: number | string) {
       void qc.invalidateQueries({ queryKey: ["orders"] });
       void qc.invalidateQueries({ queryKey: orderKey(id) });
     },
+  });
+}
+
+export interface AdminReviewQueryParams {
+  page?: number;
+  page_size?: number;
+  sort?: string;
+  rating?: number;
+  status?: string;
+  product_id?: number;
+  q?: string;
+}
+
+export function useAdminReviews(params: AdminReviewQueryParams) {
+  return useQuery({
+    queryKey: ["admin", "reviews", params],
+    queryFn: () => api.get<Page<ReviewOut>>("/admin/reviews", { ...params }),
+    placeholderData: keepPreviousData,
+  });
+}
+
+// Moderation changes the public list and the product's rating summary too.
+function reviewSideEffects(
+  qc: ReturnType<typeof useQueryClient>,
+  productSlug: string,
+): void {
+  void qc.invalidateQueries({ queryKey: ["admin", "reviews"] });
+  void qc.invalidateQueries({ queryKey: ["reviews", productSlug] });
+  void qc.invalidateQueries({ queryKey: ["product", productSlug] });
+}
+
+export function useModerateReview() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: ({ id, is_visible }: { id: number; is_visible: boolean }) =>
+      api.patch<ReviewOut>(`/admin/reviews/${id}`, { is_visible }),
+    onSuccess: (review) => reviewSideEffects(qc, review.product_slug),
+  });
+}
+
+export function useDeleteAdminReview() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (review: { id: number; product_slug: string }) =>
+      api.del<void>(`/admin/reviews/${review.id}`),
+    onSuccess: (_data, review) => reviewSideEffects(qc, review.product_slug),
   });
 }

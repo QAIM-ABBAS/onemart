@@ -104,6 +104,56 @@ export interface ProductDetail {
   available: number;
   is_featured: boolean;
   created_at: string;
+  /** Denormalised from the reviews table, kept in sync server-side. */
+  rating_avg: number;
+  rating_count: number;
+  rating_distribution: RatingBucket[];
+}
+
+export interface RatingBucket {
+  rating: number;
+  count: number;
+}
+
+export interface RatingSummary {
+  average: number;
+  count: number;
+  /** Always 5..1, so the bars render even at zero. */
+  distribution: RatingBucket[];
+}
+
+export interface ReviewOut {
+  id: number;
+  product_id: number;
+  product_name: string;
+  product_slug: string;
+  user_id: number;
+  author: string;
+  rating: number;
+  title: string;
+  body: string;
+  verified_purchase: boolean;
+  is_visible: boolean;
+  helpful_count: number;
+  viewer_has_voted: boolean;
+  can_edit: boolean;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface ReviewPage extends Page<ReviewOut> {
+  summary: RatingSummary;
+}
+
+export interface ReviewIn {
+  rating: number;
+  title: string;
+  body: string;
+}
+
+export interface HelpfulOut {
+  helpful_count: number;
+  viewer_has_voted: boolean;
 }
 
 export interface ProductFacets {

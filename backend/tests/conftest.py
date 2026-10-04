@@ -46,10 +46,16 @@ def engine():
 
 @pytest.fixture(autouse=True)
 def clean_db(engine):
+    # Catalog detail is cached in-process when Redis is disabled; without this,
+    # a product read in one test would leak into the next (ratings especially).
+    from app.modules.catalog.service import invalidate_catalog_cache
+
+    invalidate_catalog_cache()
     tables = ", ".join(f'"{t.name}"' for t in Base.metadata.sorted_tables)
     with engine.begin() as conn:
         conn.execute(text(f"TRUNCATE {tables} RESTART IDENTITY CASCADE"))
     yield
+    invalidate_catalog_cache()
 
 
 @pytest.fixture()

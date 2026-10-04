@@ -4,6 +4,7 @@ from decimal import Decimal
 from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
 
 from app.modules.catalog.models import Product
+from app.modules.reviews.schemas import RatingBucket  # reviews.schemas imports nothing back
 
 
 def money(value: Decimal | None) -> float | None:
@@ -90,6 +91,11 @@ class ProductDetail(BaseModel):
     available: int
     is_featured: bool
     created_at: datetime
+    # Rating summary lives here so the PDP needs no second request. Defaults keep
+    # entries cached before this step valid until they expire (30s TTL).
+    rating_avg: float = 0.0
+    rating_count: int = 0
+    rating_distribution: list[RatingBucket] = Field(default_factory=list)
 
 
 class ProductFacets(BaseModel):

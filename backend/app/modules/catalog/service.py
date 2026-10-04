@@ -253,6 +253,10 @@ def get_product_detail(db: Session, slug: str) -> ProductDetail:
         for v in active
     ]
     prices = [v.price for v in active]
+    # Lazy import: reviews.service imports this module for cache invalidation.
+    from app.modules.reviews.service import rating_summary
+
+    summary = rating_summary(db, product)
     detail = ProductDetail(
         id=product.id,
         name=product.name,
@@ -270,6 +274,9 @@ def get_product_detail(db: Session, slug: str) -> ProductDetail:
         available=sum(v.available for v in variants),
         is_featured=product.is_featured,
         created_at=product.published_at,
+        rating_avg=summary.average,
+        rating_count=summary.count,
+        rating_distribution=summary.distribution,
     )
     cache_set(cache_key, detail.model_dump_json(), PRODUCT_CACHE_TTL)
     return detail

@@ -6,12 +6,15 @@ import { useProduct } from "@/hooks/queries/catalog";
 import { pushRecent } from "@/hooks/useRecentlyViewed";
 import { cn } from "@/lib/cn";
 import { ApiError } from "@/lib/api";
+import { pluralize } from "@/lib/format";
 
 import { Button } from "@/components/ui/Button";
 import { CheckIcon } from "@/components/ui/Icon";
 import { Price, QuantityStepper } from "@/components/ui/Price";
 import { Badge } from "@/components/ui/Badge";
 import { ErrorState, InlineError, Skeleton } from "@/components/ui/States";
+import { ReviewSection } from "@/components/reviews/ReviewSection";
+import { Stars } from "@/components/reviews/Stars";
 
 export function ProductPage() {
   const { slug } = useParams<{ slug: string }>();
@@ -203,6 +206,23 @@ export function ProductPage() {
           </div>
           <h1 className="mt-2 text-3xl sm:text-[2.4rem]">{p.name}</h1>
 
+          {/* Jump link to the ratings block below the fold. */}
+          <a
+            href="#reviews"
+            className="mt-2.5 inline-flex items-center gap-2 rounded-md text-sm text-ink-muted underline-offset-4 transition hover:text-ink hover:underline"
+          >
+            {p.rating_count > 0 ? (
+              <>
+                <Stars rating={p.rating_avg} size={15} />
+                <span className="num font-semibold text-ink">{p.rating_avg.toFixed(1)}</span>
+                <span aria-hidden="true">·</span>
+                <span>{pluralize(p.rating_count, "review")}</span>
+              </>
+            ) : (
+              <span>No reviews yet — be the first</span>
+            )}
+          </a>
+
           <div className="mt-4 flex flex-wrap items-center gap-x-5 gap-y-2">
             <Price
               value={selected?.price ?? p.price}
@@ -338,6 +358,8 @@ export function ProductPage() {
           ) : null}
         </div>
       </div>
+
+      <ReviewSection slug={p.slug} />
     </div>
   );
 }

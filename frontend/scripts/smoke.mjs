@@ -48,7 +48,10 @@ function wire(page, tag) {
       apiLog.push(`${tag} < ${r.status()} ${r.request().method()} ${u.replace(BASE, "")}`);
       const ignore =
         (u.includes("/auth/refresh") && r.status() === 401) ||
-        (u.includes("/auth/me") && r.status() === 401);
+        (u.includes("/auth/me") && r.status() === 401) ||
+        // The review step deliberately tolerates a leftover review
+        // ("already reviewed" after an interrupted run) — see below.
+        (u.includes("/reviews") && r.request().method() === "POST" && r.status() === 409);
       if (!ignore && r.status() >= 400)
         problems.push(`${tag} api ${r.status()} ${r.request().method()} ${u.replace(BASE, "")}`);
     }
@@ -122,6 +125,8 @@ async function run(name, fn) {
 const ctx1 = await browser.createBrowserContext();
 const page = await ctx1.newPage();
 wire(page, "[cust]");
+// set by the PDP step, reused by the review steps at the end
+let productUrl = "";
 
 const goto = async (p, url) => {
   try {
@@ -174,6 +179,7 @@ await run("browse lists products + sort updates URL", async () => {
 
 await run("product detail add to cart updates header badge", async () => {
   const href = await page.$eval('a[href^="/p/"]', (a) => a.getAttribute("href"));
+  productUrl = href;
   await goto(page, href);
   await page.waitForFunction(
     () => document.body.innerText.includes("Add to cart"),
@@ -196,6 +202,16 @@ await run("product detail add to cart updates header badge", async () => {
     { timeout: 15000 },
   );
   await shot(page, "03-product");
+});
+
+await run("guest sees ratings section with login prompt", async () => {
+  await page.waitForFunction(() => document.body.innerText.includes("Ratings & reviews"), {
+    timeout: 20000,
+  });
+  const t = await bodyText(page);
+  check(t.includes("Sign in to write a review"), "guest login prompt missing");
+  check((await page.$("#review-sort")) !== null, "review sort select missing");
+  await shot(page, "03b-product-reviews");
 });
 
 await run("cart shows line item", async () => {
@@ -269,6 +285,8 @@ await run("order history lists the order", async () => {
 const ctx2 = await browser.createBrowserContext();
 const apage = await ctx2.newPage();
 wire(apage, "[admin]");
+// admin actions use window.confirm() — accept them so the flow can continue
+apage.on("dialog", (d) => d.accept());
 
 await run("admin login lands authenticated", async () => {
   await goto(apage, "/login");
@@ -323,6 +341,17 @@ await run("admin stock page renders", async () => {
   await shot(apage, "10-admin-stock");
 });
 
+await run("admin reviews queue renders", async () => {
+  await goto(apage, "/admin/reviews");
+  await apage.waitForFunction(
+    () =>
+      document.body.innerText.includes("No reviews yet") ||
+      document.querySelectorAll("tbody tr").length > 0,
+    { timeout: 30000 },
+  );
+  await shot(apage, "10b-admin-reviews");
+});
+
 let orderUrl = "";
 
 await run("admin orders list + open newest order", async () => {
@@ -374,6 +403,125 @@ await run("customer sees confirmed status in timeline", async () => {
     timeout: 20000,
   });
   await shot(page, "14-customer-timeline-confirmed");
+});
+
+await run("customer writes a review on the product", async () => {
+  await goto(page, productUrl);
+  await page.waitForFunction(() => document.body.innerText.includes("Ratings & reviews"), {
+    timeout: 25000,
+  });
+  const opened = await page.evaluate(() => {
+    const b = [...document.querySelectorAll("button")].find(
+      (x) => x.textContent.trim() === "Write a review",
+    );
+    if (!b) return "absent";
+    b.click();
+    return true;
+  });
+  if (opened === true) {
+    await page.waitForSelector("#review-title", { timeout: 15000 });
+    await page.type("#review-title", "Tried and tested");
+    await page.type("#review-body", "Good quality and it arrived the next morning.");
+    const posted = await page.evaluate(() => {
+      const b = [...document.querySelectorAll("button")].find(
+        (x) => x.textContent.trim() === "Post review",
+      );
+      if (!b) return false;
+      b.click();
+      return true;
+    });
+    check(posted, "post review button missing");
+  }
+  // The new card, an "already reviewed" notice (leftover from an interrupted
+  // run), or an existing own-review with Edit — all mean the section reacted.
+  await page.waitForFunction(
+    () =>
+      document.body.innerText.includes("Tried and tested") ||
+      document.body.innerText.includes("already reviewed") ||
+      [...document.querySelectorAll("button")].some((b) => b.textContent.trim() === "Edit"),
+    { timeout: 25000 },
+  );
+  await shot(page, "15-review-written");
+});
+
+await run("admin hides and deletes the new review", async () => {
+  await goto(apage, "/admin/reviews");
+  await apage.waitForFunction(
+    () =>
+      document.querySelectorAll("tbody tr").length > 0 ||
+      document.body.innerText.includes("No reviews yet"),
+    { timeout: 30000 },
+  );
+  const hasRow = await apage.evaluate(() => document.querySelectorAll("tbody tr").length > 0);
+  check(hasRow, "the new review is missing from the queue");
+
+  const firstRowHas = (label) =>
+    apage.evaluate(
+      (l) =>
+        [...document.querySelectorAll("tbody tr:first-child button")].some(
+          (b) => b.textContent.trim() === l,
+        ),
+      label,
+    );
+
+  // A run interrupted before cleanup can leave this row hidden — unhide it
+  // first so the hide path below always runs for real. Sequence on the button
+  // label, not the toast: the refetch lands a beat after the success notice.
+  if (await firstRowHas("Unhide")) {
+    await apage.evaluate(() => {
+      const b = [...document.querySelectorAll("tbody tr:first-child button")].find(
+        (x) => x.textContent.trim() === "Unhide",
+      );
+      b?.click();
+    });
+    await apage.waitForFunction(
+      () =>
+        [...document.querySelectorAll("tbody tr:first-child button")].some(
+          (b) => b.textContent.trim() === "Hide",
+        ),
+      { timeout: 20000 },
+    );
+    await apage.waitForFunction(() => document.body.innerText.includes("visible again"), {
+      timeout: 20000,
+    });
+  }
+
+  check(await firstRowHas("Hide"), "hide button missing");
+  await apage.evaluate(() => {
+    const b = [...document.querySelectorAll("tbody tr:first-child button")].find(
+      (x) => x.textContent.trim() === "Hide",
+    );
+    b?.click();
+  });
+  await apage.waitForFunction(() => document.body.innerText.includes("Review hidden"), {
+    timeout: 20000,
+  });
+  await shot(apage, "16-admin-review-hidden");
+
+  // Delete it afterwards so the next run can post again (one review per
+  // customer per product, and the demo account is reused every run).
+  await apage.evaluate(() => {
+    const b = [...document.querySelectorAll("tbody tr:first-child button")].find(
+      (x) => x.textContent.trim() === "Delete",
+    );
+    b?.click();
+  });
+  await apage.waitForFunction(() => document.body.innerText.includes("Review deleted"), {
+    timeout: 20000,
+  });
+  await shot(apage, "17-admin-review-deleted");
+});
+
+await run("hidden review disappears for the customer", async () => {
+  await goto(page, productUrl);
+  await page.waitForFunction(() => document.body.innerText.includes("Ratings & reviews"), {
+    timeout: 25000,
+  });
+  // wait for the refetch, not the cache: a stale entry still shows the review
+  await page.waitForFunction(() => !document.body.innerText.includes("Tried and tested"), {
+    timeout: 20000,
+  });
+  await shot(page, "18-review-removed");
 });
 
 await browser.close();

@@ -8,8 +8,10 @@ import {
   ClipboardIcon,
   FolderIcon,
   PackageIcon,
+  StarIcon,
   StoreIcon,
 } from "@/components/ui/Icon";
+import { Toaster } from "@/components/ui/Toaster";
 import { useAuth } from "@/stores/auth";
 
 const NAV = [
@@ -17,6 +19,7 @@ const NAV = [
   { to: "/admin/categories", label: "Categories", icon: FolderIcon },
   { to: "/admin/stock", label: "Stock", icon: BoxesIcon },
   { to: "/admin/orders", label: "Orders", icon: ClipboardIcon },
+  { to: "/admin/reviews", label: "Reviews", icon: StarIcon },
 ] as const;
 
 function navClass(isActive: boolean, mobile = false): string {
@@ -123,6 +126,8 @@ export function AdminShell({ children }: { children: ReactNode }) {
           <main className="px-4 py-6 sm:px-6">{children}</main>
         </div>
       </div>
+      {/* Same toast host as the storefront — admin mutations report here too. */}
+      <Toaster />
     </div>
   );
 }
