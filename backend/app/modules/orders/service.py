@@ -4,6 +4,7 @@ from sqlalchemy.orm import Session, selectinload
 
 from app.core.exceptions import AppError, ConflictError, NotFoundError
 from app.core.pagination import Page, PaginationParams
+from app.modules.audit import service as audit_service
 from app.modules.cart.models import Cart, CartItem
 from app.modules.discounts import service as discounts_service
 from app.modules.discounts.pricing import price_cart
@@ -12,6 +13,7 @@ from app.modules.inventory.service import ensure_inventory
 from app.modules.orders.models import (
     ALLOWED_TRANSITIONS,
     CANCELLABLE_STATUSES,
+    CUSTOMER_CANCELLABLE_STATUSES,
     Order,
     OrderItem,
     OrderStatus,
@@ -20,7 +22,7 @@ from app.modules.orders.models import (
 )
 from app.modules.orders.payment import payment_registry
 from app.modules.orders.schemas import CheckoutIn, OrderDetail, OrderListItem, StatusUpdateIn
-from app.modules.users.models import Address, User
+from app.modules.users.models import Address, User, UserRole
 
 
 def checkout(db: Session, user: User, cart: Cart, payload: CheckoutIn) -> Order:
@@ -309,6 +311,7 @@ def update_order_status(db: Session, order: Order, payload: StatusUpdateIn, acto
             details={"allowed": sorted(s.value for s in allowed)},
         )
 
+    from_status = order.status
     provider = payment_registry.get(order.payment_method)
 
     if payload.status == OrderStatus.CANCELLED and order.status in CANCELLABLE_STATUSES:
@@ -323,16 +326,57 @@ def update_order_status(db: Session, order: Order, payload: StatusUpdateIn, acto
         result = provider.refund(order, order.total)
         order.payment_status = result.status
 
+    # `order=order` (not order_id): the parent's collection may already be
+    # loaded, and back_populates keeps it in sync so the response this mutation
+    # returns shows the row it just wrote.
     db.add(
         OrderStatusHistory(
-            order_id=order.id,
+            order=order,
             status=payload.status,
             note=payload.note,
             actor_id=actor.id,
         )
     )
+    # Staff moves leave an accountability trail in the audit log; a customer's
+    # own cancellation is already recorded by the history row above (same
+    # precedent as reviews: admin actions audited, self-service not).
+    if actor.role != UserRole.CUSTOMER:
+        audit_service.record(
+            db,
+            actor_id=actor.id,
+            action="order.status_change",
+            entity="order",
+            entity_id=order.id,
+            detail={
+                "from": from_status.value,
+                "to": payload.status.value,
+                "note": payload.note,
+            },
+        )
     db.commit()
     return order
+
+
+def cancel_customer_order(db: Session, order: Order, user: User) -> Order:
+    """Customer self-service cancellation, Pending/Confirmed only.
+
+    Everything else (stock restore, history row, payment side effects,
+    transition validation) is `update_order_status`, so there is exactly one
+    cancellation path to keep correct.
+    """
+    if order.status == OrderStatus.CANCELLED:
+        raise ConflictError("This order has already been cancelled")
+    if order.status not in CUSTOMER_CANCELLABLE_STATUSES:
+        raise ConflictError(
+            "This order can no longer be cancelled — it is already being prepared.",
+            details={"allowed": sorted(s.value for s in CUSTOMER_CANCELLABLE_STATUSES)},
+        )
+    return update_order_status(
+        db,
+        order,
+        StatusUpdateIn(status=OrderStatus.CANCELLED, note="Cancelled by the customer"),
+        user,
+    )
 
 
 def _restock_order(db: Session, order: Order) -> None:

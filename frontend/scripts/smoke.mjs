@@ -67,27 +67,43 @@ const shot = (page, name) => page.screenshot({ path: `${SHOTS}\\${name}.png` });
 const bodyText = (page) => page.evaluate(() => document.body.innerText);
 
 /**
- * Fill the login form. Waiting for the auth bootstrap first matters: when it
- * lands mid-typing it re-renders the form, keystrokes go to the detached node
- * and are silently dropped — which surfaces later as an opaque 422 from the
- * API. Verify the fields before submitting so that failure is legible.
+ * Fill the login form. Two failure modes are guarded, both observed as
+ * silently dropped keystrokes:
+ *
+ *  1. Typing before the auth store has booted: the form remounts when the
+ *     bootstrap lands, and the keystrokes reach the detached node. So wait
+ *     for `booted` — do NOT let a missing `window.__auth` pass the wait.
+ *  2. Even after boot, a re-render can swap the form mid-type. Verify the
+ *     fields, clear both, and type again (up to 3 attempts) so the failure —
+ *     if it persists — is legible instead of a mysterious 422 later.
  */
 async function fillLogin(page, email, password) {
-  await page
-    .waitForFunction(() => !window.__auth || window.__auth.getState().booted === true, {
-      timeout: 15000,
-    })
-    .catch(() => {});
-  await page.type('input[type="email"]', email, { delay: 15 });
-  await page.type('input[type="password"]', password, { delay: 15 });
-  const typed = await page.evaluate(() => ({
-    email: document.querySelector('input[type="email"]')?.value ?? "",
-    password: document.querySelector('input[type="password"]')?.value ?? "",
-  }));
-  check(
-    typed.email === email && typed.password === password,
-    `login fields not filled: ${JSON.stringify(typed)}`,
-  );
+  await page.waitForFunction(() => window.__auth?.getState?.().booted === true, {
+    timeout: 20000,
+  });
+  let typed = { email: "", password: "" };
+  for (let attempt = 1; attempt <= 3; attempt += 1) {
+    await page.type('input[type="email"]', email, { delay: 15 });
+    await page.type('input[type="password"]', password, { delay: 15 });
+    typed = await page.evaluate(() => ({
+      email: document.querySelector('input[type="email"]')?.value ?? "",
+      password: document.querySelector('input[type="password"]')?.value ?? "",
+    }));
+    if (typed.email === email && typed.password === password) return;
+    if (attempt < 3) {
+      // Form was swapped mid-type: select whatever landed, then retype.
+      for (const sel of ['input[type="email"]', 'input[type="password"]']) {
+        await page.evaluate((s) => {
+          const el = document.querySelector(s);
+          el?.focus();
+          el?.select();
+        }, sel);
+        await page.keyboard.press("Control+A");
+        await page.keyboard.press("Backspace");
+      }
+    }
+  }
+  check(false, `login fields not filled after 3 attempts: ${JSON.stringify(typed)}`);
 }
 
 async function run(name, fn) {
@@ -323,7 +339,9 @@ await run("place order lands on confirmation with timeline", async () => {
     timeout: 15000,
   });
   const t = await bodyText(page);
-  check(/Pending|Confirmed/.test(t), "status timeline missing");
+  // Status labels are `.label` (uppercase) — innerText applies the transform,
+  // so match case-insensitively.
+  check(/pending|confirmed/i.test(t), "status timeline missing");
   await shot(page, "06-order-confirmation");
 });
 
@@ -515,10 +533,59 @@ await run("admin updates order status to confirmed", async () => {
 
 await run("customer sees confirmed status in timeline", async () => {
   await goto(page, orderUrl.replace("/admin", ""));
-  await page.waitForFunction(() => document.body.innerText.includes("Confirmed"), {
+  // `.label` text is uppercased by innerText — match case-insensitively.
+  await page.waitForFunction(() => /confirmed/i.test(document.body.innerText), {
     timeout: 20000,
   });
   await shot(page, "14-customer-timeline-confirmed");
+});
+
+await run("customer cancels a confirmed order and sees the terminal step", async () => {
+  await goto(page, orderUrl.replace("/admin", ""));
+  await page.waitForFunction(() => document.body.innerText.includes("Status timeline"), {
+    timeout: 20000,
+  });
+
+  // Cancel order (page) -> confirm inside the dialog (same label, scoped).
+  const clicked = await page.evaluate(() => {
+    const b = [...document.querySelectorAll("button")].find(
+      (x) => x.textContent.includes("Cancel order") && !x.closest('[role="dialog"]'),
+    );
+    if (!b) return false;
+    b.click();
+    return true;
+  });
+  check(clicked, "cancel order button missing on a confirmed order");
+  await page.waitForSelector('[role="dialog"]', { timeout: 15000 });
+
+  const confirmed = await page.evaluate(() => {
+    const b = [...document.querySelectorAll('[role="dialog"] button')].find((x) =>
+      x.textContent.includes("Cancel order"),
+    );
+    if (!b) return false;
+    b.click();
+    return true;
+  });
+  check(confirmed, "confirm-cancel button missing in the dialog");
+
+  // Waits for the terminal step's note (from the backend history row) — the
+  // toast alone could match a beat before the timeline re-renders.
+  // `.label` text is uppercased by innerText — match case-insensitively.
+  await page.waitForFunction(() => /cancelled by the customer/i.test(document.body.innerText), {
+    timeout: 20000,
+  });
+  const t = await bodyText(page);
+  // The history row written by the backend shows up as the terminal step note.
+  check(t.includes("Cancelled by the customer"), "cancellation history note missing");
+  // Cancelled is terminal: the cancel action must be gone.
+  const cancelGone = await page.evaluate(
+    () =>
+      ![...document.querySelectorAll("button")].some(
+        (x) => x.textContent.includes("Cancel order") && !x.closest('[role="dialog"]'),
+      ),
+  );
+  check(cancelGone, "cancel button still shown on a cancelled order");
+  await shot(page, "14b-customer-order-cancelled");
 });
 
 await run("customer writes a review on the product", async () => {

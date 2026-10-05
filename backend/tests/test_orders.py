@@ -171,3 +171,155 @@ def test_order_history_is_append_only(db, customer, seed_catalog):
     with pytest.raises(AppError):
         db.flush()
     db.rollback()
+
+
+def test_transition_rules_reject_jumps(client, db, admin_user, customer, seed_catalog):
+    """The map is enforced server-side: no skipping ahead, no stepping back."""
+    admin_headers = login(client, admin_user)
+    order, _ = _place_order(client, customer)
+
+    # The jump the rules exist to prevent: pending straight to delivered.
+    bad = client.patch(
+        f"/api/admin/orders/{order['id']}/status",
+        json={"status": "delivered"},
+        headers=admin_headers,
+    )
+    assert bad.status_code == 409
+    assert bad.json()["error"]["details"]["allowed"] == ["cancelled", "confirmed"]
+
+    # A legal move records exactly one history row...
+    ok = client.patch(
+        f"/api/admin/orders/{order['id']}/status",
+        json={"status": "confirmed", "note": "phone confirmed"},
+        headers=admin_headers,
+    )
+    assert ok.status_code == 200, ok.text
+
+    # ...and a backwards one records none.
+    back = client.patch(
+        f"/api/admin/orders/{order['id']}/status",
+        json={"status": "pending"},
+        headers=admin_headers,
+    )
+    assert back.status_code == 409
+
+    detail = client.get(f"/api/admin/orders/{order['id']}", headers=admin_headers).json()
+    assert [h["status"] for h in detail["history"]] == ["pending", "confirmed"]
+
+
+def test_customer_cancels_pending_order_and_stock_returns(client, db, customer, seed_catalog):
+    from sqlalchemy import func, select
+
+    from app.modules.audit.models import AuditLog
+    from app.modules.inventory.models import Inventory
+
+    order, headers = _place_order(client, customer, variant_id=2, quantity=4)
+
+    db.expire_all()
+    assert db.get(Inventory, 2).quantity == 6
+
+    response = client.post(f"/api/orders/{order['id']}/cancel", headers=headers)
+    assert response.status_code == 200, response.text
+    body = response.json()
+    assert body["status"] == "cancelled"
+    assert [h["status"] for h in body["history"]] == ["pending", "cancelled"]
+    assert body["history"][-1]["note"] == "Cancelled by the customer"
+
+    # Stock is restored in the same transaction that wrote the history row.
+    db.expire_all()
+    assert db.get(Inventory, 2).quantity == 10
+
+    # Self-service is not an admin action: the history row is the record.
+    audited = db.scalar(
+        select(func.count()).select_from(AuditLog).where(AuditLog.entity == "order")
+    )
+    assert audited == 0
+
+
+def test_customer_cancel_window_closes_once_packed(client, db, admin_user, customer, seed_catalog):
+    admin_headers = login(client, admin_user)
+
+    # Confirmed: still the customer's call.
+    order, headers = _place_order(client, customer)
+    confirmed = client.patch(
+        f"/api/admin/orders/{order['id']}/status",
+        json={"status": "confirmed"},
+        headers=admin_headers,
+    )
+    assert confirmed.status_code == 200
+    cancelled = client.post(f"/api/orders/{order['id']}/cancel", headers=headers)
+    assert cancelled.status_code == 200, cancelled.text
+    assert cancelled.json()["status"] == "cancelled"
+
+    # Packed: the window has closed for the customer.
+    other, other_headers = _place_order(client, customer)
+    for status in ("confirmed", "packed"):
+        moved = client.patch(
+            f"/api/admin/orders/{other['id']}/status",
+            json={"status": status},
+            headers=admin_headers,
+        )
+        assert moved.status_code == 200, moved.text
+
+    late = client.post(f"/api/orders/{other['id']}/cancel", headers=other_headers)
+    assert late.status_code == 409
+    assert late.json()["error"]["details"]["allowed"] == ["confirmed", "pending"]
+
+    # Delivered/Cancelled are terminal for everyone.
+    for status in ("shipped", "delivered"):
+        moved = client.patch(
+            f"/api/admin/orders/{other['id']}/status",
+            json={"status": status},
+            headers=admin_headers,
+        )
+        assert moved.status_code == 200, moved.text
+    terminal = client.post(f"/api/orders/{other['id']}/cancel", headers=other_headers)
+    assert terminal.status_code == 409
+
+
+def test_customer_cannot_cancel_someone_elses_order(client, customer, seed_catalog):
+    order, headers = _place_order(client, customer)
+
+    other = client.post(
+        "/api/auth/register",
+        json={"email": "nosy@test.dev", "password": PASSWORD, "full_name": "Nosy Parker"},
+    )
+    assert other.status_code == 201, other.text
+    other_headers = {"Authorization": f"Bearer {other.json()['access_token']}"}
+
+    assert (
+        client.post(f"/api/orders/{order['id']}/cancel", headers=other_headers).status_code
+        == 404
+    )
+    # Still pending for its owner.
+    detail = client.get(f"/api/orders/{order['id']}", headers=headers)
+    assert detail.status_code == 200
+    assert detail.json()["status"] == "pending"
+
+
+def test_admin_status_change_is_audited(client, db, admin_user, customer, seed_catalog):
+    from sqlalchemy import select
+
+    from app.modules.audit.models import AuditLog
+
+    admin_headers = login(client, admin_user)
+    order, _ = _place_order(client, customer)
+
+    changed = client.patch(
+        f"/api/admin/orders/{order['id']}/status",
+        json={"status": "confirmed", "note": "called the customer"},
+        headers=admin_headers,
+    )
+    assert changed.status_code == 200, changed.text
+
+    db.expire_all()
+    entry = db.scalar(select(AuditLog).where(AuditLog.entity == "order"))
+    assert entry is not None
+    assert entry.action == "order.status_change"
+    assert entry.entity_id == order["id"]
+    assert entry.actor_id is not None
+    assert entry.detail == {
+        "from": "pending",
+        "to": "confirmed",
+        "note": "called the customer",
+    }

@@ -1,8 +1,8 @@
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import { Link, useParams, useSearchParams } from "react-router-dom";
 
 import { OrderTimeline } from "@/components/orders/OrderTimeline";
-import { useOrder, useOrders } from "@/hooks/queries/orders";
+import { useCancelOrder, useOrder, useOrders } from "@/hooks/queries/orders";
 import {
   ORDER_FLOW,
   ORDER_STATUS_LABELS,
@@ -14,6 +14,7 @@ import {
 import { Badge, PaymentBadge, StatusBadge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
 import { Select } from "@/components/ui/Form";
+import { Modal } from "@/components/ui/Modal";
 import { Pagination } from "@/components/ui/Pagination";
 import { EmptyState, ErrorState, Notice, Skeleton } from "@/components/ui/States";
 import { BanknoteIcon } from "@/components/ui/Icon";
@@ -167,6 +168,8 @@ export function OrderDetailPage() {
   const [sp] = useSearchParams();
   const placed = sp.has("placed");
   const order = useOrder(orderId);
+  const cancelOrder = useCancelOrder(orderId ?? "");
+  const [confirmingCancel, setConfirmingCancel] = useState(false);
 
   const sortedHistory = useMemo(
     () => (order.data ? [...order.data.history].sort((a, b) => a.id - b.id) : []),
@@ -229,6 +232,13 @@ export function OrderDetailPage() {
             <PaymentBadge status={o.payment_status} />
             <Badge tone="neutral">Cash on delivery</Badge>
           </div>
+          {/* Customers may stop an order only before it is packed — the
+              server enforces the same window. */}
+          {o.status === "pending" || o.status === "confirmed" ? (
+            <Button variant="danger" size="sm" onClick={() => setConfirmingCancel(true)}>
+              Cancel order
+            </Button>
+          ) : null}
         </div>
       </div>
 
@@ -237,19 +247,6 @@ export function OrderDetailPage() {
         <div className="mt-4 rounded-md bg-surface-2 px-4 py-5 shadow-pressed sm:px-6">
           <OrderTimeline status={o.status} history={sortedHistory} />
         </div>
-        {sortedHistory.length > 0 ? (
-          <ul className="mt-4 divide-y divide-line rounded-md bg-surface text-sm border border-line">
-            {sortedHistory.map((event) => (
-              <li key={event.id} className="flex flex-wrap items-baseline gap-x-4 gap-y-1 px-4 py-3">
-                <span className="num w-40 shrink-0 text-ink-muted">
-                  {formatDateTime(event.created_at)}
-                </span>
-                <span className="font-medium">{ORDER_STATUS_LABELS[event.status]}</span>
-                {event.note ? <span className="text-ink-muted">— {event.note}</span> : null}
-              </li>
-            ))}
-          </ul>
-        ) : null}
       </section>
 
       <section className="mt-8">
@@ -347,6 +344,35 @@ export function OrderDetailPage() {
           ) : null}
         </section>
       </div>
+
+      <Modal
+        open={confirmingCancel}
+        onClose={() => setConfirmingCancel(false)}
+        title="Cancel this order?"
+        description={`${o.order_number} will be stopped before it ships.`}
+        footer={
+          <>
+            <Button variant="ghost" onClick={() => setConfirmingCancel(false)}>
+              Keep order
+            </Button>
+            <Button
+              variant="danger"
+              loading={cancelOrder.isPending}
+              onClick={() =>
+                cancelOrder.mutate(undefined, { onSuccess: () => setConfirmingCancel(false) })
+              }
+            >
+              Cancel order
+            </Button>
+          </>
+        }
+      >
+        <p className="text-sm leading-relaxed text-ink-muted">
+          Anything reserved for this order goes straight back to the shelf, and because you
+          pay on delivery there is nothing to refund. This cannot be undone — you can always
+          place the order again.
+        </p>
+      </Modal>
     </div>
   );
 }

@@ -129,22 +129,9 @@ export function AdminOrderDetailPage() {
         <div className="min-w-0 flex-1 space-y-6">
           <section className="rounded-md bg-surface-2 shadow-pressed">
             <h2 className="px-5 pt-5 text-lg">Status timeline</h2>
-            <div className="px-5 pt-4 pb-4">
+            <div className="px-5 pt-4 pb-5">
               <OrderTimeline status={o.status} history={history} />
             </div>
-            {history.length > 0 ? (
-              <ul className="mx-5 mb-5 divide-y divide-line overflow-hidden rounded-md bg-surface text-sm border border-line">
-                {history.map((event) => (
-                  <li key={event.id} className="flex flex-wrap items-baseline gap-x-4 gap-y-1 px-4 py-3">
-                    <span className="num w-40 shrink-0 text-ink-muted">
-                      {formatDateTime(event.created_at)}
-                    </span>
-                    <span className="font-medium">{ORDER_STATUS_LABELS[event.status]}</span>
-                    {event.note ? <span className="text-ink-muted">— {event.note}</span> : null}
-                  </li>
-                ))}
-              </ul>
-            ) : null}
           </section>
 
           <section className="rounded-md bg-surface border border-line">

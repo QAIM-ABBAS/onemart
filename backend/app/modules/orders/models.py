@@ -49,7 +49,10 @@ ALLOWED_TRANSITIONS: dict[OrderStatus, set[OrderStatus]] = {
 }
 
 TERMINAL_STATUSES = {OrderStatus.DELIVERED, OrderStatus.CANCELLED}
+# Admin may cancel anything that has not shipped (see ALLOWED_TRANSITIONS);
+# a customer only while the order is still at the front of the line.
 CANCELLABLE_STATUSES = {OrderStatus.PENDING, OrderStatus.CONFIRMED, OrderStatus.PACKED}
+CUSTOMER_CANCELLABLE_STATUSES = {OrderStatus.PENDING, OrderStatus.CONFIRMED}
 
 
 class Order(TimestampMixin, Base):

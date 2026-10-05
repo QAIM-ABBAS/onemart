@@ -6,7 +6,7 @@ staff admin console for catalogue, stock, order, and review management.
 
 Phase 1 (foundation + storefront) is complete. Phase 2 lands one step per commit:
 ✅ design system → ✅ pricing engine + coupons/discounts → ✅ reviews → ✅ wishlist →
-order timeline + cancellation → notifications → admin discounts screens →
+✅ order timeline + cancellation → notifications → admin discounts screens →
 admin reports.
 
 Modular monolith, not microservices: one FastAPI app with clear module boundaries
@@ -38,8 +38,11 @@ PostgreSQL, and Redis.
   order summary — payment sits behind a `PaymentProvider` registry
   (`backend/app/modules/orders/payment.py`) so another gateway can be added without
   touching order logic
-- Orders: history list with status/sort filters, order detail with an append-only
-  status timeline (`OrderStatusHistory`, never a mutable status column alone)
+- Orders: history list with status/sort filters, order detail with a vertical status
+  timeline replayed from the append-only `OrderStatusHistory` (status, timestamp and
+  note per step, the current step highlighted, future steps muted, cancelled ending in
+  a terminal red step), plus cancellation while the order is still Pending/Confirmed —
+  stock returns to the shelf in the same transaction that writes the history row
 - Auth: register/login, JWT access token in memory, rotating httpOnly refresh cookie,
   silent refresh on 401, guest cart merged into the account on login
 - Pricing: cart/checkout/confirmation totals all come from one server-side pricing
@@ -58,8 +61,10 @@ PostgreSQL, and Redis.
 - Product CRUD (draft/publish, variants, images, per-variant stock)
 - Category CRUD (self-referencing tree with parent/child)
 - Manual stock adjustments per variant (signed deltas with reasons)
-- Order list + detail with status updates restricted to valid transitions
-  (`pending → confirmed → packed → shipped → delivered`, cancellations where allowed)
+- Order list + detail with status updates restricted to a server-enforced
+  valid-transitions map (`pending → confirmed → packed → shipped → delivered`,
+  cancellations where allowed — no skipping or stepping back), optional note per
+  move written to the timeline, each staff change appended to the `audit_logs` trail
 - Coupons CRUD (percent/flat/free-delivery, validity window, usage limits)
 - Review moderation: filter by rating/status/search, hide/unhide + delete,
   each moderation action written to the `audit_logs` trail
@@ -69,8 +74,8 @@ order in the *same* transaction — stock is never checked and the order created
 separate steps. Covered by a race test (two concurrent checkouts → exactly one `201`,
 one `409`).
 
-**Still ahead (Phase 2):** customer cancellation + vertical order timeline,
-notifications, admin discounts screens, admin reports dashboard.
+**Still ahead (Phase 2):** notifications, admin discounts screens, admin reports
+dashboard.
 
 **Not built by design:** flash deals, promotional banner engine, related /
 frequently-bought-together, online payment gateway (COD + `PaymentProvider` seam only),
@@ -127,7 +132,7 @@ npm run dev                                 # http://localhost:5173, proxies /ap
 ```powershell
 # backend
 cd backend
-.\.venv\Scripts\python -m pytest -q          # 66 tests (auth, catalog, cart merge, checkout race, orders, admin, pricing + coupons, reviews, wishlist)
+.\.venv\Scripts\python -m pytest -q          # 71 tests (auth, catalog, cart merge, checkout race, orders + transitions/cancellation, admin, pricing + coupons, reviews, wishlist)
 .\.venv\Scripts\python -m ruff check app tests
 .\.venv\Scripts\python -m app.seed           # seed demo data (no-op if already seeded)
 
@@ -145,9 +150,10 @@ npm run test:e2e                             # Playwright flow (needs dev server
 home → browse → sort → product → add to cart → guest taps the wishlist heart (login prompt) →
 checkout → login → place order → order history → wishlist (guest tap replayed after login,
 add to cart, remove) → admin login → product list/edit → stock → orders → status update →
-customer timeline → ratings section → customer writes a review → admin hides/deletes it → the
-review disappears for the customer. It screenshots every step (temp dir path printed at
-the end) and exits non-zero on any failure or console/API error.
+customer timeline → customer cancels the order (terminal step + history note) → ratings
+section → customer writes a review → admin hides/deletes it → the review disappears for the
+customer. It screenshots every step (temp dir path printed at the end) and exits non-zero
+on any failure or console/API error.
 
 `tests/e2e/checkout-coupon-flow.spec.ts` is the Phase 2 pricing flow in one Playwright test:
 a signed-in customer adds a product, applies a coupon, checks out at the discounted total;
@@ -177,7 +183,8 @@ backend/
     catalog/          categories, brands, products, variants, images, admin CRUD
     cart/             cart resolution (guest cookie ↔ account), merge, items
     inventory/        per-variant stock, admin adjustments
-    orders/           checkout (FOR UPDATE), status history, payment registry, admin ops
+    orders/           checkout (FOR UPDATE), status history + transition rules,
+                      customer cancellation (same-transaction restock), payment registry
     discounts/        pricing engine (Decimals), coupons + redemptions, auto-clear
     reviews/          reviews + helpful votes, rating summary recompute, moderation
     wishlist/         saved products per customer (idempotent toggle, live price/stock)
@@ -224,7 +231,10 @@ Currency is formatted as INR with `en-IN` locale throughout.
 - Guest carts live behind an httpOnly `om_cart` cookie and are merged into the account on
   login/refresh (relationship-aware merge so delete-orphan cascades never drop items).
 - Order statuses are append-only history rows; the list/detail views replay them into a
-  timeline and the admin can only move an order to a valid next status.
+  timeline and only the server-enforced valid-transitions map can move an order (no
+  skipping or stepping back). Customers may cancel while Pending/Confirmed — stock is
+  restored in the same transaction that writes the history row; staff status changes are
+  appended to the audit log.
 - `product.rating_avg` / `rating_count` are denormalized and recomputed inside the same
   transaction as every review write/edit/delete; hidden reviews leave the public list
   *and* the average. The cached product-detail payload carries the live summary.

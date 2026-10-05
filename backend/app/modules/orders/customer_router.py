@@ -31,3 +31,19 @@ def my_orders(
 def my_order(order_id: int, db: Session = Depends(get_db), user: User = Depends(get_current_user)):
     order = orders_service.get_customer_order(db, user, order_id)
     return orders_service.order_to_detail(order)
+
+
+@router.post("/orders/{order_id}/cancel", response_model=OrderDetail)
+def cancel_my_order(
+    order_id: int,
+    db: Session = Depends(get_db),
+    user: User = Depends(get_current_user),
+):
+    """Cancel your own order while it is still Pending/Confirmed.
+
+    Stock returns to the shelf in the same transaction and a history row is
+    written; the transition rules make this a dead endpoint once packed.
+    """
+    order = orders_service.get_customer_order(db, user, order_id)
+    orders_service.cancel_customer_order(db, order, user)
+    return orders_service.order_to_detail(order)

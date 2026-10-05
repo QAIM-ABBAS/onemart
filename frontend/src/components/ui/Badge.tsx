@@ -49,14 +49,17 @@ export function Badge({
  *
  * Structure is deliberately uniform — soft tint + colour dot + ink label —
  * so the mid-tone status colours stay legible on white and on the tint.
+ *
+ * Exported so the order timeline draws its dots and highlight rings from the
+ * exact same colours instead of re-declaring them.
  */
-const STATUS_STYLE: Record<OrderStatus, { chip: string; dot: string }> = {
-  pending: { chip: "bg-surface-2", dot: "bg-ink-faint" },
-  confirmed: { chip: "bg-info/10", dot: "bg-info" },
-  packed: { chip: "bg-warning/20", dot: "bg-warning" },
-  shipped: { chip: "bg-brand-700/10", dot: "bg-brand-700" },
-  delivered: { chip: "bg-success/12", dot: "bg-success" },
-  cancelled: { chip: "bg-danger/10", dot: "bg-danger" },
+export const STATUS_STYLE: Record<OrderStatus, { chip: string; dot: string; ring: string }> = {
+  pending: { chip: "bg-surface-2", dot: "bg-ink-faint", ring: "ring-ink-faint/30" },
+  confirmed: { chip: "bg-info/10", dot: "bg-info", ring: "ring-info/30" },
+  packed: { chip: "bg-warning/20", dot: "bg-warning", ring: "ring-warning/40" },
+  shipped: { chip: "bg-brand-700/10", dot: "bg-brand-700", ring: "ring-brand-700/30" },
+  delivered: { chip: "bg-success/12", dot: "bg-success", ring: "ring-success/30" },
+  cancelled: { chip: "bg-danger/10", dot: "bg-danger", ring: "ring-danger/30" },
 };
 
 export function StatusBadge({ status, className }: { status: OrderStatus; className?: string }) {
