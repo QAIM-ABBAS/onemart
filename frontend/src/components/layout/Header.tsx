@@ -90,7 +90,7 @@ function WishlistLink() {
   const wishlist = useWishlist();
   return (
     <Link
-      to="/products"
+      to="/wishlist"
       aria-label={`Wishlist, ${wishlist.count} item${wishlist.count === 1 ? "" : "s"}`}
       className="relative hidden size-10 place-items-center rounded-md border border-brand-700 bg-brand-800 text-brand-50 transition hover:bg-brand-700 sm:grid"
     >

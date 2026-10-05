@@ -5,8 +5,8 @@ browse → product page → cart → checkout → order confirmation → order h
 staff admin console for catalogue, stock, order, and review management.
 
 Phase 1 (foundation + storefront) is complete. Phase 2 lands one step per commit:
-✅ design system → ✅ pricing engine + coupons/discounts → ✅ reviews →
-wishlist → order timeline + cancellation → notifications → admin discounts screens →
+✅ design system → ✅ pricing engine + coupons/discounts → ✅ reviews → ✅ wishlist →
+order timeline + cancellation → notifications → admin discounts screens →
 admin reports.
 
 Modular monolith, not microservices: one FastAPI app with clear module boundaries
@@ -48,6 +48,10 @@ PostgreSQL, and Redis.
 - Reviews: rating summary with star-distribution bars, sortable + paginated list,
   write/edit/delete one's own review, `verified_purchase` computed from a delivered
   order, login prompt for guests, helpful votes
+- Wishlist: heart toggle on cards and the product page (optimistic, rolls back on
+  error), account wishlist grid with sort/search/in-stock filter, add to cart with a
+  variant picker, live price + stock per saved item; guests get a login prompt and
+  their tap is replayed into the wishlist once they sign in
 
 **Admin** (staff/admin role)
 
@@ -65,7 +69,7 @@ order in the *same* transaction — stock is never checked and the order created
 separate steps. Covered by a race test (two concurrent checkouts → exactly one `201`,
 one `409`).
 
-**Still ahead (Phase 2):** wishlist, customer cancellation + vertical order timeline,
+**Still ahead (Phase 2):** customer cancellation + vertical order timeline,
 notifications, admin discounts screens, admin reports dashboard.
 
 **Not built by design:** flash deals, promotional banner engine, related /
@@ -123,7 +127,7 @@ npm run dev                                 # http://localhost:5173, proxies /ap
 ```powershell
 # backend
 cd backend
-.\.venv\Scripts\python -m pytest -q          # 58 tests (auth, catalog, cart merge, checkout race, orders, admin, pricing + coupons, reviews)
+.\.venv\Scripts\python -m pytest -q          # 66 tests (auth, catalog, cart merge, checkout race, orders, admin, pricing + coupons, reviews, wishlist)
 .\.venv\Scripts\python -m ruff check app tests
 .\.venv\Scripts\python -m app.seed           # seed demo data (no-op if already seeded)
 
@@ -138,9 +142,10 @@ npm run test:e2e                             # Playwright flow (needs dev server
 ```
 
 `scripts/smoke.mjs` drives Chrome (puppeteer-core) through the entire slice on both sides:
-home → browse → sort → product → add to cart → checkout → login → place order → order
-history → admin login → product list/edit → stock → orders → status update → customer
-timeline → ratings section → customer writes a review → admin hides/deletes it → the
+home → browse → sort → product → add to cart → guest taps the wishlist heart (login prompt) →
+checkout → login → place order → order history → wishlist (guest tap replayed after login,
+add to cart, remove) → admin login → product list/edit → stock → orders → status update →
+customer timeline → ratings section → customer writes a review → admin hides/deletes it → the
 review disappears for the customer. It screenshots every step (temp dir path printed at
 the end) and exits non-zero on any failure or console/API error.
 
@@ -157,8 +162,8 @@ both. It runs against the same running stack and uses the installed Chrome
 - Errors are always `{"error": {"code", "message", "details"}}` (HTTP status + envelope),
   with Pydantic field errors in `details` for validation failures.
 - List endpoints (`/products`, `/admin/products`, `/orders`, `/admin/orders`,
-  `/admin/inventory`, `/products/{slug}/reviews`, `/admin/reviews`) take `page`,
-  `page_size`, plus endpoint-specific `q` / `category` / `brand` / `in_stock` /
+  `/admin/inventory`, `/products/{slug}/reviews`, `/admin/reviews`, `/wishlist`) take
+  `page`, `page_size`, plus endpoint-specific `q` / `category` / `brand` / `in_stock` /
   `status` / `rating` filters and a `sort` whitelist.
 - Health: `GET /api/health`. Placeholder product images: `GET /api/img/placeholder.svg`.
 
@@ -175,12 +180,13 @@ backend/
     orders/           checkout (FOR UPDATE), status history, payment registry, admin ops
     discounts/        pricing engine (Decimals), coupons + redemptions, auto-clear
     reviews/          reviews + helpful votes, rating summary recompute, moderation
+    wishlist/         saved products per customer (idempotent toggle, live price/stock)
     audit/            shared audit trail (`record()` joins the caller's transaction)
   app/seed.py         demo catalogue + accounts
   tests/              pytest suite (uses onemart_test DB, REDIS_DISABLED)
 frontend/
   src/lib/            typed API client, query keys, formatting (INR), types
-  src/hooks/queries/  TanStack Query hooks (catalog, cart, checkout, orders, reviews, admin)
+  src/hooks/queries/  TanStack Query hooks (catalog, cart, checkout, orders, reviews, wishlist, admin)
   src/stores/auth.ts  Zustand auth store
   src/components/     ui primitives, layout shells, catalog/orders/reviews components
   src/pages/          customer pages + admin pages

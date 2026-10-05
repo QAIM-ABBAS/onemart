@@ -42,7 +42,7 @@ function wire(page, tag) {
   page.on("request", (r) => {
     if (r.url().includes("/api/")) apiLog.push(`${tag} > ${r.method()} ${r.url().replace(BASE, "")}`);
   });
-  page.on("response", (r) => {
+  page.on("response", async (r) => {
     const u = r.url();
     if (u.includes("/api/")) {
       apiLog.push(`${tag} < ${r.status()} ${r.request().method()} ${u.replace(BASE, "")}`);
@@ -52,14 +52,43 @@ function wire(page, tag) {
         // The review step deliberately tolerates a leftover review
         // ("already reviewed" after an interrupted run) — see below.
         (u.includes("/reviews") && r.request().method() === "POST" && r.status() === 409);
-      if (!ignore && r.status() >= 400)
-        problems.push(`${tag} api ${r.status()} ${r.request().method()} ${u.replace(BASE, "")}`);
+      if (!ignore && r.status() >= 400) {
+        const body = await r.text().catch(() => "");
+        problems.push(
+          `${tag} api ${r.status()} ${r.request().method()} ${u.replace(BASE, "")}` +
+            (body ? ` :: ${body.slice(0, 200)}` : ""),
+        );
+      }
     }
   });
 }
 
 const shot = (page, name) => page.screenshot({ path: `${SHOTS}\\${name}.png` });
 const bodyText = (page) => page.evaluate(() => document.body.innerText);
+
+/**
+ * Fill the login form. Waiting for the auth bootstrap first matters: when it
+ * lands mid-typing it re-renders the form, keystrokes go to the detached node
+ * and are silently dropped — which surfaces later as an opaque 422 from the
+ * API. Verify the fields before submitting so that failure is legible.
+ */
+async function fillLogin(page, email, password) {
+  await page
+    .waitForFunction(() => !window.__auth || window.__auth.getState().booted === true, {
+      timeout: 15000,
+    })
+    .catch(() => {});
+  await page.type('input[type="email"]', email, { delay: 15 });
+  await page.type('input[type="password"]', password, { delay: 15 });
+  const typed = await page.evaluate(() => ({
+    email: document.querySelector('input[type="email"]')?.value ?? "",
+    password: document.querySelector('input[type="password"]')?.value ?? "",
+  }));
+  check(
+    typed.email === email && typed.password === password,
+    `login fields not filled: ${JSON.stringify(typed)}`,
+  );
+}
 
 async function run(name, fn) {
   step = name;
@@ -125,8 +154,9 @@ async function run(name, fn) {
 const ctx1 = await browser.createBrowserContext();
 const page = await ctx1.newPage();
 wire(page, "[cust]");
-// set by the PDP step, reused by the review steps at the end
+// set by the PDP step, reused by the review + wishlist steps
 let productUrl = "";
+let productName = "";
 
 const goto = async (p, url) => {
   try {
@@ -185,6 +215,8 @@ await run("product detail add to cart updates header badge", async () => {
     () => document.body.innerText.includes("Add to cart"),
     { timeout: 20000 },
   );
+  productName = (await page.$eval("h1", (h) => h.textContent ?? "")).trim();
+  check(productName.length > 0, "product name missing from the product page");
   const clicked = await page.evaluate(() => {
     const b = [...document.querySelectorAll("button")].find((x) =>
       x.textContent.includes("Add to cart"),
@@ -214,6 +246,30 @@ await run("guest sees ratings section with login prompt", async () => {
   await shot(page, "03b-product-reviews");
 });
 
+await run("guest tapping save gets a login prompt", async () => {
+  await page.waitForSelector('button[aria-label="Save this product to your wishlist"]', {
+    timeout: 15000,
+  });
+  await page.click('button[aria-label="Save this product to your wishlist"]');
+  await page.waitForFunction(() => document.body.innerText.includes("Sign in to save items"), {
+    timeout: 15000,
+  });
+  await shot(page, "03c-wishlist-login-prompt");
+  // Dismissing must keep the tap parked — it is replayed after sign-in.
+  const dismissed = await page.evaluate(() => {
+    const b = [...document.querySelectorAll("button")].find((x) =>
+      x.textContent.includes("Keep browsing"),
+    );
+    if (!b) return false;
+    b.click();
+    return true;
+  });
+  check(dismissed, "prompt dismiss button missing");
+  await page.waitForFunction(() => !document.body.innerText.includes("Sign in to save items"), {
+    timeout: 10000,
+  });
+});
+
 await run("cart shows line item", async () => {
   await goto(page, "/cart");
   await page.waitForFunction(
@@ -231,8 +287,7 @@ await run("checkout gates on login, demo login returns to checkout", async () =>
   );
   if (new URL(page.url()).pathname === "/login") {
     check(page.url().includes("next=%2Fcheckout"), "login did not carry next=/checkout");
-    await page.type('input[type="email"]', "demo@onemart.test");
-    await page.type('input[type="password"]', "Demo@1234");
+    await fillLogin(page, "demo@onemart.test", "Demo@1234");
     const submitted = await page.evaluate(() => {
       const b = [...document.querySelectorAll("button")].find((x) =>
         x.textContent.includes("Sign in"),
@@ -282,6 +337,68 @@ await run("order history lists the order", async () => {
   await shot(page, "07-orders");
 });
 
+await run("wishlist replayed the guest tap and manages items", async () => {
+  await goto(page, "/wishlist");
+  await page.waitForFunction(() => document.body.innerText.includes("Wishlist"), {
+    timeout: 20000,
+  });
+  // The heart tapped as a guest must have been saved once the session existed.
+  await page.waitForFunction((name) => document.body.innerText.includes(name), {
+    timeout: 20000,
+  }, productName);
+  await shot(page, "07b-wishlist");
+
+  // Add it to the cart — multi-option products must open the picker first.
+  const clickedAdd = await page.evaluate((name) => {
+    const card = [...document.querySelectorAll("article")].find((a) =>
+      a.innerText.includes(name),
+    );
+    if (!card) return false;
+    const b = [...card.querySelectorAll("button")].find((x) => x.textContent.includes("Add to cart"));
+    if (!b || b.disabled) return false;
+    b.click();
+    return true;
+  }, productName);
+  check(clickedAdd, "add to cart button missing on the wishlist card");
+
+  await page.waitForFunction(
+    () =>
+      document.body.innerText.includes("Choose an option") ||
+      document.body.innerText.includes("to your cart"),
+    { timeout: 15000 },
+  );
+  if ((await bodyText(page)).includes("Choose an option")) {
+    await page.evaluate(() => {
+      const b = [...document.querySelectorAll('[role="dialog"] button')].find(
+        (x) => !x.disabled && x.textContent.trim().length > 0 && !x.hasAttribute("aria-label"),
+      );
+      b?.click();
+    });
+  }
+  await page.waitForFunction(() => document.body.innerText.includes("to your cart"), {
+    timeout: 15000,
+  });
+
+  // Remove it again so the next run replays into a predictable list.
+  const removed = await page.evaluate((name) => {
+    const card = [...document.querySelectorAll("article")].find((a) =>
+      a.innerText.includes(name),
+    );
+    const b = card?.querySelector('button[aria-label*="from wishlist"]');
+    if (!b) return false;
+    b.click();
+    return true;
+  }, productName);
+  check(removed, "remove-from-wishlist button missing");
+  await page.waitForFunction(
+    (name) =>
+      ![...document.querySelectorAll("article")].some((a) => a.innerText.includes(name)),
+    { timeout: 20000 },
+    productName,
+  );
+  await shot(page, "07c-wishlist-removed");
+});
+
 const ctx2 = await browser.createBrowserContext();
 const apage = await ctx2.newPage();
 wire(apage, "[admin]");
@@ -291,8 +408,7 @@ apage.on("dialog", (d) => d.accept());
 await run("admin login lands authenticated", async () => {
   await goto(apage, "/login");
   await apage.waitForSelector('input[type="email"]', { timeout: 15000 });
-  await apage.type('input[type="email"]', "admin@onemart.test");
-  await apage.type('input[type="password"]', "Admin@1234");
+  await fillLogin(apage, "admin@onemart.test", "Admin@1234");
   await apage.evaluate(() => {
     const b = [...document.querySelectorAll("button")].find((x) =>
       x.textContent.includes("Sign in"),

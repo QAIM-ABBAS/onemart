@@ -18,7 +18,8 @@ async function shoot(name, url, width, height, prep) {
   await page.setViewport({ width, height, deviceScaleFactor: 1 });
   await page.goto(BASE + url, { waitUntil: "networkidle2", timeout: 60000 }).catch(() => {});
   await new Promise((r) => setTimeout(r, 1500));
-  if (prep) await prep(page).catch(() => {});
+  if (prep)
+    await prep(page).catch((e) => console.log(`prep warn for ${name}: ${e.message}`));
   await page.screenshot({ path: `${SHOTS}\\${name}.png` });
   await page.close();
   console.log("shot " + name);
@@ -35,5 +36,89 @@ await shoot("m4-cart", "/cart", 390, 844);
 await shoot("t1-home", "/", 834, 1112);
 await shoot("t2-products", "/products", 834, 1112);
 await shoot("m5-login", "/login", 390, 844);
+
+/**
+ * The wishlist sits behind a login and is a grid of saved products, so its
+ * shots need a session and at least two saved cards: sign the demo customer
+ * in, heart two products through the UI, then open the page.
+ */
+const withWishlist = async (page) => {
+  // /wishlist is protected: a guest is bounced to /login?next=/wishlist and a
+  // session is dropped straight through, so either way we land deterministically
+  // (going to /login directly races its own "already signed in" redirect).
+  await page.goto(BASE + "/wishlist", { waitUntil: "domcontentloaded", timeout: 60000 });
+  const hasForm = await page
+    .waitForSelector('input[type="password"]', { timeout: 10000 })
+    .then(() => true)
+    .catch(() => false);
+  if (hasForm) {
+    // Same bootstrap-wait as the smoke script: typing into the pre-boot
+    // form loses keystrokes when it re-renders.
+    await page
+      .waitForFunction(() => !window.__auth || window.__auth.getState().booted === true, {
+        timeout: 15000,
+      })
+      .catch(() => {});
+    await page.type('input[type="email"]', "demo@onemart.test", { delay: 15 });
+    await page.type('input[type="password"]', "Demo@1234", { delay: 15 });
+    await page.evaluate(() => {
+      const b = [...document.querySelectorAll("button")].find((x) =>
+        x.textContent.includes("Sign in"),
+      );
+      b?.click();
+    });
+    await page.waitForFunction(() => location.pathname === "/wishlist", { timeout: 25000 });
+  }
+
+  for (let i = 0; i < 2; i++) {
+    await page.goto(BASE + "/products", { waitUntil: "domcontentloaded", timeout: 60000 });
+    // Wait for React to render the grid — domcontentloaded is too early.
+    await page.waitForFunction(() => document.querySelectorAll('a[href^="/p/"]').length > 0, {
+      timeout: 25000,
+    });
+    const href = await page.evaluate((idx) => {
+      // Deterministic pick: list order drifts between runs (ratings change),
+      // so sort — otherwise every run hearts a different pair forever.
+      const unique = [
+        ...new Set([...document.querySelectorAll('a[href^="/p/"]')].map((a) => a.href)),
+      ].sort();
+      return unique[idx] ?? null;
+    }, i);
+    if (!href) continue;
+    await page.goto(href, { waitUntil: "domcontentloaded", timeout: 60000 });
+    // Either state is fine: not saved yet, or already saved by an earlier run.
+    await page.waitForFunction(
+      () =>
+        document.querySelector('button[aria-label="Save this product to your wishlist"]') !==
+          null ||
+        document.querySelector('button[aria-label="Remove this product from your wishlist"]') !==
+          null,
+      { timeout: 25000 },
+    );
+    const needsSave = await page.$('button[aria-label="Save this product to your wishlist"]');
+    if (needsSave) {
+      await needsSave.click();
+      await page.waitForFunction(
+        () =>
+          document.querySelector(
+            'button[aria-label="Remove this product from your wishlist"]',
+          ) !== null,
+        { timeout: 15000 },
+      );
+    }
+    await new Promise((r) => setTimeout(r, 400));
+  }
+
+  await page.goto(BASE + "/wishlist", { waitUntil: "networkidle2", timeout: 60000 });
+  // Cards first, then let the images settle so the shots are not half-painted.
+  await page
+    .waitForFunction(() => document.querySelectorAll("article").length > 0, { timeout: 25000 })
+    .catch(() => {});
+  await new Promise((r) => setTimeout(r, 1500));
+};
+
+await shoot("m6-wishlist", "/login", 390, 844, withWishlist);
+await shoot("t3-wishlist", "/login", 834, 1112, withWishlist);
+await shoot("d1-wishlist", "/login", 1440, 900, withWishlist);
 
 await browser.close();

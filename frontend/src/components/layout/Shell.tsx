@@ -1,8 +1,10 @@
 import type { ReactNode } from "react";
 import { Navigate, useLocation } from "react-router-dom";
 
+import { useReplayPendingWishlist } from "@/hooks/queries/wishlist";
 import { isStaff, useAuth } from "@/stores/auth";
 
+import { WishlistLoginPrompt } from "@/components/wishlist/WishlistLoginPrompt";
 import { EmptyState, Skeleton, SkeletonText } from "@/components/ui/States";
 import { Toaster } from "@/components/ui/Toaster";
 
@@ -24,12 +26,15 @@ import { Header } from "./Header";
  * the header or footer is.
  */
 export function Shell({ children }: { children: ReactNode }) {
+  // A guest's parked heart taps are replayed the moment a session exists.
+  useReplayPendingWishlist();
   return (
     <div className="flex min-h-dvh flex-col">
       <Header />
       <main className="flex-1">{children}</main>
       <Footer />
       <Toaster />
+      <WishlistLoginPrompt />
     </div>
   );
 }

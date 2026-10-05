@@ -156,6 +156,45 @@ export interface HelpfulOut {
   viewer_has_voted: boolean;
 }
 
+export interface WishlistVariant {
+  id: number;
+  name: string;
+  price: number;
+  compare_at_price?: number | null;
+  available: number;
+  is_default: boolean;
+}
+
+export interface WishlistItem {
+  id: number;
+  added_at: string;
+  product_id: number;
+  name: string;
+  slug: string;
+  thumbnail?: string | null;
+  /** Read live on every request — a saved item never shows a stale price. */
+  price: number;
+  compare_at_price?: number | null;
+  discount_percent?: number | null;
+  available: number;
+  in_stock: boolean;
+  rating_avg: number;
+  rating_count: number;
+  variants: WishlistVariant[];
+}
+
+/** Which of the cards on screen are saved — the hearts' query payload. */
+export interface WishlistIds {
+  ids: number[];
+  count: number;
+}
+
+export interface WishlistToggle {
+  product_id: number;
+  saved: boolean;
+  count: number;
+}
+
 export interface ProductFacets {
   brands?: BrandOut[];
   min_price?: number | null;

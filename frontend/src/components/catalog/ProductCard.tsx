@@ -46,7 +46,7 @@ import { cn } from "@/lib/cn"; // className merge helper (clsx + tailwind-merge)
 import { money } from "@/lib/format"; // currency formatter → "₹50.00"
 import type { ProductListItem } from "@/lib/types"; // the data shape for each card
 import { useQuickAdd } from "@/hooks/useQuickAdd"; // add-to-cart logic + toasts
-import { useWishlist } from "@/hooks/useWishlist"; // localStorage-backed wishlist
+import { useWishlist } from "@/hooks/useWishlist"; // server-backed wishlist (guests get a login prompt)
 
 import { QuantityStepper } from "@/components/ui/Price"; // the − qty + control
 import { Skeleton } from "@/components/ui/States"; // loading shimmer blocks
@@ -104,7 +104,7 @@ function WishlistButton({ productId, name }: { productId: number; name: string }
       onClick={(event) => {
         event.preventDefault();
         event.stopPropagation();
-        wishlist.toggle(productId);
+        wishlist.toggle(productId, name);
       }}
       className={cn(
         "absolute end-2 top-2 z-20 grid size-8 place-items-center rounded-full bg-surface/95 text-ink-muted border border-line transition-all hover:shadow-lift",

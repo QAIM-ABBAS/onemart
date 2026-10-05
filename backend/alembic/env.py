@@ -13,6 +13,7 @@ from app.modules.inventory import models as inventory_models  # noqa: F401
 from app.modules.orders import models as orders_models  # noqa: F401
 from app.modules.reviews import models as reviews_models  # noqa: F401
 from app.modules.users import models as users_models  # noqa: F401
+from app.modules.wishlist import models as wishlist_models  # noqa: F401
 
 config = context.config
 

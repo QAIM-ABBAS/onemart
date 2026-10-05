@@ -187,6 +187,16 @@
     align-items: stretch;
   }
 
+  /* Same row, but empty tracks keep their width: a half-full grid (a
+     wishlist with two saved items, a filtered result set) shows cards at
+     their normal size instead of stretching the few that exist. */
+  .card-grid-fill {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(min(100%, 13rem), 1fr));
+    gap: 1rem;
+    align-items: stretch;
+  }
+
   /* ── Card: white surface + hairline border, flat (no heavy shadow) ── */
   .card {
     background-color: var(--surface);

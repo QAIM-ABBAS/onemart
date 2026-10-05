@@ -1,53 +1,84 @@
-import { useCallback, useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 
-const KEY = "onemart:wishlist";
+import { useToggleWishlist, useWishlistIds } from "@/hooks/queries/wishlist";
+import { rememberSave } from "@/lib/wishlistPending";
+import { useAuth } from "@/stores/auth";
 
-function read(): number[] {
-  try {
-    const raw = window.localStorage.getItem(KEY);
-    if (!raw) return [];
-    const parsed: unknown = JSON.parse(raw);
-    return Array.isArray(parsed) ? (parsed as number[]) : [];
-  } catch {
-    return [];
-  }
+/**
+ * Server-backed wishlist.
+ *
+ * `toggle()` behaves differently by audience on purpose:
+ *  - signed in  → optimistic mutation against /wishlist (rollback on error)
+ *  - guest      → the tap is parked locally and a sign-in prompt opens; the
+ *                 parked item is replayed the moment a session appears
+ *
+ * The prompt itself is a tiny module-level store so any card on the page can
+ * raise it, while exactly one dialog (mounted in the shell) renders it.
+ */
+export interface WishlistPrompt {
+  id: number;
+  name: string;
 }
 
-function write(ids: number[]): void {
-  try {
-    window.localStorage.setItem(KEY, JSON.stringify(ids));
-  } catch {
-    /* storage unavailable */
-  }
+let prompt: WishlistPrompt | null = null;
+const listeners = new Set<(value: WishlistPrompt | null) => void>();
+
+function emit(value: WishlistPrompt | null): void {
+  prompt = value;
+  for (const listener of listeners) listener(value);
 }
 
-let snapshot: number[] = read();
-const listeners = new Set<() => void>();
-
-function emit() {
-  for (const listener of listeners) listener();
+export function dismissWishlistPrompt(): void {
+  emit(null);
 }
 
-export function useWishlist() {
-  const [, force] = useState(0);
-
+export function useWishlistPrompt(): {
+  product: WishlistPrompt | null;
+  dismiss: () => void;
+} {
+  const [product, setProduct] = useState<WishlistPrompt | null>(prompt);
   useEffect(() => {
-    const listener = () => force((n) => n + 1);
-    listeners.add(listener);
+    listeners.add(setProduct);
     return () => {
-      listeners.delete(listener);
+      listeners.delete(setProduct);
     };
   }, []);
+  return { product, dismiss: dismissWishlistPrompt };
+}
 
-  const toggle = useCallback((productId: number): boolean => {
-    const has = snapshot.includes(productId);
-    snapshot = has
-      ? snapshot.filter((id) => id !== productId)
-      : [...snapshot, productId];
-    write(snapshot);
-    emit();
-    return !has;
-  }, []);
+export function useWishlist(): {
+  ids: number[];
+  count: number;
+  signedIn: boolean;
+  has: (id: number) => boolean;
+  /** Returns what the heart should show next (false for a guest's prompt). */
+  toggle: (productId: number, name?: string) => boolean;
+  isPending: boolean;
+} {
+  const booted = useAuth((state) => state.booted);
+  const user = useAuth((state) => state.user);
+  const idsQuery = useWishlistIds();
+  const mutation = useToggleWishlist();
 
-  return { ids: snapshot, count: snapshot.length, has: (id: number) => snapshot.includes(id), toggle };
+  const signedIn = booted && user !== null;
+  const ids = signedIn ? (idsQuery.data?.ids ?? []) : [];
+
+  return {
+    ids,
+    count: ids.length,
+    signedIn,
+    has: (id: number) => ids.includes(id),
+    isPending: mutation.isPending,
+    toggle(productId: number, name?: string) {
+      if (!signedIn) {
+        const parked = { id: productId, name: name ?? "This item" };
+        rememberSave(parked);
+        emit(parked);
+        return false;
+      }
+      const saved = !ids.includes(productId);
+      mutation.mutate({ productId, saved });
+      return saved;
+    },
+  };
 }

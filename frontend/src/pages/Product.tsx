@@ -4,22 +4,47 @@ import { Link, useParams } from "react-router-dom";
 import { useAddToCart } from "@/hooks/queries/cart";
 import { useProduct } from "@/hooks/queries/catalog";
 import { pushRecent } from "@/hooks/useRecentlyViewed";
+import { useWishlist } from "@/hooks/useWishlist";
 import { cn } from "@/lib/cn";
 import { ApiError } from "@/lib/api";
 import { pluralize } from "@/lib/format";
 
 import { Button } from "@/components/ui/Button";
-import { CheckIcon } from "@/components/ui/Icon";
+import { CheckIcon, HeartIcon } from "@/components/ui/Icon";
 import { Price, QuantityStepper } from "@/components/ui/Price";
 import { Badge } from "@/components/ui/Badge";
 import { ErrorState, InlineError, Skeleton } from "@/components/ui/States";
 import { ReviewSection } from "@/components/reviews/ReviewSection";
 import { Stars } from "@/components/reviews/Stars";
 
+/**
+ * Save-for-later toggle on the product page. Signed-in customers get an
+ * optimistic heart; guests get the sign-in prompt (the tap is parked and
+ * replayed after they log in).
+ */
+function SaveButton({ saved, onClick }: { saved: boolean; onClick: () => void }) {
+  return (
+    <Button
+      variant="secondary"
+      size="lg"
+      aria-pressed={saved}
+      aria-label={
+        saved ? "Remove this product from your wishlist" : "Save this product to your wishlist"
+      }
+      onClick={onClick}
+      className={saved ? "border-danger/40 text-danger" : "hover:text-danger"}
+    >
+      <HeartIcon width={16} height={16} fill={saved ? "currentColor" : "none"} />
+      {saved ? "Saved" : "Save"}
+    </Button>
+  );
+}
+
 export function ProductPage() {
   const { slug } = useParams<{ slug: string }>();
   const product = useProduct(slug);
   const addToCart = useAddToCart();
+  const wishlist = useWishlist();
 
   const [variantId, setVariantId] = useState<number | null>(null);
   const [qty, setQty] = useState(1);
@@ -314,6 +339,10 @@ export function ProductPage() {
                 "Add to cart"
               )}
             </Button>
+            <SaveButton
+              saved={wishlist.has(p.id)}
+              onClick={() => wishlist.toggle(p.id, p.name)}
+            />
           </div>
 
           {error ? <InlineError className="mt-3">{error}</InlineError> : null}

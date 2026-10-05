@@ -85,6 +85,14 @@ export function AccountMenu() {
             >
               My orders
             </Link>
+            <Link
+              to="/wishlist"
+              onClick={() => setOpen(false)}
+              className="block px-4 py-2.5 text-sm transition-colors hover:bg-surface-2"
+              role="menuitem"
+            >
+              Wishlist
+            </Link>
             {isStaff(user) ? (
               <Link
                 to="/admin/products"

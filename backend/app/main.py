@@ -106,6 +106,7 @@ from app.modules.reviews.admin_router import router as reviews_admin_router  # n
 from app.modules.reviews.router import router as reviews_router  # noqa: E402
 from app.modules.users.router import address_router  # noqa: E402
 from app.modules.users.router import router as auth_router  # noqa: E402
+from app.modules.wishlist.router import router as wishlist_router  # noqa: E402
 
 API_PREFIX = "/api"
 
@@ -119,6 +120,7 @@ app.include_router(inventory_admin_router, prefix=f"{API_PREFIX}")
 app.include_router(orders_admin_router, prefix=f"{API_PREFIX}")
 app.include_router(reviews_router, prefix=f"{API_PREFIX}")
 app.include_router(reviews_admin_router, prefix=f"{API_PREFIX}")
+app.include_router(wishlist_router, prefix=f"{API_PREFIX}")
 
 
 @app.get("/api/health")
