@@ -57,7 +57,13 @@ CUSTOMER_CANCELLABLE_STATUSES = {OrderStatus.PENDING, OrderStatus.CONFIRMED}
 
 class Order(TimestampMixin, Base):
     __tablename__ = "orders"
-    __table_args__ = (Index("ix_orders_user_created", "user_id", "created_at"),)
+    __table_args__ = (
+        Index("ix_orders_user_created", "user_id", "created_at"),
+        # Reports scan windows by placement time (range filters, series, CSV
+        # export) and order by it — created_at is the same instant but the
+        # queries all speak placed_at, so index the column they use.
+        Index("ix_orders_placed_at", "placed_at"),
+    )
 
     id: Mapped[int] = mapped_column(primary_key=True)
     order_number: Mapped[str] = mapped_column(String(32), unique=True, index=True, nullable=False)

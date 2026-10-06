@@ -4,10 +4,10 @@ Everything you need, in one place. — a hypermarket e-commerce platform:
 browse → product page → cart → checkout → order confirmation → order history, plus a
 staff admin console for catalogue, stock, order, and review management.
 
-Phase 1 (foundation + storefront) is complete. Phase 2 lands one step per commit:
+Phase 1 (foundation + storefront) is complete. Phase 2 landed one step per commit:
 ✅ design system → ✅ pricing engine + coupons/discounts → ✅ reviews → ✅ wishlist →
 ✅ order timeline + cancellation → ✅ notifications → ✅ admin discounts screens →
-admin reports.
+✅ admin reports.
 
 Modular monolith, not microservices: one FastAPI app with clear module boundaries
 (catalog, cart, orders, inventory, discounts, reviews, notifications, audit, users),
@@ -77,13 +77,20 @@ a Celery worker for async email, a React SPA, PostgreSQL, and Redis.
   and create/edit modals with server-error field mapping
 - Review moderation: filter by rating/status/search, hide/unhide + delete,
   each moderation action written to the `audit_logs` trail
+- Reports dashboard: revenue/orders/new-customers/AOV cards with deltas against the
+  previous window, a date-range picker (today / 7d / 30d / custom), a revenue + orders
+  combo chart, an orders-by-status donut, top-10 products and category roll-ups
+  (recursive CTE up to the top-level department), a configurable low-stock table,
+  recent orders and recent activity — every number a SQL `GROUP BY` aggregate (never
+  rows summed in Python), cached in Redis for 60s, plus a streamed CSV export of the
+  window's orders
 
 **Concurrency:** checkout locks inventory rows with `SELECT … FOR UPDATE` and creates the
 order in the *same* transaction — stock is never checked and the order created as
 separate steps. Covered by a race test (two concurrent checkouts → exactly one `201`,
 one `409`).
 
-**Still ahead (Phase 2):** admin reports dashboard.
+**Phase 2 status:** complete.
 
 **Not built by design:** flash deals, promotional banner engine, related /
 frequently-bought-together, online payment gateway (COD + `PaymentProvider` seam only),
@@ -144,7 +151,7 @@ npm run dev                                 # http://localhost:5173, proxies /ap
 ```powershell
 # backend
 cd backend
-.\.venv\Scripts\python -m pytest -q          # 95 tests (auth, catalog, cart merge, checkout race, orders + transitions/cancellation, admin, pricing + coupons + auto-discounts, admin promo CRUD, reviews, wishlist, notifications)
+.\.venv\Scripts\python -m pytest -q          # 104 tests (auth, catalog, cart merge, checkout race, orders + transitions/cancellation, admin, pricing + coupons + auto-discounts, admin promo CRUD, reviews, wishlist, notifications, reports aggregates + CSV + cache)
 .\.venv\Scripts\python -m ruff check app tests
 .\.venv\Scripts\python -m app.seed           # seed demo data (no-op if already seeded)
 
@@ -166,7 +173,10 @@ customer timeline → customer cancels the order (terminal step + history note) 
 section → customer writes a review → admin hides/deletes it → admin creates/toggles/deletes a
 coupon and creates/deletes a discount rule → the review disappears for the customer →
 notifications inbox (bell badge, dropdown, mark all read, unread-filter empty
-state). It screenshots every step (temp dir path printed at the end) and exits non-zero
+state) → admin opens the reports dashboard (KPI deltas, charts, tables), switches the
+range to Today (hourly buckets), and exports the orders CSV as a real download whose
+header line is asserted). It screenshots every step (temp dir path printed at the end)
+and exits non-zero
 on any failure or console/API error.
 
 `tests/e2e/checkout-coupon-flow.spec.ts` is the Phase 2 pricing flow in one Playwright test:
@@ -186,6 +196,10 @@ both. It runs against the same running stack and uses the installed Chrome
   `/notifications`, `/admin/coupons`, `/admin/discounts`) take `page`, `page_size`,
   plus endpoint-specific `q` / `category` / `brand` / `in_stock` / `status` / `rating` /
   `unread` / `scope` filters and a `sort` whitelist.
+- Reports are window aggregates, not lists: `GET /admin/reports/overview` takes
+  `range` (`today` | `7d` | `30d` | `custom`) + `start` / `end` / `threshold` and is
+  cached 60s under a key derived from the resolved window; `GET /admin/reports/orders.csv`
+  streams the same window as a CSV attachment (both staff-only).
 - Health: `GET /api/health`. Placeholder product images: `GET /api/img/placeholder.svg`.
 
 ## Project layout

@@ -1,6 +1,6 @@
 import { keepPreviousData, useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 
-import { api } from "@/lib/api";
+import { ApiError, api, buildQuery, getAccessToken, refreshSession } from "@/lib/api";
 import type {
   CategoryNode,
   CategoryWrite,
@@ -8,12 +8,15 @@ import type {
   CouponWrite,
   DiscountAdminOut,
   DiscountWrite,
+  ErrorEnvelope,
   InventoryRow,
   OrderDetail,
   OrderListItem,
   Page,
   ProductAdminOut,
   ProductWrite,
+  ReportOverview,
+  ReportRangeKind,
   ReviewOut,
   StatusUpdateIn,
   StockAdjustment,
@@ -323,6 +326,74 @@ export function useDeleteDiscount() {
     onSuccess: () => {
       void qc.invalidateQueries({ queryKey: ["admin", "discounts"] });
       void qc.invalidateQueries({ queryKey: ["cart"] });
+    },
+  });
+}
+
+// --------------------------------------------------------------------------- //
+// Reports: dashboard aggregates + CSV export
+// --------------------------------------------------------------------------- //
+
+export interface ReportQueryParams {
+  range: ReportRangeKind;
+  start?: string;
+  end?: string;
+  threshold?: number;
+}
+
+export function useAdminReports(params: ReportQueryParams) {
+  return useQuery({
+    queryKey: ["admin", "reports", params],
+    queryFn: () => api.get<ReportOverview>("/admin/reports/overview", { ...params }),
+    // The server caches the payload for 60s; refetching sooner than the TTL
+    // would only rereg the same numbers. keepPreviousData so switching ranges
+    // swaps the cards in place instead of flashing the whole page skeleton.
+    staleTime: 60_000,
+    placeholderData: keepPreviousData,
+  });
+}
+
+/**
+ * Download the orders CSV for the selected window. The access token lives in
+ * memory (not a cookie), so the file has to be fetched with the auth header
+ * and handed to the browser as a blob — a plain <a href> would arrive
+ * unauthenticated. One silent refresh retry, mirroring `request()`.
+ */
+export function useExportOrdersCsv() {
+  return useMutation({
+    mutationFn: async (params: ReportQueryParams) => {
+      const url = `/api/admin/reports/orders.csv${buildQuery({ ...params, threshold: undefined })}`;
+      const fetchCsv = () =>
+        fetch(url, {
+          headers: { Authorization: `Bearer ${getAccessToken() ?? ""}` },
+          credentials: "include",
+        });
+
+      let res = await fetchCsv();
+      if (res.status === 401 && (await refreshSession())) res = await fetchCsv();
+
+      if (!res.ok) {
+        let message = "Export failed. Please try again.";
+        try {
+          const body = (await res.json()) as ErrorEnvelope;
+          message = body.error?.message || message;
+        } catch {
+          /* non-JSON error body — keep the generic message */
+        }
+        throw new ApiError(res.status, "export_failed", message);
+      }
+
+      const disposition = res.headers.get("Content-Disposition") ?? "";
+      const filename = /filename="([^"]+)"/.exec(disposition)?.[1] ?? "onemart-orders.csv";
+      const href = URL.createObjectURL(await res.blob());
+      const anchor = document.createElement("a");
+      anchor.href = href;
+      anchor.download = filename;
+      document.body.appendChild(anchor);
+      anchor.click();
+      anchor.remove();
+      URL.revokeObjectURL(href);
+      return filename;
     },
   });
 }

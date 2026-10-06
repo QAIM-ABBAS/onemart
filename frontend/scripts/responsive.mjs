@@ -175,5 +175,9 @@ await shoot("t5-admin-coupons", "/login", 834, 1112, withAdminPromos("/admin/cou
 await shoot("t6-admin-discounts", "/login", 834, 1112, withAdminPromos("/admin/discounts", "+ New discount"));
 await shoot("d3-admin-coupons", "/login", 1440, 900, withAdminPromos("/admin/coupons", "+ New coupon"));
 await shoot("d4-admin-discounts", "/login", 1440, 900, withAdminPromos("/admin/discounts", "+ New discount"));
+// Reports: KPI grid, charts, and tables across the three breakpoints.
+await shoot("m10-admin-reports", "/login", 390, 844, withAdminPromos("/admin/reports", "Revenue & orders"));
+await shoot("t7-admin-reports", "/login", 834, 1112, withAdminPromos("/admin/reports", "Revenue & orders"));
+await shoot("d5-admin-reports", "/login", 1440, 900, withAdminPromos("/admin/reports", "Revenue & orders"));
 
 await browser.close();

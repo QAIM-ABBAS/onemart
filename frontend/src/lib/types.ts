@@ -503,6 +503,101 @@ export interface StatusUpdateIn {
   note?: string;
 }
 
+// ---- Reports (admin dashboard) ----
+
+export type ReportRangeKind = "today" | "7d" | "30d" | "custom";
+
+export interface ReportMetric {
+  current: number;
+  previous: number;
+  /** null when the previous window was zero — the ratio is undefined */
+  delta_pct: number | null;
+}
+
+export interface ReportRangeInfo {
+  kind: ReportRangeKind;
+  start: string;
+  end: string;
+  bucket: "hour" | "day";
+  previous_start: string;
+  previous_end: string;
+}
+
+export interface ReportSeriesPoint {
+  bucket: string;
+  revenue: number;
+  orders: number;
+}
+
+export interface ReportStatusCount {
+  status: OrderStatus;
+  orders: number;
+  revenue: number;
+}
+
+export interface ReportTopProduct {
+  product_id: number | null;
+  product_name: string;
+  units: number;
+  revenue: number;
+  orders: number;
+}
+
+export interface ReportCategorySales {
+  category_id: number | null;
+  name: string;
+  revenue: number;
+  units: number;
+}
+
+export interface ReportLowStockRow {
+  variant_id: number;
+  sku: string;
+  product_name: string;
+  product_slug: string;
+  variant_name: string;
+  quantity: number;
+  available: number;
+  threshold: number;
+}
+
+export interface ReportRecentOrder {
+  id: number;
+  order_number: string;
+  customer: string;
+  total: number;
+  status: OrderStatus;
+  placed_at: string;
+}
+
+export interface ReportActivity {
+  id: number;
+  action: string;
+  entity: string;
+  entity_id: number | null;
+  actor: string | null;
+  detail: Record<string, unknown>;
+  created_at: string;
+}
+
+export interface ReportOverview {
+  range: ReportRangeInfo;
+  kpis: {
+    revenue: ReportMetric;
+    orders: ReportMetric;
+    new_customers: ReportMetric;
+    avg_order_value: ReportMetric;
+  };
+  revenue_series: ReportSeriesPoint[];
+  status_breakdown: ReportStatusCount[];
+  top_products: ReportTopProduct[];
+  category_sales: ReportCategorySales[];
+  low_stock: ReportLowStockRow[];
+  recent_orders: ReportRecentOrder[];
+  recent_activity: ReportActivity[];
+  generated_at: string;
+}
+
 export interface ErrorEnvelope {
   error: {
     code: string;

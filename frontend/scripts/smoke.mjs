@@ -1,4 +1,4 @@
-import { mkdirSync } from "node:fs";
+import { mkdirSync, readFileSync, readdirSync, statSync, unlinkSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import puppeteer from "puppeteer-core";
@@ -935,6 +935,98 @@ await run("customer sees the notifications inbox and clears it", async () => {
     timeout: 20000,
   });
   await shot(page, "21-notifications-read");
+});
+
+await run("admin reads the reports dashboard and exports CSV", async () => {
+  // The apage context still holds the staff session from the promo steps.
+  await goto(apage, "/admin/reports");
+  await apage.waitForFunction(
+    () =>
+      document.body.innerText.includes("Revenue & orders") &&
+      document.body.innerText.includes("Orders by status"),
+    { timeout: 30000 },
+  );
+
+  // Every panel of the bundle renders, KPIs included. Case-insensitive: the
+  // KPI labels are `.label`, and innerText obeys text-transform (the same
+  // trap as the PENDING status labels).
+  const markers = [
+    "average order value",
+    "top 10 products by revenue",
+    "sales by category",
+    "low stock",
+    "recent orders",
+    "recent activity",
+  ];
+  for (const marker of markers) {
+    const found = await apage.evaluate(
+      (m) => document.body.innerText.toLowerCase().includes(m),
+      marker,
+    );
+    check(found, `reports should show "${marker}"`);
+  }
+  const money = await apage.evaluate(() => /₹[\d,]+/.test(document.body.innerText));
+  check(money, "KPI cards should show rupee values");
+  const svgs = await apage.$$eval("svg", (els) => els.length);
+  check(svgs >= 2, `charts should render SVGs, got ${svgs}`);
+  await shot(apage, "22-admin-reports");
+
+  // Range switching is URL-driven: Today swaps the axis to hourly buckets.
+  await apage.evaluate(() => {
+    const b = [...document.querySelectorAll("button")].find(
+      (x) => x.textContent.trim() === "Today",
+    );
+    if (b) b.click();
+  });
+  await apage.waitForFunction(() => location.search.includes("range=today"), {
+    timeout: 10000,
+  });
+  await apage.waitForFunction(() => document.body.innerText.includes("Hourly buckets"), {
+    timeout: 20000,
+  });
+  check(
+    await apage.$eval('button[aria-pressed="true"]', (b) => b.textContent.trim()).then(
+      (t) => t === "Today",
+      () => false,
+    ),
+    'the "Today" chip should be aria-pressed',
+  );
+  await shot(apage, "23-admin-reports-today");
+
+  // Export CSV for real: allow the download, then verify the file's header.
+  const csvDir = join(SHOTS, "csv-export");
+  mkdirSync(csvDir, { recursive: true });
+  // Previous runs leave files behind — start empty or the wait below would
+  // happily "find" a stale export.
+  for (const stale of readdirSync(csvDir)) unlinkSync(join(csvDir, stale));
+  try {
+    const cdp = await apage.createCDPSession();
+    await cdp.send("Page.setDownloadBehavior", { behavior: "allow", downloadPath: csvDir });
+  } catch {
+    check(false, "CDP Page.setDownloadBehavior should be supported");
+  }
+  await apage.evaluate(() => {
+    const b = [...document.querySelectorAll("button")].find((x) =>
+      x.textContent.includes("Export CSV"),
+    );
+    if (b) b.click();
+  });
+  let csvFile = null;
+  for (let i = 0; i < 60 && !csvFile; i += 1) {
+    const files = readdirSync(csvDir).filter((f) => f.endsWith(".csv"));
+    if (files.length > 0) {
+      const path = join(csvDir, files[0]);
+      if (statSync(path).size > 0) csvFile = path;
+    }
+    if (!csvFile) await sleep(250);
+  }
+  check(csvFile, "Export CSV should download a file");
+  const csv = readFileSync(csvFile, "utf8");
+  check(
+    csv.startsWith("order_number,placed_at,status,"),
+    `CSV header line, got: ${csv.slice(0, 60)}`,
+  );
+  check(csv.split(/\r?\n/).filter(Boolean).length > 1, "CSV should contain at least one order");
 });
 
 await browser.close();

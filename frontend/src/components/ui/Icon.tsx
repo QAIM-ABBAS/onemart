@@ -206,6 +206,17 @@ export function PercentIcon(props: IconProps) {
   );
 }
 
+export function ChartIcon(props: IconProps) {
+  return (
+    <svg {...base(props)}>
+      <path d="M3 20h18" />
+      <path d="M6 20v-5" />
+      <path d="M12 20V8" />
+      <path d="M18 20v-9" />
+    </svg>
+  );
+}
+
 export function PinIcon(props: IconProps) {
   return (
     <svg {...base(props)}>

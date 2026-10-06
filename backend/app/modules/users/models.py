@@ -1,7 +1,7 @@
 ﻿import enum
 from datetime import datetime
 
-from sqlalchemy import Boolean, DateTime, ForeignKey, String
+from sqlalchemy import Boolean, DateTime, ForeignKey, Index, String
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.core.db import Base
@@ -16,6 +16,8 @@ class UserRole(enum.StrEnum):
 
 class User(TimestampMixin, Base):
     __tablename__ = "users"
+    # The reports "new customers" KPI counts signups inside a date window.
+    __table_args__ = (Index("ix_users_created_at", "created_at"),)
 
     id: Mapped[int] = mapped_column(primary_key=True)
     email: Mapped[str] = mapped_column(String(255), unique=True, index=True, nullable=False)

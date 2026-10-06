@@ -5,6 +5,7 @@ import { cn } from "@/lib/cn";
 
 import {
   BoxesIcon,
+  ChartIcon,
   ClipboardIcon,
   FolderIcon,
   PackageIcon,
@@ -21,6 +22,7 @@ const NAV = [
   { to: "/admin/categories", label: "Categories", icon: FolderIcon },
   { to: "/admin/stock", label: "Stock", icon: BoxesIcon },
   { to: "/admin/orders", label: "Orders", icon: ClipboardIcon },
+  { to: "/admin/reports", label: "Reports", icon: ChartIcon },
   { to: "/admin/coupons", label: "Coupons", icon: TagIcon },
   { to: "/admin/discounts", label: "Discounts", icon: PercentIcon },
   { to: "/admin/reviews", label: "Reviews", icon: StarIcon },

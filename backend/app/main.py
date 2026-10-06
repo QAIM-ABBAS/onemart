@@ -104,6 +104,7 @@ from app.modules.notifications.router import router as notifications_router  # n
 from app.modules.orders.admin_router import router as orders_admin_router  # noqa: E402
 from app.modules.orders.customer_router import router as orders_router  # noqa: E402
 from app.modules.orders.router import router as cart_checkout_router  # noqa: E402
+from app.modules.reports.router import router as reports_router  # noqa: E402
 from app.modules.reviews.admin_router import router as reviews_admin_router  # noqa: E402
 from app.modules.reviews.router import router as reviews_router  # noqa: E402
 from app.modules.users.router import address_router  # noqa: E402
@@ -120,6 +121,7 @@ app.include_router(orders_router, prefix=f"{API_PREFIX}")
 app.include_router(catalog_admin_router, prefix=f"{API_PREFIX}")
 app.include_router(inventory_admin_router, prefix=f"{API_PREFIX}")
 app.include_router(discounts_admin_router, prefix=f"{API_PREFIX}")
+app.include_router(reports_router, prefix=f"{API_PREFIX}")
 app.include_router(orders_admin_router, prefix=f"{API_PREFIX}")
 app.include_router(reviews_router, prefix=f"{API_PREFIX}")
 app.include_router(reviews_admin_router, prefix=f"{API_PREFIX}")
