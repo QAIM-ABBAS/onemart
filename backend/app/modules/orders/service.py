@@ -10,6 +10,8 @@ from app.modules.discounts import service as discounts_service
 from app.modules.discounts.pricing import price_cart
 from app.modules.inventory.models import Inventory
 from app.modules.inventory.service import ensure_inventory
+from app.modules.notifications import service as notifications_service
+from app.modules.notifications.models import NotificationType
 from app.modules.orders.models import (
     ALLOWED_TRANSITIONS,
     CANCELLABLE_STATUSES,
@@ -23,6 +25,36 @@ from app.modules.orders.models import (
 from app.modules.orders.payment import payment_registry
 from app.modules.orders.schemas import CheckoutIn, OrderDetail, OrderListItem, StatusUpdateIn
 from app.modules.users.models import Address, User, UserRole
+
+# What the customer is told when an order reaches each status: notification type,
+# the verb for the title, and the default body (an admin's note overrides it).
+_STATUS_NOTIFICATIONS: dict[OrderStatus, tuple[NotificationType, str, str]] = {
+    OrderStatus.CONFIRMED: (
+        NotificationType.ORDER_STATUS,
+        "confirmed",
+        "The store has confirmed your order.",
+    ),
+    OrderStatus.PACKED: (
+        NotificationType.ORDER_STATUS,
+        "is packed",
+        "Your items are packed and ready to go.",
+    ),
+    OrderStatus.SHIPPED: (
+        NotificationType.ORDER_STATUS,
+        "has shipped",
+        "Your order is on its way to you.",
+    ),
+    OrderStatus.DELIVERED: (
+        NotificationType.ORDER_STATUS,
+        "was delivered",
+        "Your order was delivered. Thank you for shopping with OneMart!",
+    ),
+    OrderStatus.CANCELLED: (
+        NotificationType.ORDER_CANCELLED,
+        "was cancelled",
+        "Your order was cancelled.",
+    ),
+}
 
 
 def checkout(db: Session, user: User, cart: Cart, payload: CheckoutIn) -> Order:
@@ -154,6 +186,14 @@ def checkout(db: Session, user: User, cart: Cart, payload: CheckoutIn) -> Order:
     db.execute(delete(CartItem).where(CartItem.cart_id == cart.id))
     # The cart is empty now: don't leave the redeemed code pinned to it.
     cart.coupon_id = None
+    notifications_service.notify(
+        db,
+        user_id=user.id,
+        type=NotificationType.ORDER_PLACED,
+        title=f"Order {order.order_number} placed",
+        body="We have received your order. Payment is due on delivery.",
+        link=f"/orders/{order.id}",
+    )
     db.commit()
     return order
 
@@ -352,6 +392,19 @@ def update_order_status(db: Session, order: Order, payload: StatusUpdateIn, acto
                 "to": payload.status.value,
                 "note": payload.note,
             },
+        )
+    # The customer hears about it — whoever moved the order (their own
+    # cancellation included). An admin's note becomes the message body.
+    status_notification = _STATUS_NOTIFICATIONS.get(payload.status)
+    if status_notification is not None:
+        kind, verb, default_body = status_notification
+        notifications_service.notify(
+            db,
+            user_id=order.user_id,
+            type=kind,
+            title=f"Order {order.order_number} {verb}",
+            body=payload.note or default_body,
+            link=f"/orders/{order.id}",
         )
     db.commit()
     return order

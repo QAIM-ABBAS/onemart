@@ -7,6 +7,8 @@ from app.core.pagination import Page, PaginationParams
 from app.modules.audit import service as audit_service
 from app.modules.catalog.models import Product
 from app.modules.catalog.service import invalidate_catalog_cache
+from app.modules.notifications import service as notifications_service
+from app.modules.notifications.models import NotificationType
 from app.modules.orders.models import Order, OrderItem, OrderStatus
 from app.modules.reviews.models import Review, ReviewVote
 from app.modules.reviews.schemas import (
@@ -324,6 +326,21 @@ def moderate_visibility(
         entity_id=review.id,
         detail={"product_id": review.product_id, "rating": review.rating},
     )
+    if not is_visible:
+        # Only hiding is an event worth telling the author about (unhiding is
+        # the moderator undoing their own action).
+        notifications_service.notify(
+            db,
+            user_id=review.user_id,
+            type=NotificationType.REVIEW_HIDDEN,
+            title="Your review was hidden",
+            body=(
+                f"A moderator hid your review of {product.name} from the product page."
+                if product is not None
+                else "A moderator hid your review from the product page."
+            ),
+            link=f"/p/{product.slug}" if product is not None else None,
+        )
     db.commit()
     invalidate_catalog_cache()
     return review

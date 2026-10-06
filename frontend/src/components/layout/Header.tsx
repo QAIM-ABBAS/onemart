@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { Link, NavLink, useLocation } from "react-router-dom";
 
+import { NotificationBell } from "@/components/notifications/NotificationBell";
 import { STATIC_NAV } from "@/content/home";
 import { useCart } from "@/hooks/queries/cart";
 import { useCategories } from "@/hooks/queries/catalog";
@@ -240,6 +241,7 @@ export function Header() {
 
           <div className="ms-auto flex items-center gap-2 md:ms-0">
             <Hotline />
+            <NotificationBell />
             <AccountMenu />
             <WishlistLink />
             <CartButton onOpen={() => setCartOpen(true)} />
@@ -360,6 +362,9 @@ export function Header() {
                 <>
                   <Link to="/orders" className="py-3 text-sm font-medium">
                     My orders
+                  </Link>
+                  <Link to="/notifications" className="py-3 text-sm font-medium">
+                    Notifications
                   </Link>
                   <p className="py-2 text-[0.8125rem] text-brand-200">
                     Signed in as {user.full_name} · {roleName(user.role)}

@@ -707,6 +707,67 @@ await run("hidden review disappears for the customer", async () => {
   await shot(page, "18-review-removed");
 });
 
+await run("customer sees the notifications inbox and clears it", async () => {
+  // Full reload so the bell's count query fetches on mount instead of waiting
+  // out its 45s poll. This run produced placed + confirmed + cancelled + hidden.
+  await goto(page, "/notifications");
+  await page.waitForFunction(
+    () =>
+      document.body.innerText.includes("Notifications") &&
+      /Order \S+ (placed|confirmed)/i.test(document.body.innerText),
+    { timeout: 25000 },
+  );
+  await page.waitForFunction(() => {
+    const b = document.querySelector('button[aria-label="Notifications"]');
+    return b && /^\d/.test(b.innerText.trim());
+  }, { timeout: 20000 });
+  const badge = await page.evaluate(
+    () => document.querySelector('button[aria-label="Notifications"]').innerText.trim(),
+  );
+  check(badge.length > 0, `bell badge should show an unread count, got "${badge}"`);
+  await shot(page, "19-notifications-inbox");
+
+  // The bell opens the latest-10 dropdown...
+  await page.evaluate(() => document.querySelector('button[aria-label="Notifications"]').click());
+  await page.waitForFunction(() => document.body.innerText.includes("View all notifications"), {
+    timeout: 10000,
+  });
+  await shot(page, "20-notifications-bell");
+  // ...and closes again so the controls underneath stay reachable.
+  await page.evaluate(() => document.querySelector('button[aria-label="Notifications"]').click());
+  await page.waitForFunction(() => !document.body.innerText.includes("View all notifications"), {
+    timeout: 10000,
+  });
+
+  // Mark all as read empties the badge...
+  await page.evaluate(() => {
+    const b = [...document.querySelectorAll("button")].find((x) =>
+      x.textContent.includes("Mark all as read"),
+    );
+    if (b) b.click();
+  });
+  await page.waitForFunction(
+    () => {
+      const b = document.querySelector('button[aria-label="Notifications"]');
+      return b && b.innerText.trim() === "";
+    },
+    { timeout: 20000 },
+  );
+  // ...and the Unread filter falls back to its real empty state. Case-
+  // insensitive: `.label` uppercases via text-transform and innerText obeys it
+  // (the same trap as the PENDING status labels).
+  await page.evaluate(() => {
+    const b = [...document.querySelectorAll("button")].find(
+      (x) => x.getAttribute("aria-pressed") !== null && x.textContent.trim() === "Unread",
+    );
+    if (b) b.click();
+  });
+  await page.waitForFunction(() => /nothing here/i.test(document.body.innerText), {
+    timeout: 20000,
+  });
+  await shot(page, "21-notifications-read");
+});
+
 await browser.close();
 
 console.log("\n--- failures ---");

@@ -93,6 +93,14 @@ export function AccountMenu() {
             >
               Wishlist
             </Link>
+            <Link
+              to="/notifications"
+              onClick={() => setOpen(false)}
+              className="block px-4 py-2.5 text-sm transition-colors hover:bg-surface-2"
+              role="menuitem"
+            >
+              Notifications
+            </Link>
             {isStaff(user) ? (
               <Link
                 to="/admin/products"

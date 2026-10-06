@@ -6,12 +6,12 @@ staff admin console for catalogue, stock, order, and review management.
 
 Phase 1 (foundation + storefront) is complete. Phase 2 lands one step per commit:
 ✅ design system → ✅ pricing engine + coupons/discounts → ✅ reviews → ✅ wishlist →
-✅ order timeline + cancellation → notifications → admin discounts screens →
+✅ order timeline + cancellation → ✅ notifications → admin discounts screens →
 admin reports.
 
 Modular monolith, not microservices: one FastAPI app with clear module boundaries
-(catalog, cart, orders, inventory, discounts, reviews, audit, users), a React SPA,
-PostgreSQL, and Redis.
+(catalog, cart, orders, inventory, discounts, reviews, notifications, audit, users),
+a Celery worker for async email, a React SPA, PostgreSQL, and Redis.
 
 ## Stack
 
@@ -20,6 +20,7 @@ PostgreSQL, and Redis.
 | API       | FastAPI, SQLAlchemy 2.0 (typed ORM), Alembic, Pydantic v2 |
 | DB        | PostgreSQL 16 (Docker Compose, `127.0.0.1:5433`) |
 | Cache     | Redis 7 (Docker Compose, internal only — not published; falls back to an in-process cache when unreachable) |
+| Jobs      | Celery worker on the Redis broker; `EmailProvider` interface with a console implementation (SMTP-ready swap) |
 | Frontend  | React 19, Vite 6, TypeScript (strict), Tailwind CSS v4, React Router 7 |
 | Data/Auth | TanStack Query (server state), Zustand (auth state), JWT access token + httpOnly refresh cookie |
 | Tooling   | Ruff, pytest, Docker Compose, puppeteer-core + Playwright for E2E |
@@ -55,6 +56,10 @@ PostgreSQL, and Redis.
   error), account wishlist grid with sort/search/in-stock filter, add to cart with a
   variant picker, live price + stock per saved item; guests get a login prompt and
   their tap is replayed into the wishlist once they sign in
+- Notifications: a header bell with an unread badge + latest-10 dropdown and a full
+  account inbox (pagination, All/Unread filter, sort, mark read / mark all read,
+  polling every 45s); events fire on order placed, each status move, cancellation, and
+  a hidden review — one `notify()` writes the row and queues the email
 
 **Admin** (staff/admin role)
 
@@ -74,8 +79,7 @@ order in the *same* transaction — stock is never checked and the order created
 separate steps. Covered by a race test (two concurrent checkouts → exactly one `201`,
 one `409`).
 
-**Still ahead (Phase 2):** notifications, admin discounts screens, admin reports
-dashboard.
+**Still ahead (Phase 2):** admin discounts screens, admin reports dashboard.
 
 **Not built by design:** flash deals, promotional banner engine, related /
 frequently-bought-together, online payment gateway (COD + `PaymentProvider` seam only),
@@ -89,6 +93,7 @@ docker compose up --build
 
 - Web (Vite dev): http://127.0.0.1:5173
 - API (FastAPI + auto docs): http://127.0.0.1:8000/docs
+- Worker: Celery consumer for notification emails (`docker compose logs -f worker`)
 - DB: `127.0.0.1:5433` — Redis: not published (compose network only; see
   `docker-compose.override.example.yml` to expose it on `127.0.0.1:17500`)
 
@@ -104,6 +109,9 @@ Prereqs: Python 3.12+, Node 20+, Docker (for Postgres/Redis).
 ```powershell
 # 1. infrastructure
 docker compose up -d db redis
+
+# (optional) Celery worker for notification emails — without it, tasks queue on
+# Redis harmlessly: docker compose up -d --build worker
 
 # 2. backend
 cd backend
@@ -132,7 +140,7 @@ npm run dev                                 # http://localhost:5173, proxies /ap
 ```powershell
 # backend
 cd backend
-.\.venv\Scripts\python -m pytest -q          # 71 tests (auth, catalog, cart merge, checkout race, orders + transitions/cancellation, admin, pricing + coupons, reviews, wishlist)
+.\.venv\Scripts\python -m pytest -q          # 78 tests (auth, catalog, cart merge, checkout race, orders + transitions/cancellation, admin, pricing + coupons, reviews, wishlist, notifications)
 .\.venv\Scripts\python -m ruff check app tests
 .\.venv\Scripts\python -m app.seed           # seed demo data (no-op if already seeded)
 
@@ -152,7 +160,8 @@ checkout → login → place order → order history → wishlist (guest tap rep
 add to cart, remove) → admin login → product list/edit → stock → orders → status update →
 customer timeline → customer cancels the order (terminal step + history note) → ratings
 section → customer writes a review → admin hides/deletes it → the review disappears for the
-customer. It screenshots every step (temp dir path printed at the end) and exits non-zero
+customer → notifications inbox (bell badge, dropdown, mark all read, unread-filter empty
+state). It screenshots every step (temp dir path printed at the end) and exits non-zero
 on any failure or console/API error.
 
 `tests/e2e/checkout-coupon-flow.spec.ts` is the Phase 2 pricing flow in one Playwright test:
@@ -168,16 +177,16 @@ both. It runs against the same running stack and uses the installed Chrome
 - Errors are always `{"error": {"code", "message", "details"}}` (HTTP status + envelope),
   with Pydantic field errors in `details` for validation failures.
 - List endpoints (`/products`, `/admin/products`, `/orders`, `/admin/orders`,
-  `/admin/inventory`, `/products/{slug}/reviews`, `/admin/reviews`, `/wishlist`) take
-  `page`, `page_size`, plus endpoint-specific `q` / `category` / `brand` / `in_stock` /
-  `status` / `rating` filters and a `sort` whitelist.
+  `/admin/inventory`, `/products/{slug}/reviews`, `/admin/reviews`, `/wishlist`,
+  `/notifications`) take `page`, `page_size`, plus endpoint-specific `q` / `category` /
+  `brand` / `in_stock` / `status` / `rating` / `unread` filters and a `sort` whitelist.
 - Health: `GET /api/health`. Placeholder product images: `GET /api/img/placeholder.svg`.
 
 ## Project layout
 
 ```
 backend/
-  app/core/           config, db, security (JWT), exceptions, redis cache
+  app/core/           config, db, security (JWT), exceptions, redis cache, email provider, Celery app
   app/modules/
     users/            auth (JWT + httpOnly refresh), addresses, roles
     catalog/          categories, brands, products, variants, images, admin CRUD
@@ -188,14 +197,15 @@ backend/
     discounts/        pricing engine (Decimals), coupons + redemptions, auto-clear
     reviews/          reviews + helpful votes, rating summary recompute, moderation
     wishlist/         saved products per customer (idempotent toggle, live price/stock)
+    notifications/    inbox (`notify()` joins the caller's transaction), Celery email task
     audit/            shared audit trail (`record()` joins the caller's transaction)
   app/seed.py         demo catalogue + accounts
-  tests/              pytest suite (uses onemart_test DB, REDIS_DISABLED)
+  tests/              pytest suite (uses onemart_test DB, REDIS_DISABLED, eager Celery)
 frontend/
   src/lib/            typed API client, query keys, formatting (INR), types
-  src/hooks/queries/  TanStack Query hooks (catalog, cart, checkout, orders, reviews, wishlist, admin)
+  src/hooks/queries/  TanStack Query hooks (catalog, cart, checkout, orders, reviews, wishlist, notifications, admin)
   src/stores/auth.ts  Zustand auth store
-  src/components/     ui primitives, layout shells, catalog/orders/reviews components
+  src/components/     ui primitives, layout shells (header bell), catalog/orders/reviews components
   src/pages/          customer pages + admin pages
   scripts/            E2E smoke + responsive screenshot tools
   tests/e2e/          Playwright flow test (pricing + coupons end to end)
@@ -238,3 +248,9 @@ Currency is formatted as INR with `en-IN` locale throughout.
 - `product.rating_avg` / `rating_count` are denormalized and recomputed inside the same
   transaction as every review write/edit/delete; hidden reviews leave the public list
   *and* the average. The cached product-detail payload carries the live summary.
+- Notifications are written through one `notify(user_id, type, …)` that joins the caller's
+  transaction (a rolled-back action never leaves a phantom row) — order placed, each status
+  move, cancellation, and a hidden review all funnel through it. The email leg is a Celery
+  task on the Redis broker that renders through the `EmailProvider` interface (console
+  implementation today; the compose `worker` service runs it). The header bell and inbox
+  poll every 45s through TanStack Query — no websockets yet.

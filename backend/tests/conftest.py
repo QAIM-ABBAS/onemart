@@ -5,6 +5,8 @@ os.environ["DATABASE_URL"] = "postgresql+psycopg://onemart:onemart@127.0.0.1:543
 os.environ["REDIS_DISABLED"] = "true"
 os.environ["SEED_ON_STARTUP"] = "false"
 os.environ["COOKIE_SECURE"] = "false"
+# Celery tasks run in-process: no worker, no broker connection in pytest.
+os.environ["CELERY_TASK_ALWAYS_EAGER"] = "true"
 
 import pytest
 from sqlalchemy import create_engine, text

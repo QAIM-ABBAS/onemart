@@ -99,6 +99,7 @@ from fastapi import Query  # noqa: E402
 from app.modules.catalog.admin_router import router as catalog_admin_router  # noqa: E402
 from app.modules.catalog.router import router as catalog_router  # noqa: E402
 from app.modules.inventory.router import router as inventory_admin_router  # noqa: E402
+from app.modules.notifications.router import router as notifications_router  # noqa: E402
 from app.modules.orders.admin_router import router as orders_admin_router  # noqa: E402
 from app.modules.orders.customer_router import router as orders_router  # noqa: E402
 from app.modules.orders.router import router as cart_checkout_router  # noqa: E402
@@ -121,6 +122,7 @@ app.include_router(orders_admin_router, prefix=f"{API_PREFIX}")
 app.include_router(reviews_router, prefix=f"{API_PREFIX}")
 app.include_router(reviews_admin_router, prefix=f"{API_PREFIX}")
 app.include_router(wishlist_router, prefix=f"{API_PREFIX}")
+app.include_router(notifications_router, prefix=f"{API_PREFIX}")
 
 
 @app.get("/api/health")

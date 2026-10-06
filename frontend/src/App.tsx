@@ -13,6 +13,7 @@ import { OrderDetailPage, OrdersPage } from "@/pages/Orders";
 import { ProductPage } from "@/pages/Product";
 import { BrowsePage } from "@/pages/Browse";
 import { WishlistPage } from "@/pages/Wishlist";
+import { NotificationsPage } from "@/pages/Notifications";
 import { AdminCategoriesPage } from "@/pages/admin/Categories";
 import { AdminOrdersPage } from "@/pages/admin/Orders";
 import { AdminOrderDetailPage } from "@/pages/admin/OrderDetail";
@@ -102,6 +103,16 @@ export function App() {
             <Shell>
               <RequireAuth>
                 <WishlistPage />
+              </RequireAuth>
+            </Shell>
+          }
+        />
+        <Route
+          path="/notifications"
+          element={
+            <Shell>
+              <RequireAuth>
+                <NotificationsPage />
               </RequireAuth>
             </Shell>
           }

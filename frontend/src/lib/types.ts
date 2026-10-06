@@ -292,6 +292,23 @@ export interface StatusEventOut {
   created_at: string;
 }
 
+export type NotificationType =
+  | "order_placed"
+  | "order_status"
+  | "order_cancelled"
+  | "review_hidden"
+  | "announcement";
+
+export interface Notification {
+  id: number;
+  type: NotificationType;
+  title: string;
+  body?: string | null;
+  link?: string | null;
+  read_at: string | null;
+  created_at: string;
+}
+
 export interface OrderItemOut {
   id: number;
   variant_id?: number | null;

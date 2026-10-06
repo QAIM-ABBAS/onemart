@@ -28,6 +28,10 @@ class Settings(BaseSettings):
 
     seed_on_startup: bool = False
 
+    # Celery: the broker is `redis_url`. Tests flip this on so tasks execute
+    # in-process — no worker and no broker connection anywhere in pytest.
+    celery_task_always_eager: bool = False
+
     @property
     def cors_origin_list(self) -> list[str]:
         return [o.strip() for o in self.cors_origins.split(",") if o.strip()]

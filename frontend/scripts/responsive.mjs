@@ -38,15 +38,13 @@ await shoot("t2-products", "/products", 834, 1112);
 await shoot("m5-login", "/login", 390, 844);
 
 /**
- * The wishlist sits behind a login and is a grid of saved products, so its
- * shots need a session and at least two saved cards: sign the demo customer
- * in, heart two products through the UI, then open the page.
+ * Signs the demo customer in, landing on `next`. A protected route bounces a
+ * guest to /login?next=… and an existing session is dropped straight through,
+ * so either way we land deterministically (going to /login directly races its
+ * own "already signed in" redirect).
  */
-const withWishlist = async (page) => {
-  // /wishlist is protected: a guest is bounced to /login?next=/wishlist and a
-  // session is dropped straight through, so either way we land deterministically
-  // (going to /login directly races its own "already signed in" redirect).
-  await page.goto(BASE + "/wishlist", { waitUntil: "domcontentloaded", timeout: 60000 });
+const signIn = async (page, next) => {
+  await page.goto(BASE + next, { waitUntil: "domcontentloaded", timeout: 60000 });
   const hasForm = await page
     .waitForSelector('input[type="password"]', { timeout: 10000 })
     .then(() => true)
@@ -67,8 +65,17 @@ const withWishlist = async (page) => {
       );
       b?.click();
     });
-    await page.waitForFunction(() => location.pathname === "/wishlist", { timeout: 25000 });
+    await page.waitForFunction((p) => location.pathname === p, { timeout: 25000 }, next);
   }
+};
+
+/**
+ * The wishlist sits behind a login and is a grid of saved products, so its
+ * shots need a session and at least two saved cards: sign the demo customer
+ * in, heart two products through the UI, then open the page.
+ */
+const withWishlist = async (page) => {
+  await signIn(page, "/wishlist");
 
   for (let i = 0; i < 2; i++) {
     await page.goto(BASE + "/products", { waitUntil: "domcontentloaded", timeout: 60000 });
@@ -120,5 +127,23 @@ const withWishlist = async (page) => {
 await shoot("m6-wishlist", "/login", 390, 844, withWishlist);
 await shoot("t3-wishlist", "/login", 834, 1112, withWishlist);
 await shoot("d1-wishlist", "/login", 1440, 900, withWishlist);
+
+/**
+ * The notifications inbox sits behind the same login and needs no setup
+ * beyond a session — the demo customer always has some — so the prep is just
+ * the sign-in plus a settled network (list + bell count) before the shot.
+ */
+const withNotifications = async (page) => {
+  await signIn(page, "/notifications");
+  await page.goto(BASE + "/notifications", { waitUntil: "networkidle2", timeout: 60000 });
+  await page
+    .waitForFunction(() => document.body.innerText.includes("Notifications"), { timeout: 25000 })
+    .catch(() => {});
+  await new Promise((r) => setTimeout(r, 800));
+};
+
+await shoot("m7-notifications", "/login", 390, 844, withNotifications);
+await shoot("t4-notifications", "/login", 834, 1112, withNotifications);
+await shoot("d2-notifications", "/login", 1440, 900, withNotifications);
 
 await browser.close();
