@@ -38,12 +38,13 @@ await shoot("t2-products", "/products", 834, 1112);
 await shoot("m5-login", "/login", 390, 844);
 
 /**
- * Signs the demo customer in, landing on `next`. A protected route bounces a
- * guest to /login?next=… and an existing session is dropped straight through,
- * so either way we land deterministically (going to /login directly races its
- * own "already signed in" redirect).
+ * Signs in, landing on `next`. A protected route bounces a guest to
+ * /login?next=… and an existing session is dropped straight through, so either
+ * way we land deterministically (going to /login directly races its own
+ * "already signed in" redirect). Credentials default to the demo customer;
+ * admin shots pass their own.
  */
-const signIn = async (page, next) => {
+const signIn = async (page, next, email = "demo@onemart.test", password = "Demo@1234") => {
   await page.goto(BASE + next, { waitUntil: "domcontentloaded", timeout: 60000 });
   const hasForm = await page
     .waitForSelector('input[type="password"]', { timeout: 10000 })
@@ -57,8 +58,8 @@ const signIn = async (page, next) => {
         timeout: 15000,
       })
       .catch(() => {});
-    await page.type('input[type="email"]', "demo@onemart.test", { delay: 15 });
-    await page.type('input[type="password"]', "Demo@1234", { delay: 15 });
+    await page.type('input[type="email"]', email, { delay: 15 });
+    await page.type('input[type="password"]', password, { delay: 15 });
     await page.evaluate(() => {
       const b = [...document.querySelectorAll("button")].find((x) =>
         x.textContent.includes("Sign in"),
@@ -145,5 +146,34 @@ const withNotifications = async (page) => {
 await shoot("m7-notifications", "/login", 390, 844, withNotifications);
 await shoot("t4-notifications", "/login", 834, 1112, withNotifications);
 await shoot("d2-notifications", "/login", 1440, 900, withNotifications);
+
+/**
+ * The promo screens sit behind staff auth. Every shoot shares one browser
+ * context, so the customer sessions from the shots above are still in the
+ * cookie jar — drop them first, or the staff route renders "no access"
+ * instead of bouncing to the login form. Admin shots run last, after which
+ * the browser closes, so the staff session outlives nothing.
+ */
+const withAdminPromos = (path, marker) => async (page) => {
+  try {
+    const cdp = await page.createCDPSession();
+    await cdp.send("Network.clearBrowserCookies");
+  } catch {
+    /* a stale session would only cost an extra login attempt below */
+  }
+  await signIn(page, path, "admin@onemart.test", "Admin@1234");
+  await page.goto(BASE + path, { waitUntil: "networkidle2", timeout: 60000 });
+  await page
+    .waitForFunction((m) => document.body.innerText.includes(m), { timeout: 25000 }, marker)
+    .catch(() => {});
+  await new Promise((r) => setTimeout(r, 800));
+};
+
+await shoot("m8-admin-coupons", "/login", 390, 844, withAdminPromos("/admin/coupons", "+ New coupon"));
+await shoot("m9-admin-discounts", "/login", 390, 844, withAdminPromos("/admin/discounts", "+ New discount"));
+await shoot("t5-admin-coupons", "/login", 834, 1112, withAdminPromos("/admin/coupons", "+ New coupon"));
+await shoot("t6-admin-discounts", "/login", 834, 1112, withAdminPromos("/admin/discounts", "+ New discount"));
+await shoot("d3-admin-coupons", "/login", 1440, 900, withAdminPromos("/admin/coupons", "+ New coupon"));
+await shoot("d4-admin-discounts", "/login", 1440, 900, withAdminPromos("/admin/discounts", "+ New discount"));
 
 await browser.close();

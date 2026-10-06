@@ -6,7 +6,7 @@ staff admin console for catalogue, stock, order, and review management.
 
 Phase 1 (foundation + storefront) is complete. Phase 2 lands one step per commit:
 ✅ design system → ✅ pricing engine + coupons/discounts → ✅ reviews → ✅ wishlist →
-✅ order timeline + cancellation → ✅ notifications → admin discounts screens →
+✅ order timeline + cancellation → ✅ notifications → ✅ admin discounts screens →
 admin reports.
 
 Modular monolith, not microservices: one FastAPI app with clear module boundaries
@@ -70,7 +70,11 @@ a Celery worker for async email, a React SPA, PostgreSQL, and Redis.
   valid-transitions map (`pending → confirmed → packed → shipped → delivered`,
   cancellations where allowed — no skipping or stepping back), optional note per
   move written to the timeline, each staff change appended to the `audit_logs` trail
-- Coupons CRUD (percent/flat/free-delivery, validity window, usage limits)
+- Coupons CRUD (percent/flat/free-delivery, validity window, usage limits) and
+  automatic discount rules (product/category scope, percent/fixed, schedule) —
+  both as paginated lists with search/status/sort filters, a status computed from
+  the window (inactive > scheduled > expired > active), row-level enable/disable,
+  and create/edit modals with server-error field mapping
 - Review moderation: filter by rating/status/search, hide/unhide + delete,
   each moderation action written to the `audit_logs` trail
 
@@ -79,7 +83,7 @@ order in the *same* transaction — stock is never checked and the order created
 separate steps. Covered by a race test (two concurrent checkouts → exactly one `201`,
 one `409`).
 
-**Still ahead (Phase 2):** admin discounts screens, admin reports dashboard.
+**Still ahead (Phase 2):** admin reports dashboard.
 
 **Not built by design:** flash deals, promotional banner engine, related /
 frequently-bought-together, online payment gateway (COD + `PaymentProvider` seam only),
@@ -140,7 +144,7 @@ npm run dev                                 # http://localhost:5173, proxies /ap
 ```powershell
 # backend
 cd backend
-.\.venv\Scripts\python -m pytest -q          # 78 tests (auth, catalog, cart merge, checkout race, orders + transitions/cancellation, admin, pricing + coupons, reviews, wishlist, notifications)
+.\.venv\Scripts\python -m pytest -q          # 95 tests (auth, catalog, cart merge, checkout race, orders + transitions/cancellation, admin, pricing + coupons + auto-discounts, admin promo CRUD, reviews, wishlist, notifications)
 .\.venv\Scripts\python -m ruff check app tests
 .\.venv\Scripts\python -m app.seed           # seed demo data (no-op if already seeded)
 
@@ -159,8 +163,9 @@ home → browse → sort → product → add to cart → guest taps the wishlist
 checkout → login → place order → order history → wishlist (guest tap replayed after login,
 add to cart, remove) → admin login → product list/edit → stock → orders → status update →
 customer timeline → customer cancels the order (terminal step + history note) → ratings
-section → customer writes a review → admin hides/deletes it → the review disappears for the
-customer → notifications inbox (bell badge, dropdown, mark all read, unread-filter empty
+section → customer writes a review → admin hides/deletes it → admin creates/toggles/deletes a
+coupon and creates/deletes a discount rule → the review disappears for the customer →
+notifications inbox (bell badge, dropdown, mark all read, unread-filter empty
 state). It screenshots every step (temp dir path printed at the end) and exits non-zero
 on any failure or console/API error.
 
@@ -178,8 +183,9 @@ both. It runs against the same running stack and uses the installed Chrome
   with Pydantic field errors in `details` for validation failures.
 - List endpoints (`/products`, `/admin/products`, `/orders`, `/admin/orders`,
   `/admin/inventory`, `/products/{slug}/reviews`, `/admin/reviews`, `/wishlist`,
-  `/notifications`) take `page`, `page_size`, plus endpoint-specific `q` / `category` /
-  `brand` / `in_stock` / `status` / `rating` / `unread` filters and a `sort` whitelist.
+  `/notifications`, `/admin/coupons`, `/admin/discounts`) take `page`, `page_size`,
+  plus endpoint-specific `q` / `category` / `brand` / `in_stock` / `status` / `rating` /
+  `unread` / `scope` filters and a `sort` whitelist.
 - Health: `GET /api/health`. Placeholder product images: `GET /api/img/placeholder.svg`.
 
 ## Project layout
@@ -194,7 +200,8 @@ backend/
     inventory/        per-variant stock, admin adjustments
     orders/           checkout (FOR UPDATE), status history + transition rules,
                       customer cancellation (same-transaction restock), payment registry
-    discounts/        pricing engine (Decimals), coupons + redemptions, auto-clear
+    discounts/        pricing engine (Decimals), coupons + redemptions, auto-discount
+                      rules (product/category, percent/fixed), admin promo CRUD
     reviews/          reviews + helpful votes, rating summary recompute, moderation
     wishlist/         saved products per customer (idempotent toggle, live price/stock)
     notifications/    inbox (`notify()` joins the caller's transaction), Celery email task
@@ -248,6 +255,11 @@ Currency is formatted as INR with `en-IN` locale throughout.
 - `product.rating_avg` / `rating_count` are denormalized and recomputed inside the same
   transaction as every review write/edit/delete; hidden reviews leave the public list
   *and* the average. The cached product-detail payload carries the live summary.
+- Totals apply in one order: base → best automatic discount (product-scope rules claim
+  their lines before category-scope rules, one best rule per group, never stacking, capped
+  at the goods value) → coupon (percent/flat off the remainder, free-delivery waives the
+  fee) → delivery fee (free over ₹999). Cart, checkout summary and the order record all
+  come from that single server-side calculation.
 - Notifications are written through one `notify(user_id, type, …)` that joins the caller's
   transaction (a rolled-back action never leaves a phantom row) — order placed, each status
   move, cancellation, and a hidden review all funnel through it. The email leg is a Celery

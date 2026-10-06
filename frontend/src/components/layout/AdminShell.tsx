@@ -8,8 +8,10 @@ import {
   ClipboardIcon,
   FolderIcon,
   PackageIcon,
+  PercentIcon,
   StarIcon,
   StoreIcon,
+  TagIcon,
 } from "@/components/ui/Icon";
 import { Toaster } from "@/components/ui/Toaster";
 import { useAuth } from "@/stores/auth";
@@ -19,6 +21,8 @@ const NAV = [
   { to: "/admin/categories", label: "Categories", icon: FolderIcon },
   { to: "/admin/stock", label: "Stock", icon: BoxesIcon },
   { to: "/admin/orders", label: "Orders", icon: ClipboardIcon },
+  { to: "/admin/coupons", label: "Coupons", icon: TagIcon },
+  { to: "/admin/discounts", label: "Discounts", icon: PercentIcon },
   { to: "/admin/reviews", label: "Reviews", icon: StarIcon },
 ] as const;
 

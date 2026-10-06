@@ -20,6 +20,8 @@ import { AdminOrderDetailPage } from "@/pages/admin/OrderDetail";
 import { AdminProductFormPage } from "@/pages/admin/ProductForm";
 import { AdminProductsPage } from "@/pages/admin/Products";
 import { AdminReviewsPage } from "@/pages/admin/Reviews";
+import { AdminCouponsPage } from "@/pages/admin/Coupons";
+import { AdminDiscountsPage } from "@/pages/admin/Discounts";
 import { AdminStockPage } from "@/pages/admin/Stock";
 
 function ScrollToTop() {
@@ -179,6 +181,26 @@ export function App() {
             <RequireAuth staffOnly>
               <AdminShell>
                 <AdminCategoriesPage />
+              </AdminShell>
+            </RequireAuth>
+          }
+        />
+        <Route
+          path="/admin/coupons"
+          element={
+            <RequireAuth staffOnly>
+              <AdminShell>
+                <AdminCouponsPage />
+              </AdminShell>
+            </RequireAuth>
+          }
+        />
+        <Route
+          path="/admin/discounts"
+          element={
+            <RequireAuth staffOnly>
+              <AdminShell>
+                <AdminDiscountsPage />
               </AdminShell>
             </RequireAuth>
           }

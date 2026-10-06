@@ -72,7 +72,8 @@ const bodyText = (page) => page.evaluate(() => document.body.innerText);
  *
  *  1. Typing before the auth store has booted: the form remounts when the
  *     bootstrap lands, and the keystrokes reach the detached node. So wait
- *     for `booted` — do NOT let a missing `window.__auth` pass the wait.
+ *     for `booted` — do NOT let a missing `window.__auth` pass the wait —
+ *     and then for the fields themselves (boot can precede the mount).
  *  2. Even after boot, a re-render can swap the form mid-type. Verify the
  *     fields, clear both, and type again (up to 3 attempts) so the failure —
  *     if it persists — is legible instead of a mysterious 422 later.
@@ -83,6 +84,10 @@ async function fillLogin(page, email, password) {
   });
   let typed = { email: "", password: "" };
   for (let attempt = 1; attempt <= 3; attempt += 1) {
+    // The store can boot before the form mounts (lazy route, mid-redirect):
+    // wait for the actual fields, or type() throws "No element found".
+    await page.waitForSelector('input[type="email"]', { timeout: 20000 });
+    await page.waitForSelector('input[type="password"]', { timeout: 20000 });
     await page.type('input[type="email"]', email, { delay: 15 });
     await page.type('input[type="password"]', password, { delay: 15 });
     typed = await page.evaluate(() => ({
@@ -91,16 +96,21 @@ async function fillLogin(page, email, password) {
     }));
     if (typed.email === email && typed.password === password) return;
     if (attempt < 3) {
-      // Form was swapped mid-type: select whatever landed, then retype.
-      for (const sel of ['input[type="email"]', 'input[type="password"]']) {
-        await page.evaluate((s) => {
-          const el = document.querySelector(s);
-          el?.focus();
-          el?.select();
-        }, sel);
-        await page.keyboard.press("Control+A");
-        await page.keyboard.press("Backspace");
-      }
+      // Form was swapped mid-type: clear both fields React-safely (the native
+      // setter + an input event, so controlled components pick it up), then
+      // retype. keyboard.press("Control+A") is not a valid puppeteer key.
+      await page.evaluate(() => {
+        const set = Object.getOwnPropertyDescriptor(
+          HTMLInputElement.prototype,
+          "value",
+        )?.set;
+        for (const sel of ['input[type="email"]', 'input[type="password"]']) {
+          const el = document.querySelector(sel);
+          if (!el) continue;
+          set?.call(el, "");
+          el.dispatchEvent(new Event("input", { bubbles: true }));
+        }
+      });
     }
   }
   check(false, `login fields not filled after 3 attempts: ${JSON.stringify(typed)}`);
@@ -693,6 +703,165 @@ await run("admin hides and deletes the new review", async () => {
     timeout: 20000,
   });
   await shot(apage, "17-admin-review-deleted");
+});
+
+await run("admin manages coupons and discounts", async () => {
+  // ---- Coupons: seeded codes on screen, then create / toggle / delete ----
+  await goto(apage, "/admin/coupons");
+  await apage.waitForFunction(
+    () =>
+      document.body.innerText.includes("+ New coupon") &&
+      !document.body.innerText.includes("Loading"),
+    { timeout: 30000 },
+  );
+  check(
+    await apage.evaluate(() => document.body.innerText.includes("WELCOME10")),
+    "seeded WELCOME10 coupon missing from the admin list",
+  );
+  check(
+    await apage.evaluate(() => document.body.innerText.includes("FREESHIP")),
+    "seeded FREESHIP coupon missing from the admin list",
+  );
+  check(
+    await apage.evaluate(() => /used/i.test(document.body.innerText)), // .label uppercases
+    "usage column missing from the coupon list",
+  );
+  await shot(apage, "17b-admin-coupons");
+
+  // Self-heal: a leftover SMOKE20 from an interrupted run would 409 below.
+  await apage.evaluate(() => {
+    const row = [...document.querySelectorAll("tbody tr")].find((tr) =>
+      tr.textContent.includes("SMOKE20"),
+    );
+    [...(row?.querySelectorAll("button") ?? [])]
+      .find((b) => b.textContent.trim() === "Delete")
+      ?.click();
+  });
+  await apage
+    .waitForFunction(
+      () =>
+        ![...document.querySelectorAll("tbody tr")].some((tr) =>
+          tr.textContent.includes("SMOKE20"),
+        ),
+      { timeout: 20000 },
+    )
+    .catch(() => {});
+  check(
+    await apage.evaluate(
+      () =>
+        ![...document.querySelectorAll("tbody tr")].some((tr) =>
+          tr.textContent.includes("SMOKE20"),
+        ),
+    ),
+    "could not clean up a leftover SMOKE20 coupon",
+  );
+
+  // Create through the modal form (client validation passes, server accepts).
+  await apage.evaluate(() => {
+    [...document.querySelectorAll("button")].find((b) =>
+      b.textContent.includes("+ New coupon"),
+    )?.click();
+  });
+  await apage.waitForSelector("#coupon-code", { timeout: 15000 });
+  await apage.type("#coupon-code", "smoke20"); // the server upper-cases it
+  await apage.type("#coupon-value", "20");
+  await apage.type("#coupon-min", "100");
+  await apage.evaluate(() => document.querySelector('button[form="coupon-form"]')?.click());
+  await apage.waitForFunction(
+    () =>
+      [...document.querySelectorAll("tbody tr")].some((tr) =>
+        tr.textContent.includes("SMOKE20"),
+      ),
+    { timeout: 25000 },
+  );
+  await shot(apage, "17c-admin-coupon-created");
+
+  // Partial PATCH from the row: Disable flips the chip to Inactive.
+  await apage.evaluate(() => {
+    const row = [...document.querySelectorAll("tbody tr")].find((tr) =>
+      tr.textContent.includes("SMOKE20"),
+    );
+    [...(row?.querySelectorAll("button") ?? [])].find(
+      (b) => b.textContent.trim() === "Disable",
+    )?.click();
+  });
+  await apage.waitForFunction(
+    () =>
+      [...document.querySelectorAll("tbody tr")].some(
+        (tr) => tr.textContent.includes("SMOKE20") && tr.textContent.includes("Inactive"),
+      ),
+    { timeout: 20000 },
+  );
+  await shot(apage, "17d-admin-coupon-inactive");
+
+  await apage.evaluate(() => {
+    const row = [...document.querySelectorAll("tbody tr")].find((tr) =>
+      tr.textContent.includes("SMOKE20"),
+    );
+    [...(row?.querySelectorAll("button") ?? [])].find(
+      (b) => b.textContent.trim() === "Delete",
+    )?.click();
+  });
+  await apage.waitForFunction(
+    () =>
+      ![...document.querySelectorAll("tbody tr")].some((tr) =>
+        tr.textContent.includes("SMOKE20"),
+      ),
+    { timeout: 25000 },
+  );
+
+  // ---- Discounts: the demo ships no rules, so every row here is a leftover ----
+  await goto(apage, "/admin/discounts");
+  await apage.waitForFunction(
+    () =>
+      document.body.innerText.includes("+ New discount") &&
+      !document.body.innerText.includes("Loading"),
+    { timeout: 30000 },
+  );
+
+  for (let i = 0; i < 5; i += 1) {
+    const count = await apage.$$eval("tbody tr", (rows) => rows.length);
+    if (count === 0) break;
+    await apage.evaluate(() => {
+      [...(document.querySelector("tbody tr")?.querySelectorAll("button") ?? [])]
+        .find((b) => b.textContent.trim() === "Delete")
+        ?.click();
+    });
+    await apage.waitForFunction(
+      (n) => document.querySelectorAll("tbody tr").length < n,
+      { timeout: 25000 },
+      count,
+    );
+  }
+
+  await apage.evaluate(() => {
+    [...document.querySelectorAll("button")].find((b) =>
+      b.textContent.includes("+ New discount"),
+    )?.click();
+  });
+  await apage.waitForSelector("#discount-product", { timeout: 15000 });
+  const productId = await apage.$eval(
+    "#discount-product",
+    (sel) => sel.options[1]?.value ?? "",
+  );
+  check(productId !== "", "no products offered in the discount target dropdown");
+  await apage.select("#discount-product", productId);
+  await apage.type("#discount-value", "15");
+  await apage.evaluate(() => document.querySelector('button[form="discount-form"]')?.click());
+  await apage.waitForFunction(() => document.querySelectorAll("tbody tr").length > 0, {
+    timeout: 25000,
+  });
+  await shot(apage, "17e-admin-discounts");
+
+  // Clean up: rules are global — leftovers would discount the storefront.
+  await apage.evaluate(() => {
+    [...(document.querySelector("tbody tr")?.querySelectorAll("button") ?? [])]
+      .find((b) => b.textContent.trim() === "Delete")
+      ?.click();
+  });
+  await apage.waitForFunction(() => document.querySelectorAll("tbody tr").length === 0, {
+    timeout: 25000,
+  });
 });
 
 await run("hidden review disappears for the customer", async () => {

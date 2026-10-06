@@ -98,6 +98,7 @@ from fastapi import Query  # noqa: E402
 
 from app.modules.catalog.admin_router import router as catalog_admin_router  # noqa: E402
 from app.modules.catalog.router import router as catalog_router  # noqa: E402
+from app.modules.discounts.admin_router import router as discounts_admin_router  # noqa: E402
 from app.modules.inventory.router import router as inventory_admin_router  # noqa: E402
 from app.modules.notifications.router import router as notifications_router  # noqa: E402
 from app.modules.orders.admin_router import router as orders_admin_router  # noqa: E402
@@ -118,6 +119,7 @@ app.include_router(cart_checkout_router, prefix=f"{API_PREFIX}")
 app.include_router(orders_router, prefix=f"{API_PREFIX}")
 app.include_router(catalog_admin_router, prefix=f"{API_PREFIX}")
 app.include_router(inventory_admin_router, prefix=f"{API_PREFIX}")
+app.include_router(discounts_admin_router, prefix=f"{API_PREFIX}")
 app.include_router(orders_admin_router, prefix=f"{API_PREFIX}")
 app.include_router(reviews_router, prefix=f"{API_PREFIX}")
 app.include_router(reviews_admin_router, prefix=f"{API_PREFIX}")

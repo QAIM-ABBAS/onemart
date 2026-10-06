@@ -460,7 +460,23 @@ export function CheckoutPage() {
                 <dt className="text-ink-muted">Subtotal</dt>
                 <dd className="num font-medium">{money(cartSummary.subtotal)}</dd>
               </div>
-              {cartSummary.discount > 0 ? (
+              {cartSummary.auto_discount > 0 ? (
+                <div className="flex justify-between">
+                  <dt className="text-ink-muted">Discount</dt>
+                  <dd className="num font-medium text-deal">−{money(cartSummary.auto_discount)}</dd>
+                </div>
+              ) : null}
+              {cartSummary.coupon?.kind === "free_delivery" ? (
+                <div className="flex items-center justify-between gap-3">
+                  <dt className="text-ink-muted">
+                    Coupon{" "}
+                    <span className="rounded-md bg-highlight px-1.5 py-0.5 text-[0.6875rem] font-semibold text-highlight-ink">
+                      {cartSummary.coupon.code}
+                    </span>
+                  </dt>
+                  <dd className="num shrink-0 font-medium text-brand-600">Free delivery</dd>
+                </div>
+              ) : cartSummary.discount > 0 ? (
                 <div className="flex items-center justify-between gap-3">
                   <dt className="text-ink-muted">
                     Coupon{" "}

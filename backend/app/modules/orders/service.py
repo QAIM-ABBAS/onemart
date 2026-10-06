@@ -112,6 +112,7 @@ def checkout(db: Session, user: User, cart: Cart, payload: CheckoutIn) -> Order:
     pricing = price_cart(
         discounts_service.cart_lines(cart),
         discounts_service.spec_for(coupon) if coupon is not None else None,
+        auto_discount=discounts_service.auto_discount_total(db, cart),
     )
 
     order = Order(
@@ -128,7 +129,7 @@ def checkout(db: Session, user: User, cart: Cart, payload: CheckoutIn) -> Order:
         postal_code=address["postal_code"],
         country=address["country"],
         subtotal=pricing.subtotal,
-        discount_total=pricing.discount,
+        discount_total=pricing.total_discount,
         delivery_fee=pricing.delivery,
         total=pricing.total,
         coupon_id=pricing.coupon_id,
@@ -169,7 +170,7 @@ def checkout(db: Session, user: User, cart: Cart, payload: CheckoutIn) -> Order:
 
     if pricing.has_coupon and coupon is not None:
         discounts_service.record_redemption(
-            db, coupon, user_id=user.id, order_id=order.id, discount=pricing.discount
+            db, coupon, user_id=user.id, order_id=order.id, discount=pricing.coupon_value
         )
 
     result = provider.authorize(order, pricing.total)

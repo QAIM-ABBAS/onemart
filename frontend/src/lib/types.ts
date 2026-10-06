@@ -238,6 +238,8 @@ export interface CartOut {
   id: number;
   items: CartItemOut[];
   subtotal: number;
+  /** Automatic (no-code) discount rules applied before any coupon */
+  auto_discount: number;
   discount: number;
   coupon: CouponOut | null;
   delivery_fee: number;
@@ -253,6 +255,7 @@ export interface PaymentMethodInfo {
 export interface CheckoutSummary {
   items: CartItemOut[];
   subtotal: number;
+  auto_discount: number;
   discount: number;
   coupon: CouponOut | null;
   delivery_fee: number;
@@ -410,6 +413,68 @@ export interface CategoryWrite {
 
 export interface BrandWrite {
   name: string;
+}
+
+/** Status chip computed server-side from the window + the active flag. */
+export type PromoStatus = "active" | "scheduled" | "expired" | "inactive";
+
+export interface CouponAdminOut {
+  id: number;
+  code: string;
+  description?: string | null;
+  kind: "percent" | "fixed" | "free_delivery";
+  value: number;
+  min_subtotal: number;
+  max_discount?: number | null;
+  starts_at?: string | null;
+  ends_at?: string | null;
+  usage_limit?: number | null;
+  per_user_limit?: number | null;
+  used_count: number;
+  is_active: boolean;
+  status: PromoStatus;
+  created_at: string;
+}
+
+export interface CouponWrite {
+  code?: string;
+  description?: string | null;
+  kind?: "percent" | "fixed" | "free_delivery";
+  value?: number;
+  min_subtotal?: number;
+  max_discount?: number | null;
+  starts_at?: string | null;
+  ends_at?: string | null;
+  usage_limit?: number | null;
+  per_user_limit?: number | null;
+  is_active?: boolean;
+}
+
+export interface DiscountAdminOut {
+  id: number;
+  scope: "product" | "category";
+  kind: "percent" | "fixed";
+  value: number;
+  product_id?: number | null;
+  category_id?: number | null;
+  product_name?: string | null;
+  category_name?: string | null;
+  starts_at?: string | null;
+  ends_at?: string | null;
+  is_active: boolean;
+  status: PromoStatus;
+  created_at: string;
+}
+
+export interface DiscountWrite {
+  scope?: "product" | "category";
+  kind?: "percent" | "fixed";
+  value?: number;
+  product_id?: number | null;
+  category_id?: number | null;
+  starts_at?: string | null;
+  ends_at?: string | null;
+  is_active?: boolean;
 }
 
 export interface InventoryRow {

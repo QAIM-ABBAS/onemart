@@ -7,17 +7,25 @@ discounted total). The final guard is :func:`claim_usage`, an atomic conditional
 UPDATE that only one of two racing customers can win.
 """
 
+from collections import defaultdict
 from datetime import UTC, datetime
 from decimal import Decimal
 
-from sqlalchemy import func, or_, select, update
+from sqlalchemy import and_, func, or_, select, update
 from sqlalchemy.orm import Session
 
 from app.core.exceptions import AppError, ConflictError, NotFoundError
 from app.modules.cart.models import Cart
 from app.modules.discounts.exceptions import CouponError
-from app.modules.discounts.models import Coupon, CouponRedemption
+from app.modules.discounts.models import (
+    Coupon,
+    CouponRedemption,
+    Discount,
+    DiscountKind,
+    DiscountScope,
+)
 from app.modules.discounts.pricing import (
+    HUNDRED,
     ZERO,
     CouponSpec,
     Pricing,
@@ -29,6 +37,7 @@ from app.modules.discounts.pricing import (
 __all__ = [
     "active_coupon",
     "apply_coupon",
+    "auto_discount_total",
     "cart_lines",
     "claim_usage",
     "clear_coupon",
@@ -156,10 +165,124 @@ def clear_coupon(db: Session, cart: Cart) -> None:
     db.flush()
 
 
+def _rule_amount(rule: Discount, base: Decimal) -> Decimal:
+    """Rupees this rule takes off a group base of ``base``."""
+    if rule.kind == DiscountKind.PERCENT:
+        return money(min(base * rule.value / HUNDRED, base))
+    return money(min(rule.value, base))
+
+
+def auto_discount_total(db: Session, cart: Cart) -> Decimal:
+    """The automatic (no-code) discount for this cart — the pricing engine's
+    first layer, applied before any coupon.
+
+    Rules, all evaluated against ``is_active`` rows inside their window:
+      * product-scope rules claim a line before category-scope ones;
+      * within the winning scope the single best rule wins (percent and fixed
+        compared by the rupees they would actually take) — nothing stacks;
+      * a ``fixed`` rule pays once per product/category group, not per line.
+    """
+    if not cart.items:
+        return ZERO
+
+    from app.modules.catalog.models import Product, ProductVariant
+
+    now = datetime.now(UTC)
+    variant_ids = {item.variant_id for item in cart.items}
+    variant_product = dict(
+        db.execute(
+            select(ProductVariant.id, ProductVariant.product_id).where(
+                ProductVariant.id.in_(variant_ids)
+            )
+        ).all()
+    )
+    product_ids = set(variant_product.values())
+    if not product_ids:
+        return ZERO
+    product_category = dict(
+        db.execute(
+            select(Product.id, Product.category_id).where(Product.id.in_(product_ids))
+        ).all()
+    )
+
+    category_ids = {
+        product_category[pid]
+        for pid in product_ids
+        if product_category.get(pid) is not None
+    }
+    candidates = db.scalars(
+        select(Discount).where(
+            Discount.is_active.is_(True),
+            or_(Discount.starts_at.is_(None), Discount.starts_at <= now),
+            or_(Discount.ends_at.is_(None), Discount.ends_at > now),
+            or_(
+                and_(
+                    Discount.scope == DiscountScope.PRODUCT,
+                    Discount.product_id.in_(product_ids),
+                ),
+                and_(
+                    Discount.scope == DiscountScope.CATEGORY,
+                    Discount.category_id.in_(category_ids),
+                ),
+            ),
+        )
+    ).all()
+    if not candidates:
+        return ZERO
+
+    by_product: dict[int, list[Discount]] = defaultdict(list)
+    by_category: dict[int, list[Discount]] = defaultdict(list)
+    for rule in candidates:
+        if rule.scope == DiscountScope.PRODUCT and rule.product_id is not None:
+            by_product[rule.product_id].append(rule)
+        elif rule.category_id is not None:
+            by_category[rule.category_id].append(rule)
+
+    # One entry per cart line: (product_id, category_id, line base).
+    lines: list[tuple[int, int | None, Decimal]] = []
+    for item in cart.items:
+        pid = variant_product.get(item.variant_id)
+        if pid is None:
+            continue
+        lines.append(
+            (pid, product_category.get(pid), money(item.unit_price) * item.quantity)
+        )
+
+    total = ZERO
+    claimed: list[bool] = [False] * len(lines)
+
+    # Product-scope groups claim their lines outright — product beats category.
+    product_groups: dict[int, list[int]] = defaultdict(list)
+    for index, (pid, _cid, _base) in enumerate(lines):
+        if pid in by_product:
+            product_groups[pid].append(index)
+    for pid, indexes in product_groups.items():
+        base = sum((lines[i][2] for i in indexes), ZERO)
+        total += max(_rule_amount(rule, base) for rule in by_product[pid])
+        for i in indexes:
+            claimed[i] = True
+
+    # What is left falls back to category-scope rules.
+    category_groups: dict[int, list[int]] = defaultdict(list)
+    for index, (_pid, cid, _base) in enumerate(lines):
+        if not claimed[index] and cid is not None and cid in by_category:
+            category_groups[cid].append(index)
+    for cid, indexes in category_groups.items():
+        base = sum((lines[i][2] for i in indexes), ZERO)
+        total += max(_rule_amount(rule, base) for rule in by_category[cid])
+
+    return money(min(total, cart_subtotal(cart_lines(cart))))
+
+
 def price_for_cart(db: Session, cart: Cart) -> Pricing:
-    """Price the cart with its (still valid) coupon attached."""
+    """Price the cart with its automatic discounts and (still valid) coupon."""
     coupon = active_coupon(db, cart)
-    return price_cart(cart_lines(cart), spec_for(coupon) if coupon is not None else None)
+    auto = auto_discount_total(db, cart)
+    return price_cart(
+        cart_lines(cart),
+        spec_for(coupon) if coupon is not None else None,
+        auto_discount=auto,
+    )
 
 
 def claim_usage(db: Session, coupon: Coupon) -> None:

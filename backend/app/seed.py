@@ -285,6 +285,13 @@ DEMO_COUPONS: list[dict] = [
         "min_subtotal": Decimal("999"),
         "description": "₹100 off orders over ₹999",
     },
+    {
+        "code": "FREESHIP",
+        "kind": CouponKind.FREE_DELIVERY,
+        "value": Decimal("0"),
+        "min_subtotal": Decimal("499"),
+        "description": "Free delivery on orders over ₹499",
+    },
 ]
 
 

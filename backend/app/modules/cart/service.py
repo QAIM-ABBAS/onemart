@@ -148,6 +148,7 @@ def serialize_cart(db: Session, cart: Cart) -> CartOut:
         id=cart.id,
         items=items,
         subtotal=float(pricing.subtotal),
+        auto_discount=float(pricing.auto_discount),
         discount=float(pricing.discount),
         coupon=(
             CouponOut(
@@ -155,7 +156,7 @@ def serialize_cart(db: Session, cart: Cart) -> CartOut:
                 kind=coupon.kind.value,
                 value=float(coupon.value),
                 description=coupon.description,
-                discount=float(pricing.discount),
+                discount=float(pricing.coupon_value),
             )
             if coupon is not None
             else None

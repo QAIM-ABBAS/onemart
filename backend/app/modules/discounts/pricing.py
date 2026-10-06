@@ -8,7 +8,7 @@ Everything is ``Decimal``; each field is rounded exactly once with ROUND_HALF_UP
 and the fields are derived from the rounded values above them so the printed
 arithmetic always adds up:
 
-    total == (subtotal - discount) + delivery
+    total == (subtotal - auto_discount - discount) + delivery
 
 No imports from other app modules — the engine is pure and unit-testable.
 """
@@ -26,6 +26,7 @@ FREE_DELIVERY_OVER = Decimal("999.00")
 
 PERCENT = "percent"
 FIXED = "fixed"
+FREE_DELIVERY = "free_delivery"
 
 
 def money(value: Decimal | float | int | str) -> Decimal:
@@ -56,11 +57,23 @@ class Pricing:
     total: Decimal
     coupon_id: int | None = None
     coupon_code: str | None = None
+    # Automatic (non-coupon) line discounts chosen by the admin rules; the
+    # coupon then applies to what is left of the goods.
+    auto_discount: Decimal = ZERO
+    # What the coupon was worth: the goods discount, or the waived delivery for
+    # a free_delivery coupon (which leaves ``discount`` at zero).
+    coupon_value: Decimal = ZERO
 
     @property
     def payable(self) -> Decimal:
-        """What the items cost after the discount (delivery excluded)."""
-        return self.subtotal - self.discount
+        """What the items cost after the automatic and coupon discounts
+        (delivery excluded)."""
+        return self.subtotal - self.auto_discount - self.discount
+
+    @property
+    def total_discount(self) -> Decimal:
+        """Everything taken off the list prices (automatic + coupon)."""
+        return self.auto_discount + self.discount
 
     @property
     def has_coupon(self) -> bool:
@@ -104,41 +117,69 @@ def discount_amount(
 def price_cart(
     lines: Iterable[tuple[Decimal | float, int]],
     coupon: CouponSpec | None = None,
+    *,
+    auto_discount: Decimal | float | int | str = ZERO,
 ) -> Pricing:
-    """Price a cart, optionally with a coupon.
+    """Price a cart: base prices -> automatic discount -> coupon -> delivery.
 
-    Delivery is decided on the *discounted* amount: a ₹1050 basket with a ₹100
-    coupon pays on ₹950 and therefore does not qualify for free delivery.
+    ``auto_discount`` is the sum the admin rules picked for this cart
+    (:func:`app.modules.discounts.service.auto_discount_total`); it comes off
+    the goods first and the coupon applies to what is left. Delivery is decided
+    on that final amount: a ₹1050 basket with a ₹100 coupon pays on ₹950 and
+    therefore does not qualify for free delivery.
+
+    A ``free_delivery`` coupon waives the delivery line instead of cutting the
+    goods; ``coupon_value`` reports what the coupon was worth either way. The
+    coupon is only attached when it actually changes the bill (a code that
+    saves nothing — e.g. free delivery on a cart that already qualifies — is
+    not recorded as applied or redeemed).
     """
     subtotal = cart_subtotal(lines)
+    auto = money(min(_as_decimal(auto_discount), subtotal))
+
+    goods = subtotal - auto
 
     discount = ZERO
+    coupon_value = ZERO
     coupon_id: int | None = None
     coupon_code: str | None = None
+    waive_delivery = False
     if coupon is not None and subtotal > ZERO:
-        discount = discount_amount(
-            subtotal,
-            kind=coupon.kind,
-            value=coupon.value,
-            max_discount=coupon.max_discount,
-        )
-        if discount > ZERO:
-            coupon_id = coupon.id
-            coupon_code = coupon.code
+        if coupon.kind == FREE_DELIVERY:
+            waive_delivery = True
+        else:
+            discount = discount_amount(
+                goods,
+                kind=coupon.kind,
+                value=coupon.value,
+                max_discount=coupon.max_discount,
+            )
+            if discount > ZERO:
+                coupon_id = coupon.id
+                coupon_code = coupon.code
+                coupon_value = discount
+        goods -= discount
 
-    payable = subtotal - discount
-    if subtotal == ZERO or payable >= FREE_DELIVERY_OVER:
+    if subtotal == ZERO or goods >= FREE_DELIVERY_OVER:
         delivery = ZERO
     else:
         delivery = DELIVERY_FEE
+
+    if waive_delivery and delivery > ZERO:
+        coupon_id = coupon.id
+        coupon_code = coupon.code
+        coupon_value = delivery
+        delivery = ZERO
 
     return Pricing(
         subtotal=money(subtotal),
         discount=money(discount),
         delivery=money(delivery),
-        total=money(payable + delivery),
+        total=money(goods + delivery),
         coupon_id=coupon_id,
         coupon_code=coupon_code,
+        auto_discount=auto,
+        coupon_value=money(coupon_value),
     )
 
 

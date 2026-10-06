@@ -4,6 +4,10 @@ import { api } from "@/lib/api";
 import type {
   CategoryNode,
   CategoryWrite,
+  CouponAdminOut,
+  CouponWrite,
+  DiscountAdminOut,
+  DiscountWrite,
   InventoryRow,
   OrderDetail,
   OrderListItem,
@@ -230,5 +234,95 @@ export function useDeleteAdminReview() {
     mutationFn: (review: { id: number; product_slug: string }) =>
       api.del<void>(`/admin/reviews/${review.id}`),
     onSuccess: (_data, review) => reviewSideEffects(qc, review.product_slug),
+  });
+}
+
+// --------------------------------------------------------------------------- //
+// Promotions: coupons + automatic discounts
+// --------------------------------------------------------------------------- //
+
+export interface AdminCouponQueryParams {
+  page?: number;
+  page_size?: number;
+  sort?: string;
+  status?: string;
+  q?: string;
+}
+
+export function useAdminCoupons(params: AdminCouponQueryParams) {
+  return useQuery({
+    queryKey: ["admin", "coupons", params],
+    queryFn: () => api.get<Page<CouponAdminOut>>("/admin/coupons", { ...params }),
+    placeholderData: keepPreviousData,
+  });
+}
+
+export function useSaveCoupon() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: ({ id, payload }: { id?: number; payload: CouponWrite }) =>
+      id
+        ? api.patch<CouponAdminOut>(`/admin/coupons/${id}`, payload)
+        : api.post<CouponAdminOut>("/admin/coupons", payload),
+    onSuccess: () => {
+      void qc.invalidateQueries({ queryKey: ["admin", "coupons"] });
+      // cart/checkout totals are recomputed server-side from these rules
+      void qc.invalidateQueries({ queryKey: ["cart"] });
+      void qc.invalidateQueries({ queryKey: ["checkout-summary"] });
+    },
+  });
+}
+
+export function useDeleteCoupon() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (couponId: number) => api.del<void>(`/admin/coupons/${couponId}`),
+    onSuccess: () => {
+      void qc.invalidateQueries({ queryKey: ["admin", "coupons"] });
+      void qc.invalidateQueries({ queryKey: ["cart"] });
+    },
+  });
+}
+
+export interface AdminDiscountQueryParams {
+  page?: number;
+  page_size?: number;
+  sort?: string;
+  scope?: string;
+  status?: string;
+  q?: string;
+}
+
+export function useAdminDiscounts(params: AdminDiscountQueryParams) {
+  return useQuery({
+    queryKey: ["admin", "discounts", params],
+    queryFn: () => api.get<Page<DiscountAdminOut>>("/admin/discounts", { ...params }),
+    placeholderData: keepPreviousData,
+  });
+}
+
+export function useSaveDiscount() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: ({ id, payload }: { id?: number; payload: DiscountWrite }) =>
+      id
+        ? api.patch<DiscountAdminOut>(`/admin/discounts/${id}`, payload)
+        : api.post<DiscountAdminOut>("/admin/discounts", payload),
+    onSuccess: () => {
+      void qc.invalidateQueries({ queryKey: ["admin", "discounts"] });
+      void qc.invalidateQueries({ queryKey: ["cart"] });
+      void qc.invalidateQueries({ queryKey: ["checkout-summary"] });
+    },
+  });
+}
+
+export function useDeleteDiscount() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (discountId: number) => api.del<void>(`/admin/discounts/${discountId}`),
+    onSuccess: () => {
+      void qc.invalidateQueries({ queryKey: ["admin", "discounts"] });
+      void qc.invalidateQueries({ queryKey: ["cart"] });
+    },
   });
 }

@@ -149,6 +149,7 @@ def checkout_summary(
     return {
         "items": summary.items,
         "subtotal": summary.subtotal,
+        "auto_discount": summary.auto_discount,
         "discount": summary.discount,
         "coupon": summary.coupon,
         "delivery_fee": summary.delivery_fee,

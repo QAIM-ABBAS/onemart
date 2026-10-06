@@ -25,6 +25,7 @@ class CartOut(BaseModel):
     id: int
     items: list[CartItemOut]
     subtotal: float
+    auto_discount: float = 0.0
     discount: float = 0.0
     coupon: CouponOut | None = None
     delivery_fee: float

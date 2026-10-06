@@ -394,3 +394,220 @@ def test_concurrent_redemption_only_one_customer_wins(client, db, seed_catalog):
     assert coupon.used_count == 1, "usage limit must not overshoot under contention"
     assert db.scalar(select(func.count()).select_from(CouponRedemption)) == 1
     assert db.scalar(select(func.count()).select_from(Order)) == 1
+
+
+# --------------------------------------------------------------------------- #
+# Automatic discounts (the layer before the coupon)
+# --------------------------------------------------------------------------- #
+
+
+def _discount(db, **overrides):
+    from app.modules.discounts.models import Discount, DiscountKind, DiscountScope
+
+    spec = dict(
+        scope=DiscountScope.PRODUCT,
+        kind=DiscountKind.PERCENT,
+        value=Decimal("10"),
+        is_active=True,
+    )
+    spec.update(overrides)
+    row = Discount(**spec)
+    db.add(row)
+    db.commit()
+    return row
+
+
+def test_engine_applies_the_automatic_discount_before_the_coupon():
+    from app.modules.discounts.pricing import price_cart
+
+    pricing = price_cart([(Decimal("199.99"), 1)], None, auto_discount=Decimal("20"))
+    assert pricing.auto_discount == Decimal("20.00")
+    assert pricing.discount == Decimal("0.00")
+    assert pricing.payable == Decimal("179.99")
+    assert pricing.delivery == Decimal("40.00")
+    assert pricing.total == Decimal("219.99")
+    # printed arithmetic always adds up, now including the first layer
+    assert pricing.total == (
+        (pricing.subtotal - pricing.auto_discount - pricing.discount) + pricing.delivery
+    )
+
+
+def test_automatic_discount_is_capped_at_the_goods():
+    from app.modules.discounts.pricing import price_cart
+
+    pricing = price_cart([(Decimal("60.00"), 1)], None, auto_discount=Decimal("500"))
+    assert pricing.auto_discount == Decimal("60.00")  # never more than the basket
+    assert pricing.payable == Decimal("0.00")
+    assert pricing.total == Decimal("40.00")  # delivery still applies
+
+
+def test_product_discount_beats_the_category_discount(client, db, customer, seed_catalog):
+    from app.modules.discounts.models import DiscountScope
+
+    headers = login(client, customer)
+    client.post("/api/cart/items", json={"variant_id": 2, "quantity": 3}, headers=headers)  # 540
+    _discount(db, product_id=seed_catalog["product"].id, value=Decimal("10"))
+    _discount(
+        db,
+        scope=DiscountScope.CATEGORY,
+        category_id=seed_catalog["category"].id,
+        value=Decimal("30"),
+    )
+
+    body = client.get("/api/cart", headers=headers).json()
+    assert body["subtotal"] == 540
+    assert body["auto_discount"] == 54  # 10% product rule beats the 30% category rule
+    assert body["discount"] == 0  # no coupon involved
+    assert body["total"] == 526  # 486 + 40 delivery
+
+
+def test_best_single_rule_wins_and_fixed_pays_once_per_category(client, db, seed_catalog):
+    from app.modules.discounts.models import DiscountKind, DiscountScope
+
+    client.post("/api/cart/items", json={"variant_id": 1, "quantity": 1})  # 100
+    client.post("/api/cart/items", json={"variant_id": 2, "quantity": 2})  # 360
+    category_id = seed_catalog["category"].id
+
+    ten = _discount(db, scope=DiscountScope.CATEGORY, category_id=category_id, value=Decimal("10"))
+    twenty = _discount(
+        db, scope=DiscountScope.CATEGORY, category_id=category_id, value=Decimal("20")
+    )
+
+    body = client.get("/api/cart").json()
+    assert body["auto_discount"] == 92  # best single rule (20%), never stacked (30%)
+
+    db.delete(ten)
+    db.delete(twenty)
+    db.commit()
+    _discount(
+        db,
+        scope=DiscountScope.CATEGORY,
+        category_id=category_id,
+        kind=DiscountKind.FIXED,
+        value=Decimal("50"),
+    )
+    body = client.get("/api/cart").json()
+    assert body["auto_discount"] == 50  # fixed pays once per group, not per line
+
+
+def test_automatic_discount_respects_its_window_and_active_flag(
+    client, db, customer, seed_catalog
+):
+    headers = login(client, customer)
+    client.post("/api/cart/items", json={"variant_id": 2, "quantity": 3}, headers=headers)  # 540
+    rule = _discount(db, product_id=seed_catalog["product"].id, is_active=False)
+
+    def auto_now() -> float:
+        return client.get("/api/cart", headers=headers).json()["auto_discount"]
+
+    assert auto_now() == 0  # switched off
+
+    now = datetime.now(UTC)
+    rule.is_active = True
+    rule.starts_at = now + timedelta(days=1)
+    rule.ends_at = now + timedelta(days=8)
+    db.commit()
+    assert auto_now() == 0  # scheduled
+
+    rule.starts_at = now - timedelta(days=8)
+    rule.ends_at = now - timedelta(days=1)
+    db.commit()
+    assert auto_now() == 0  # expired
+
+    rule.starts_at = now - timedelta(days=1)
+    rule.ends_at = now + timedelta(days=1)
+    db.commit()
+    assert auto_now() == 54  # running now
+
+
+def test_automatic_discount_then_coupon_order_of_operations(client, db, customer, seed_catalog):
+    headers = login(client, customer)
+    client.post("/api/cart/items", json={"variant_id": 2, "quantity": 3}, headers=headers)  # 540
+    _discount(db, product_id=seed_catalog["product"].id, value=Decimal("10"))  # 54 off
+    _coupon(db, value=Decimal("10"))  # 10% of the remaining 486
+
+    body = client.post("/api/cart/coupon", json={"code": "TEST10"}, headers=headers).json()
+    assert body["auto_discount"] == 54
+    assert body["discount"] == 48.6  # coupon applies after the automatic layer
+    assert body["delivery_fee"] == 40  # 437.40 payable -> still below ₹999
+    assert body["total"] == 477.4
+
+
+def test_checkout_snapshots_both_discount_layers(client, db, customer, seed_catalog):
+    from app.modules.discounts.models import CouponRedemption
+
+    headers = login(client, customer)
+    client.post("/api/cart/items", json={"variant_id": 2, "quantity": 3}, headers=headers)  # 540
+    _discount(db, product_id=seed_catalog["product"].id, value=Decimal("10"))  # 54 off
+    _coupon(db, value=Decimal("10"))  # 48.60 off
+    assert (
+        client.post("/api/cart/coupon", json={"code": "TEST10"}, headers=headers).status_code
+        == 200
+    )
+
+    summary = client.get("/api/checkout/summary", headers=headers).json()
+    response = client.post("/api/checkout", json={"address": ADDRESS}, headers=headers)
+    assert response.status_code == 201, response.text
+    order = response.json()
+
+    assert order["subtotal"] == 540
+    assert order["discount_total"] == 102.6  # both layers snapshotted as the total off
+    assert order["total"] == 477.4
+
+    # what the customer was shown is exactly what they were charged
+    assert summary["auto_discount"] == 54
+    assert summary["discount"] == 48.6
+    assert summary["total"] == order["total"]
+
+    db.expire_all()
+    redemption = db.scalar(select(CouponRedemption))
+    assert redemption.discount_amount == Decimal("48.60")  # records the coupon only
+
+
+def test_free_delivery_coupon_waives_the_delivery_line(client, db, customer, seed_catalog):
+    from app.modules.discounts.models import Coupon, CouponKind, CouponRedemption
+
+    headers = login(client, customer)
+    client.post("/api/cart/items", json={"variant_id": 2, "quantity": 3}, headers=headers)  # 540
+    _coupon(db, code="FREESHIP", kind=CouponKind.FREE_DELIVERY, value=Decimal("0"))
+
+    body = client.post("/api/cart/coupon", json={"code": "FREESHIP"}, headers=headers).json()
+    assert body["coupon"]["kind"] == "free_delivery"
+    assert body["discount"] == 0  # nothing comes off the goods
+    assert body["coupon"]["discount"] == 40  # ...but the delivery line is worth ₹40
+    assert body["delivery_fee"] == 0
+    assert body["total"] == 540
+
+    order = client.post("/api/checkout", json={"address": ADDRESS}, headers=headers)
+    assert order.status_code == 201, order.text
+    assert order.json()["delivery_fee"] == 0
+    assert order.json()["total"] == 540
+
+    db.expire_all()
+    redemption = db.scalar(select(CouponRedemption))
+    assert redemption.discount_amount == Decimal("40.00")  # usage records what it saved
+    assert db.scalar(select(Coupon.used_count)) == 1
+
+
+def test_a_no_op_free_delivery_code_is_not_applied_or_redeemed(
+    client, db, customer, seed_catalog
+):
+    from app.modules.discounts.models import CouponKind, CouponRedemption
+
+    headers = login(client, customer)
+    client.post("/api/cart/items", json={"variant_id": 2, "quantity": 6}, headers=headers)  # 1080
+    _coupon(db, code="FREESHIP", kind=CouponKind.FREE_DELIVERY, value=Decimal("0"))
+
+    # delivery is already free at ₹1080, so the code saves nothing and is not
+    # shown as applied — and never claims a redemption slot.
+    body = client.post("/api/cart/coupon", json={"code": "FREESHIP"}, headers=headers).json()
+    assert body["coupon"] is None
+    assert body["delivery_fee"] == 0
+    assert body["total"] == 1080
+
+    order = client.post("/api/checkout", json={"address": ADDRESS}, headers=headers)
+    assert order.status_code == 201, order.text
+    assert order.json()["coupon_code"] is None
+
+    db.expire_all()
+    assert db.scalar(select(func.count()).select_from(CouponRedemption)) == 0

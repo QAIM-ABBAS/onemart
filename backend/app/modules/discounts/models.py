@@ -2,7 +2,17 @@ import enum
 from datetime import datetime
 from decimal import Decimal
 
-from sqlalchemy import DateTime, ForeignKey, Integer, Numeric, String, UniqueConstraint, func
+from sqlalchemy import (
+    Boolean,
+    DateTime,
+    ForeignKey,
+    Index,
+    Integer,
+    Numeric,
+    String,
+    UniqueConstraint,
+    func,
+)
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.core.db import Base
@@ -12,6 +22,7 @@ from app.core.types import TimestampMixin, string_enum
 class CouponKind(enum.StrEnum):
     PERCENT = "percent"
     FIXED = "fixed"
+    FREE_DELIVERY = "free_delivery"
 
 
 class Coupon(TimestampMixin, Base):
@@ -64,3 +75,52 @@ class CouponRedemption(Base):
     )
 
     coupon: Mapped[Coupon] = relationship(back_populates="redemptions")
+
+
+class DiscountScope(enum.StrEnum):
+    PRODUCT = "product"
+    CATEGORY = "category"
+
+
+class DiscountKind(enum.StrEnum):
+    PERCENT = "percent"
+    FIXED = "fixed"
+
+
+class Discount(TimestampMixin, Base):
+    """An automatic discount: applied by the pricing engine with no code needed.
+
+    Separate table from ``Coupon`` by design — these are scoped rules
+    (product *or* category) with a validity window, never typed by a customer.
+    The engine takes the single best discount per group and never stacks them.
+
+    A row always targets exactly one thing: ``scope`` says which column is set
+    (enforced in the admin service; Postgres keeps both nullable so the row can
+    be deleted with its product via CASCADE).
+    """
+
+    __tablename__ = "discounts"
+    __table_args__ = (
+        Index("ix_discounts_product_id", "product_id"),
+        Index("ix_discounts_category_id", "category_id"),
+        Index("ix_discounts_active_window", "is_active", "starts_at", "ends_at"),
+    )
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    scope: Mapped[DiscountScope] = mapped_column(
+        string_enum(DiscountScope, "discount_scope"), nullable=False
+    )
+    kind: Mapped[DiscountKind] = mapped_column(
+        string_enum(DiscountKind, "discount_kind"), nullable=False
+    )
+    # percent: 1-100 (10 means 10% off) · fixed: rupees off the group's items
+    value: Mapped[Decimal] = mapped_column(Numeric(12, 2), nullable=False)
+    product_id: Mapped[int | None] = mapped_column(
+        ForeignKey("products.id", ondelete="CASCADE")
+    )
+    category_id: Mapped[int | None] = mapped_column(
+        ForeignKey("categories.id", ondelete="CASCADE")
+    )
+    starts_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    ends_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    is_active: Mapped[bool] = mapped_column(Boolean, default=True, nullable=False)
