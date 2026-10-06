@@ -7,7 +7,7 @@ from app.core.exceptions import AppError, ConflictError, NotFoundError
 from app.modules.cart.models import Cart, CartItem
 from app.modules.cart.schemas import CartItemOut, CartOut, price
 from app.modules.discounts import service as discounts_service
-from app.modules.discounts.pricing import money
+from app.modules.discounts.pricing import free_delivery_gap, money
 from app.modules.discounts.schemas import CouponOut
 from app.modules.inventory.models import Inventory
 from app.modules.users.models import User
@@ -163,6 +163,7 @@ def serialize_cart(db: Session, cart: Cart) -> CartOut:
         ),
         delivery_fee=float(pricing.delivery),
         total=float(pricing.total),
+        free_delivery_gap=float(free_delivery_gap(pricing.payable)),
         item_count=count,
     )
 

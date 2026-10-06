@@ -78,11 +78,6 @@ export function CartPage() {
     );
   }
 
-  // Free delivery is judged on the amounts after the automatic *and* coupon
-  // discounts, exactly like the backend.
-  const payable = data.subtotal - data.auto_discount - data.discount;
-  const freeDeliveryGap = payable >= 999 ? 0 : Math.max(0, 999 - payable);
-
   const onApplyCoupon = (event: FormEvent) => {
     event.preventDefault();
     const code = couponCode.trim();
@@ -299,9 +294,9 @@ export function CartPage() {
                 <dd className="num font-semibold">{money(data.total)}</dd>
               </div>
             </dl>
-            {freeDeliveryGap > 0 ? (
+            {data.free_delivery_gap > 0 ? (
               <p className="bg-surface-2/50 px-5 py-3 text-[0.8125rem] text-ink-muted ">
-                Add <span className="num font-medium text-ink">{money(freeDeliveryGap)}</span> more
+                Add <span className="num font-medium text-ink">{money(data.free_delivery_gap)}</span> more
                 for free delivery.
               </p>
             ) : (

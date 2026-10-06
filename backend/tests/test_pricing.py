@@ -146,6 +146,20 @@ def test_unknown_coupon_kind_discounts_nothing():
 # --------------------------------------------------------------------------- #
 
 
+def test_cart_reports_the_free_delivery_gap_from_the_engine(client, db, seed_catalog):
+    """The gap travels with the cart so the UI never re-derives the ₹999
+    threshold in float arithmetic (which lands on 998.9999999999999 for
+    e.g. 1050.60 − 51.60 and shows "Add ₹0.00 more" next to "Free")."""
+    added = client.post("/api/cart/items", json={"variant_id": 2, "quantity": 5})  # 900
+    assert added.status_code == 201, added.text
+    assert added.json()["free_delivery_gap"] == 99.0
+
+    client.post("/api/cart/items", json={"variant_id": 2, "quantity": 1})  # 1080
+    body = client.get("/api/cart").json()
+    assert body["delivery_fee"] == 0
+    assert body["free_delivery_gap"] == 0.0
+
+
 def test_apply_coupon_updates_cart_totals(client, db, customer, seed_catalog):
     headers = login(client, customer)
     client.post("/api/cart/items", json={"variant_id": 2, "quantity": 3}, headers=headers)  # 540

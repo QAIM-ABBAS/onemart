@@ -30,6 +30,10 @@ class CartOut(BaseModel):
     coupon: CouponOut | None = None
     delivery_fee: float
     total: float
+    # How much more the customer must spend for free delivery, judged on the
+    # goods after all discounts — computed by the pricing engine (Decimal), so
+    # the UI never has to re-derive the threshold in float arithmetic.
+    free_delivery_gap: float = 0.0
     item_count: int
 
 

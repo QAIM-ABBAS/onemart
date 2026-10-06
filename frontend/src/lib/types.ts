@@ -244,6 +244,8 @@ export interface CartOut {
   coupon: CouponOut | null;
   delivery_fee: number;
   total: number;
+  /** How much more to spend for free delivery; 0 when already unlocked */
+  free_delivery_gap: number;
   item_count: number;
 }
 
