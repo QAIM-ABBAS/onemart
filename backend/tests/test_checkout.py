@@ -150,3 +150,39 @@ def test_concurrent_checkout_only_one_wins(client, db, seed_catalog):
     db.expire_all()
     assert db.get(Inventory, 1).quantity == 0
     assert db.query(Order).filter(Order.status != "cancelled").count() == 1
+
+
+def test_concurrent_checkout_of_the_same_cart_only_one_wins(client, db, customer, seed_catalog):
+    """Double click / two tabs: one cart checked out twice at the same moment.
+
+    Both requests see the cart, but the second blocks on the inventory locks the
+    first one holds; after the first commits it must find the cart empty rather
+    than build a duplicate order from its stale copy of the items.
+    """
+    from app.modules.orders.models import Order
+
+    headers = login(client, customer)
+    added = client.post("/api/cart/items", json={"variant_id": 2, "quantity": 1}, headers=headers)
+    assert added.status_code == 201, added.text
+
+    ready = threading.Barrier(2)
+    lock = threading.Lock()
+    results = []
+
+    def race() -> None:
+        with TestClient(app=client.app, base_url="http://testserver") as racer:
+            ready.wait(timeout=30)
+            response = racer.post("/api/checkout", json={"address": ADDRESS}, headers=headers)
+            with lock:
+                results.append(response)
+
+    with ThreadPoolExecutor(max_workers=2) as pool:
+        list(pool.map(lambda _: race(), range(2)))
+
+    codes = sorted(r.status_code for r in results)
+    assert codes == [201, 400], [r.status_code for r in results]
+    loser = next(r for r in results if r.status_code == 400)
+    assert loser.json()["error"]["message"] == "Your cart is empty"
+
+    db.expire_all()
+    assert db.query(Order).count() == 1, "one cart may only produce one order"

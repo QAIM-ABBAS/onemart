@@ -85,6 +85,16 @@ def checkout(db: Session, user: User, cart: Cart, payload: CheckoutIn) -> Order:
     ).scalars()
     inventory = {row.variant_id: row for row in locked_rows}
 
+    # The cart was loaded *before* these locks were taken, and a second,
+    # simultaneous checkout of the same cart (double click, two tabs) blocks on
+    # them until the first commits — by which point its items are gone. Re-check
+    # with a fresh statement: the loser gets a clean "cart is empty" instead of
+    # a duplicate order built from the stale in-memory items.
+    if not db.scalar(
+        select(func.count()).select_from(CartItem).where(CartItem.cart_id == cart.id)
+    ):
+        raise AppError("Your cart is empty")
+
     shortages = []
     for item in cart.items:
         row = inventory.get(item.variant_id)
