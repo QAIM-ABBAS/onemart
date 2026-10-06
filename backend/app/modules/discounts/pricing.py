@@ -13,7 +13,7 @@ arithmetic always adds up:
 No imports from other app modules — the engine is pure and unit-testable.
 """
 
-from collections.abc import Iterable, Sequence
+from collections.abc import Iterable
 from dataclasses import dataclass
 from decimal import ROUND_HALF_UP, Decimal
 
@@ -124,7 +124,9 @@ def price_cart(
 
     ``auto_discount`` is the sum the admin rules picked for this cart
     (:func:`app.modules.discounts.service.auto_discount_total`); it comes off
-    the goods first and the coupon applies to what is left. Delivery is decided
+    the goods first and the coupon applies to what is left. It is floored at
+    zero and capped at the subtotal, so a corrupt rule value can never inflate
+    the bill the way a negative value would otherwise. Delivery is decided
     on that final amount: a ₹1050 basket with a ₹100 coupon pays on ₹950 and
     therefore does not qualify for free delivery.
 
@@ -135,7 +137,7 @@ def price_cart(
     not recorded as applied or redeemed).
     """
     subtotal = cart_subtotal(lines)
-    auto = money(min(_as_decimal(auto_discount), subtotal))
+    auto = money(max(ZERO, min(_as_decimal(auto_discount), subtotal)))
 
     goods = subtotal - auto
 
@@ -189,7 +191,3 @@ def free_delivery_gap(subtotal_after_discount: Decimal | float) -> Decimal:
     if payable >= FREE_DELIVERY_OVER:
         return ZERO
     return money(FREE_DELIVERY_OVER - payable)
-
-
-def as_sequence(lines: Iterable[tuple[Decimal | float, int]]) -> Sequence[tuple[Decimal, int]]:
-    return [(_as_decimal(price), int(quantity)) for price, quantity in lines]

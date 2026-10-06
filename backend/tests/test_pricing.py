@@ -92,6 +92,20 @@ def test_max_discount_caps_the_percentage():
     assert pricing.total == Decimal("2300.00")
 
 
+def test_negative_auto_discount_is_clamped_to_zero():
+    from app.modules.discounts.pricing import price_cart
+
+    # Admin validation rejects rule values <= 0, but there is no DB CHECK: a
+    # corrupt row must never *inflate* the bill. The engine floors the automatic
+    # layer at zero exactly like discount_amount() floors the coupon.
+    pricing = price_cart([(Decimal("100.00"), 1)], auto_discount=Decimal("-10.00"))
+    assert pricing.auto_discount == Decimal("0.00")
+    assert pricing.total == Decimal("140.00")  # 100 + 40 delivery, not 150
+    assert pricing.total == (pricing.subtotal - pricing.auto_discount - pricing.discount) + (
+        pricing.delivery
+    )
+
+
 def test_free_delivery_is_judged_on_the_discounted_amount():
     from app.modules.discounts.pricing import price_cart
 
