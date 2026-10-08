@@ -13,8 +13,11 @@ import type {
   OrderDetail,
   OrderListItem,
   Page,
+  PaymentAdminOut,
+  PaymentDetailOut,
   ProductAdminOut,
   ProductWrite,
+  RefundIn,
   ReportOverview,
   ReportRangeKind,
   ReviewOut,
@@ -326,6 +329,56 @@ export function useDeleteDiscount() {
     onSuccess: () => {
       void qc.invalidateQueries({ queryKey: ["admin", "discounts"] });
       void qc.invalidateQueries({ queryKey: ["cart"] });
+    },
+  });
+}
+
+// --------------------------------------------------------------------------- //
+// Payments: audit attempts, inspect the gateway response, refund
+// --------------------------------------------------------------------------- //
+
+export interface AdminPaymentQueryParams {
+  page?: number;
+  page_size?: number;
+  sort?: string;
+  status?: string;
+  provider?: string;
+  q?: string;
+  start?: string;
+  end?: string;
+}
+
+export function useAdminPayments(params: AdminPaymentQueryParams) {
+  return useQuery({
+    queryKey: ["admin", "payments", params],
+    queryFn: () => api.get<Page<PaymentAdminOut>>("/admin/payments", { ...params }),
+    placeholderData: keepPreviousData,
+  });
+}
+
+export function useAdminPayment(paymentId: number | string | undefined) {
+  return useQuery({
+    queryKey: ["admin", "payment", paymentId == null ? "" : String(paymentId)],
+    queryFn: () => api.get<PaymentDetailOut>(`/admin/payments/${paymentId}`),
+    enabled: paymentId !== undefined && paymentId !== "",
+  });
+}
+
+/**
+ * Full, partial or manual refund of one attempt. Refund money leaves the
+ * gateway, so the list and the customer's order both need to re-read.
+ */
+export function useRefundPayment() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: ({ id, payload }: { id: number; payload: RefundIn }) =>
+      api.post<PaymentAdminOut>(`/admin/payments/${id}/refund`, payload),
+    onSuccess: (payment) => {
+      qc.setQueryData(["admin", "payment", String(payment.id)], payment);
+      void qc.invalidateQueries({ queryKey: ["admin", "payments"] });
+      void qc.invalidateQueries({ queryKey: ["admin", "orders"] });
+      void qc.invalidateQueries({ queryKey: ["orders"] });
+      void qc.invalidateQueries({ queryKey: ["order"] });
     },
   });
 }

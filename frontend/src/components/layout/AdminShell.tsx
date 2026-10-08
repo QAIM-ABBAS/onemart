@@ -4,6 +4,7 @@ import { Link, NavLink } from "react-router-dom";
 import { cn } from "@/lib/cn";
 
 import {
+  BanknoteIcon,
   BoxesIcon,
   ChartIcon,
   ClipboardIcon,
@@ -22,6 +23,7 @@ const NAV = [
   { to: "/admin/categories", label: "Categories", icon: FolderIcon },
   { to: "/admin/stock", label: "Stock", icon: BoxesIcon },
   { to: "/admin/orders", label: "Orders", icon: ClipboardIcon },
+  { to: "/admin/payments", label: "Payments", icon: BanknoteIcon },
   { to: "/admin/reports", label: "Reports", icon: ChartIcon },
   { to: "/admin/coupons", label: "Coupons", icon: TagIcon },
   { to: "/admin/discounts", label: "Discounts", icon: PercentIcon },

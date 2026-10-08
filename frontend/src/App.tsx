@@ -10,6 +10,7 @@ import { HomePage } from "@/pages/Home";
 import { LoginPage, RegisterPage } from "@/pages/Auth";
 import { NotFoundPage } from "@/pages/NotFound";
 import { OrderDetailPage, OrdersPage } from "@/pages/Orders";
+import { PaymentResultPage } from "@/pages/PaymentResult";
 import { ProductPage } from "@/pages/Product";
 import { BrowsePage } from "@/pages/Browse";
 import { WishlistPage } from "@/pages/Wishlist";
@@ -19,6 +20,7 @@ import { AdminOrdersPage } from "@/pages/admin/Orders";
 import { AdminOrderDetailPage } from "@/pages/admin/OrderDetail";
 import { AdminProductFormPage } from "@/pages/admin/ProductForm";
 import { AdminProductsPage } from "@/pages/admin/Products";
+import { AdminPaymentsPage } from "@/pages/admin/Payments";
 import { AdminReviewsPage } from "@/pages/admin/Reviews";
 import { AdminCouponsPage } from "@/pages/admin/Coupons";
 import { AdminDiscountsPage } from "@/pages/admin/Discounts";
@@ -77,6 +79,14 @@ export function App() {
               <RequireAuth>
                 <CheckoutPage />
               </RequireAuth>
+            </Shell>
+          }
+        />
+        <Route
+          path="/payment/result"
+          element={
+            <Shell>
+              <PaymentResultPage />
             </Shell>
           }
         />
@@ -252,6 +262,16 @@ export function App() {
             <RequireAuth staffOnly>
               <AdminShell>
                 <AdminOrderDetailPage />
+              </AdminShell>
+            </RequireAuth>
+          }
+        />
+        <Route
+          path="/admin/payments"
+          element={
+            <RequireAuth staffOnly>
+              <AdminShell>
+                <AdminPaymentsPage />
               </AdminShell>
             </RequireAuth>
           }
