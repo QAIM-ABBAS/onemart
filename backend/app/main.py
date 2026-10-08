@@ -104,6 +104,8 @@ from app.modules.notifications.router import router as notifications_router  # n
 from app.modules.orders.admin_router import router as orders_admin_router  # noqa: E402
 from app.modules.orders.customer_router import router as orders_router  # noqa: E402
 from app.modules.orders.router import router as cart_checkout_router  # noqa: E402
+from app.modules.payments.admin_router import router as payments_admin_router  # noqa: E402
+from app.modules.payments.router import router as payments_router  # noqa: E402
 from app.modules.reports.router import router as reports_router  # noqa: E402
 from app.modules.reviews.admin_router import router as reviews_admin_router  # noqa: E402
 from app.modules.reviews.router import router as reviews_router  # noqa: E402
@@ -127,6 +129,8 @@ app.include_router(reviews_router, prefix=f"{API_PREFIX}")
 app.include_router(reviews_admin_router, prefix=f"{API_PREFIX}")
 app.include_router(wishlist_router, prefix=f"{API_PREFIX}")
 app.include_router(notifications_router, prefix=f"{API_PREFIX}")
+app.include_router(payments_router, prefix=f"{API_PREFIX}")
+app.include_router(payments_admin_router, prefix=f"{API_PREFIX}")
 
 
 @app.get("/api/health")

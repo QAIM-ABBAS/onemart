@@ -22,6 +22,9 @@ from app.core.types import TimestampMixin, string_enum
 # Registers the Coupon/CouponRedemption mappers (referenced by Order and Cart)
 from app.modules.discounts import models as discounts_models  # noqa: F401
 
+# Registers the Payment mapper (Order.payments back-references it)
+from app.modules.payments import models as payments_models  # noqa: F401
+
 
 class OrderStatus(enum.StrEnum):
     PENDING = "pending"
@@ -37,6 +40,7 @@ class PaymentStatus(enum.StrEnum):
     PAID = "paid"
     FAILED = "failed"
     REFUNDED = "refunded"
+    PARTIALLY_REFUNDED = "partially_refunded"
 
 
 ALLOWED_TRANSITIONS: dict[OrderStatus, set[OrderStatus]] = {
@@ -99,6 +103,8 @@ class Order(TimestampMixin, Base):
     )
     coupon_code: Mapped[str | None] = mapped_column(String(40))
     customer_note: Mapped[str | None] = mapped_column(Text)
+    # Online payments only: when the stock reservation lapses. Null for COD.
+    payment_deadline: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
 
     placed_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), server_default=func.now(), nullable=False
@@ -107,6 +113,13 @@ class Order(TimestampMixin, Base):
     user = relationship("User", lazy="selectin")
     items: Mapped[list["OrderItem"]] = relationship(
         back_populates="order", cascade="all, delete-orphan", lazy="selectin"
+    )
+    # Attempt history: every initiate/retry/refund row. Loaded only where it is
+    # shown (see orders.service._order_options) — never on list queries.
+    payments: Mapped[list["Payment"]] = relationship(  # noqa: F821
+        back_populates="order",
+        cascade="all, delete-orphan",
+        order_by="(Payment.created_at, Payment.id)",
     )
     history: Mapped[list["OrderStatusHistory"]] = relationship(
         back_populates="order",
