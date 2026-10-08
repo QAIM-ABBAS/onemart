@@ -1,4 +1,6 @@
-import { expect, test, type Page } from "@playwright/test";
+import { expect, test } from "@playwright/test";
+
+import { ADMIN, CUSTOMER, dropLeftoverCoupon, emptyCart, inr, login } from "./helpers";
 
 /**
  * One Playwright test covering the whole Phase 2 pricing loop end to end:
@@ -10,9 +12,6 @@ import { expect, test, type Page } from "@playwright/test";
  * accounts. WELCOME10 = 10% off orders over ₹499, capped at ₹200.
  */
 
-const CUSTOMER = { email: "demo@onemart.test", password: "Demo@1234" };
-const ADMIN = { email: "admin@onemart.test", password: "Admin@1234" };
-
 // Pampers Diapers · Medium pack — ₹749, and the default variant on the page.
 const PRODUCT_SLUG = "pampers-diapers";
 const SUBTOTAL = 749;
@@ -21,52 +20,6 @@ const PAYABLE = SUBTOTAL - DISCOUNT; // ₹674.10 → below ₹999, so delivery 
 const DELIVERY = 40;
 const TOTAL = PAYABLE + DELIVERY; // ₹714.10
 const NOTE = "Confirmed by the checkout flow test";
-
-const inr = (value: number) =>
-  new Intl.NumberFormat("en-IN", {
-    style: "currency",
-    currency: "INR",
-    maximumFractionDigits: 2,
-  }).format(value);
-
-async function login(page: Page, user: { email: string; password: string }) {
-  await page.goto("/login");
-  await page.fill("#email", user.email);
-  await page.fill("#password", user.password);
-  await page.getByRole("button", { name: "Sign in" }).click();
-  await page.waitForURL((url) => !url.pathname.startsWith("/login"));
-}
-
-/** Start from a known state: no items left over from an earlier run. */
-async function emptyCart(page: Page) {
-  await page.goto("/cart");
-  await expect(
-    page.getByText("Your cart is empty").or(page.locator("article")).first(),
-  ).toBeVisible();
-
-  for (let i = 0; i < 40; i += 1) {
-    // Scoped to the item list so the coupon's own Remove button is never clicked.
-    const remove = page.locator("article").getByRole("button", { name: "Remove" });
-    const count = await remove.count();
-    if (count === 0) break;
-    await remove.first().click();
-    await expect(remove).toHaveCount(count - 1);
-  }
-
-  await expect(page.locator("body")).toContainText("Your cart is empty");
-}
-
-/**
- * A code pinned by an earlier run replaces the input with a chip (and an empty
- * cart hides the block entirely, so this can only be done once items exist).
- */
-async function dropLeftoverCoupon(page: Page) {
-  const remove = page.locator("aside").getByRole("button", { name: "Remove" });
-  if (await remove.count()) {
-    await remove.click();
-    await expect(remove).toHaveCount(0);
-  }
-}
 
 test("customer buys with a coupon, admin moves the status, the timeline shows it", async ({
   browser,

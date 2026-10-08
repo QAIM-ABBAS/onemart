@@ -12,7 +12,9 @@ const BASE_URL = process.env.ONEMART_WEB ?? "http://127.0.0.1:5173";
 
 export default defineConfig({
   testDir: "./tests/e2e",
-  timeout: 90_000,
+  // 150s: the first test in a cold run pays for Vite's on-demand compile and
+  // the api's cold caches (~66s warm was already close to the old 90s limit).
+  timeout: 150_000,
   expect: { timeout: 10_000 },
   fullyParallel: false,
   workers: 1,
