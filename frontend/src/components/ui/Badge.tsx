@@ -2,7 +2,7 @@ import type { ReactNode } from "react";
 
 import { cn } from "@/lib/cn";
 import { ORDER_STATUS_LABELS } from "@/lib/format";
-import type { OrderStatus, PaymentStatus } from "@/lib/types";
+import type { OrderStatus, PaymentAttemptStatus, PaymentStatus } from "@/lib/types";
 
 export type Tone = "neutral" | "info" | "positive" | "warning" | "negative";
 
@@ -78,8 +78,18 @@ export function StatusBadge({ status, className }: { status: OrderStatus; classN
   );
 }
 
-export function PaymentBadge({ status }: { status: PaymentStatus }) {
+export function PaymentBadge({
+  status,
+}: {
+  status: PaymentStatus | PaymentAttemptStatus;
+}) {
   const tone: Tone =
-    status === "paid" ? "positive" : status === "failed" ? "negative" : status === "refunded" ? "warning" : "neutral";
+    status === "paid"
+      ? "positive"
+      : status === "failed"
+        ? "negative"
+        : status === "refunded" || status === "partially_refunded"
+          ? "warning"
+          : "neutral";
   return <Badge tone={tone}>{status.replace(/_/g, " ")}</Badge>;
 }

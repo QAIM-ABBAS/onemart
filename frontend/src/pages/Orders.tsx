@@ -3,6 +3,7 @@ import { Link, useParams, useSearchParams } from "react-router-dom";
 
 import { OrderTimeline } from "@/components/orders/OrderTimeline";
 import { useCancelOrder, useOrder, useOrders } from "@/hooks/queries/orders";
+import { useInitiatePayment } from "@/hooks/queries/payments";
 import {
   ORDER_FLOW,
   ORDER_STATUS_LABELS,
@@ -33,6 +34,16 @@ const SORT_OPTIONS = [
 ];
 
 const PAGE_SIZE = 10;
+
+/** Server payment codes → the words a customer reads. */
+const PAYMENT_METHOD_LABELS: Record<string, string> = {
+  cod: "Cash on delivery",
+  zarinpal: "Online payment",
+};
+
+function paymentMethodLabel(code: string): string {
+  return PAYMENT_METHOD_LABELS[code] ?? code.replace(/_/g, " ");
+}
 
 export function OrdersPage() {
   const [sp, setSp] = useSearchParams();
@@ -117,7 +128,7 @@ export function OrdersPage() {
                     <div className="flex items-center gap-2">
                       <StatusBadge status={order.status} />
                       <Badge tone={order.payment_status === "paid" ? "positive" : "neutral"}>
-                        COD
+                        {paymentMethodLabel(order.payment_method)}
                       </Badge>
                     </div>
                     <p className="num text-base font-semibold sm:text-right">
@@ -169,6 +180,7 @@ export function OrderDetailPage() {
   const placed = sp.has("placed");
   const order = useOrder(orderId);
   const cancelOrder = useCancelOrder(orderId ?? "");
+  const initiate = useInitiatePayment();
   const [confirmingCancel, setConfirmingCancel] = useState(false);
 
   const sortedHistory = useMemo(
@@ -201,6 +213,20 @@ export function OrderDetailPage() {
   }
 
   const o = order.data;
+  const isOnline = o.payment_method !== "cod";
+  // Online + still pending = this order is holding stock against a payment
+  // that has not landed; the window is the reservation's deadline.
+  const awaitingPayment = o.status === "pending" && isOnline && o.payment_status !== "paid";
+  const deadline = o.payment_deadline ? new Date(o.payment_deadline).getTime() : null;
+  const paymentWindowOpen = deadline === null || deadline > Date.now();
+
+  function retryPayment() {
+    initiate.mutate(o.id, {
+      onSuccess: (started) => {
+        window.location.assign(started.redirect_url);
+      },
+    });
+  }
 
   return (
     <div className="mx-auto max-w-4xl px-4 py-8 lg:py-12">
@@ -212,9 +238,22 @@ export function OrderDetailPage() {
       </Link>
 
       {placed ? (
-        <Notice className="mt-5">
-          Order placed — keep <span className="num font-semibold">{money(o.total)}</span> ready for
-          cash on delivery. You can follow its progress on this page.
+        <Notice className="mt-5" tone={o.payment_status === "paid" ? "positive" : "info"}>
+          {o.payment_status === "paid" ? (
+            <>
+              Order placed and paid — thank you! You can follow its progress on this page.
+            </>
+          ) : awaitingPayment ? (
+            <>
+              Order placed — finish the payment to confirm it. Your items are held until the
+              window below closes.
+            </>
+          ) : (
+            <>
+              Order placed — keep <span className="num font-semibold">{money(o.total)}</span> ready
+              for cash on delivery. You can follow its progress on this page.
+            </>
+          )}
         </Notice>
       ) : null}
 
@@ -230,8 +269,20 @@ export function OrderDetailPage() {
           <StatusBadge status={o.status} />
           <div className="flex items-center gap-2">
             <PaymentBadge status={o.payment_status} />
-            <Badge tone="neutral">Cash on delivery</Badge>
+            <Badge tone="neutral">{paymentMethodLabel(o.payment_method)}</Badge>
           </div>
+          {/* Online orders still inside the reservation window get a retry
+              until the hold lapses; after that the order is cancelled. */}
+          {awaitingPayment && paymentWindowOpen ? (
+            <Button
+              variant="primary"
+              size="sm"
+              loading={initiate.isPending}
+              onClick={retryPayment}
+            >
+              Retry payment
+            </Button>
+          ) : null}
           {/* Customers may stop an order only before it is packed — the
               server enforces the same window. */}
           {o.status === "pending" || o.status === "confirmed" ? (
@@ -296,12 +347,22 @@ export function OrderDetailPage() {
           <dl className="mt-3 space-y-2 text-sm">
             <div className="flex justify-between">
               <dt className="text-ink-muted">Method</dt>
-              <dd>Cash on delivery</dd>
+              <dd>{paymentMethodLabel(o.payment_method)}</dd>
             </div>
             <div className="flex justify-between">
               <dt className="text-ink-muted">Status</dt>
               <dd>{o.payment_status.replace(/_/g, " ")}</dd>
             </div>
+            {awaitingPayment && deadline !== null ? (
+              <div className="flex justify-between">
+                <dt className="text-ink-muted">Payment window</dt>
+                <dd className={paymentWindowOpen ? "num" : "num text-deal"}>
+                  {paymentWindowOpen
+                    ? `until ${formatDateTime(new Date(deadline).toISOString())}`
+                    : "closed"}
+                </dd>
+              </div>
+            ) : null}
             <div className="flex justify-between pt-3">
               <dt className="text-ink-muted">Subtotal</dt>
               <dd className="num">{money(o.subtotal)}</dd>
@@ -368,9 +429,12 @@ export function OrderDetailPage() {
         }
       >
         <p className="text-sm leading-relaxed text-ink-muted">
-          Anything reserved for this order goes straight back to the shelf, and because you
-          pay on delivery there is nothing to refund. This cannot be undone — you can always
-          place the order again.
+          Anything reserved for this order goes straight back to the shelf, along with your
+          delivery slot.{" "}
+          {o.payment_status === "paid"
+            ? "The payment is sent to an admin for a refund before it can finish."
+            : "Nothing has been paid yet, so there is nothing to refund."}{" "}
+          This cannot be undone — you can always place the order again.
         </p>
       </Modal>
     </div>
