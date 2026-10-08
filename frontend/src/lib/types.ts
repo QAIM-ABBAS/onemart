@@ -8,7 +8,73 @@ export type OrderStatus =
   | "delivered"
   | "cancelled";
 
-export type PaymentStatus = "pending" | "paid" | "failed" | "refunded";
+export type PaymentStatus =
+  | "pending"
+  | "paid"
+  | "failed"
+  | "refunded"
+  | "partially_refunded";
+
+/** One attempt against a gateway (an order can have several). */
+export type PaymentAttemptStatus =
+  | "initiated"
+  | "pending"
+  | "paid"
+  | "failed"
+  | "refunded"
+  | "partially_refunded";
+
+export interface PaymentAttempt {
+  id: number;
+  order_id: number;
+  provider: string;
+  amount: number;
+  currency: string;
+  status: PaymentAttemptStatus;
+  provider_ref?: string | null;
+  refunded_amount: number;
+  created_at: string;
+  paid_at?: string | null;
+}
+
+export interface PaymentAdminOut extends PaymentAttempt {
+  order_number: string;
+}
+
+export interface PaymentDetailOut extends PaymentAdminOut {
+  order_status: string;
+  raw_response: Record<string, unknown>;
+  attempts: PaymentAttempt[];
+}
+
+export interface PaymentInitiate {
+  payment_id: number;
+  order_id: number;
+  redirect_url: string;
+  status: string;
+  amount: number;
+  currency: string;
+  expires_at?: string | null;
+}
+
+export interface PaymentStatusOut {
+  payment_id: number;
+  order_id: number;
+  order_number: string;
+  status: string;
+  amount: number;
+  currency: string;
+  order_status: string;
+  payment_deadline?: string | null;
+  already_processed: boolean;
+}
+
+export interface RefundIn {
+  amount?: number | null;
+  reason?: string | null;
+  manual?: boolean;
+}
+
 
 export interface User {
   id: number;
@@ -264,6 +330,8 @@ export interface CheckoutSummary {
   total: number;
   item_count: number;
   payment_methods: PaymentMethodInfo[];
+  /** How long an online order holds its stock while payment is pending. */
+  payment_reservation_minutes: number;
 }
 
 export interface AddressIn {
@@ -358,10 +426,13 @@ export interface OrderDetail {
   delivery_fee: number;
   total: number;
   customer_note?: string | null;
+  /** Online payments: when the stock hold lapses (null for COD). */
+  payment_deadline?: string | null;
   created_at: string;
   placed_at: string;
   items: OrderItemOut[];
   history: StatusEventOut[];
+  payments: PaymentAttempt[];
 }
 
 export interface ProductAdminOut extends ProductListItem {
