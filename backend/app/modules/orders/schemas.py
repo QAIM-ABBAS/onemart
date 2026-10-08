@@ -4,6 +4,7 @@ from decimal import Decimal
 from pydantic import BaseModel, ConfigDict, Field, model_validator
 
 from app.modules.orders.models import OrderStatus, PaymentStatus
+from app.modules.payments.schemas import PaymentAttemptOut
 from app.modules.users.schemas import AddressIn
 
 
@@ -95,11 +96,14 @@ class OrderDetail(BaseModel):
     coupon_code: str | None = None
     delivery_fee: float
     total: float
-    customer_note: str | None
+    customer_note: str | None = None
+    # Online payments: when the stock hold lapses (null for COD).
+    payment_deadline: datetime | None = None
     created_at: datetime
     placed_at: datetime
     items: list[OrderItemOut]
     history: list[StatusEventOut]
+    payments: list[PaymentAttemptOut] = Field(default_factory=list)
 
     @model_validator(mode="before")
     @classmethod

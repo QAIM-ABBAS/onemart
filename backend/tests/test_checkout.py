@@ -70,7 +70,7 @@ def test_checkout_creates_order_and_decrements_stock(client, db, customer, seed_
     summary = client.get("/api/checkout/summary", headers=headers).json()
     assert summary["subtotal"] == 540
     assert summary["delivery_fee"] == 40  # free delivery starts at 999
-    assert [m["code"] for m in summary["payment_methods"]] == ["cod"]
+    assert [m["code"] for m in summary["payment_methods"]] == ["cod", "zarinpal"]
 
     response = client.post(
         "/api/checkout",

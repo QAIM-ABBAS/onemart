@@ -1,6 +1,7 @@
 from fastapi import APIRouter, Depends, Request, Response
 from sqlalchemy.orm import Session
 
+from app.core.config import settings
 from app.core.db import get_db
 from app.core.deps import get_current_user, get_current_user_optional
 from app.modules.cart import service as cart_service
@@ -159,6 +160,9 @@ def checkout_summary(
             PaymentMethodInfo(code=code, name=payment_registry.get(code).display_name)
             for code in payment_registry.codes
         ],
+        # How long an online order holds its stock — the checkout footnote
+        # quotes it, so it must come from the same config the sweeper uses.
+        "payment_reservation_minutes": settings.payment_reservation_minutes,
     }
 
 

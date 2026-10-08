@@ -1,15 +1,18 @@
 
+from datetime import UTC, datetime, timedelta
+
 from sqlalchemy import delete, func, select
 from sqlalchemy.orm import Session, selectinload
 
+from app.core.config import settings
 from app.core.exceptions import AppError, ConflictError, NotFoundError
 from app.core.pagination import Page, PaginationParams
 from app.modules.audit import service as audit_service
 from app.modules.cart.models import Cart, CartItem
 from app.modules.discounts import service as discounts_service
 from app.modules.discounts.pricing import price_cart
-from app.modules.inventory.models import Inventory
-from app.modules.inventory.service import ensure_inventory
+from app.modules.inventory.models import Inventory, ReservationStatus, StockReservation
+from app.modules.inventory.reservations import restock_order
 from app.modules.notifications import service as notifications_service
 from app.modules.notifications.models import NotificationType
 from app.modules.orders.models import (
@@ -24,6 +27,7 @@ from app.modules.orders.models import (
 )
 from app.modules.orders.payment import payment_registry
 from app.modules.orders.schemas import CheckoutIn, OrderDetail, OrderListItem, StatusUpdateIn
+from app.modules.payments import service as payments_service
 from app.modules.users.models import Address, User, UserRole
 
 # What the customer is told when an order reaches each status: notification type,
@@ -148,9 +152,16 @@ def checkout(db: Session, user: User, cart: Cart, payload: CheckoutIn) -> Order:
     )
     db.add(order)
     db.flush()
-    from datetime import UTC, datetime
 
     order.order_number = f"OM-{datetime.now(UTC):%Y%m%d}-{order.id:06d}"
+
+    # An online order exists before the money does: hold the stock for the
+    # payment window instead of taking it off the shelf. COD takes it now.
+    online = provider.is_online
+    if online:
+        order.payment_deadline = datetime.now(UTC) + timedelta(
+            minutes=settings.payment_reservation_minutes
+        )
 
     if pricing.has_coupon and coupon is not None:
         # Atomic conditional UPDATE: of two customers racing for the last
@@ -176,7 +187,27 @@ def checkout(db: Session, user: User, cart: Cart, payload: CheckoutIn) -> Order:
             )
         )
         row = inventory[variant.id]
-        row.quantity -= item.quantity
+        if online:
+            row.reserved += item.quantity
+            db.add(
+                StockReservation(
+                    order_id=order.id,
+                    variant_id=variant.id,
+                    qty=item.quantity,
+                    status=ReservationStatus.ACTIVE,
+                    expires_at=order.payment_deadline,
+                )
+            )
+        else:
+            row.quantity -= item.quantity
+            db.add(
+                StockReservation(
+                    order_id=order.id,
+                    variant_id=variant.id,
+                    qty=item.quantity,
+                    status=ReservationStatus.CONSUMED,
+                )
+            )
 
     if pricing.has_coupon and coupon is not None:
         discounts_service.record_redemption(
@@ -185,6 +216,9 @@ def checkout(db: Session, user: User, cart: Cart, payload: CheckoutIn) -> Order:
 
     result = provider.authorize(order, pricing.total)
     order.payment_status = result.status
+    # One attempt per order up front; retrying a failed online payment opens
+    # another (see payments.service.initiate_attempt).
+    payments_service.create_attempt(db, order, provider)
 
     db.add(
         OrderStatusHistory(
@@ -202,7 +236,12 @@ def checkout(db: Session, user: User, cart: Cart, payload: CheckoutIn) -> Order:
         user_id=user.id,
         type=NotificationType.ORDER_PLACED,
         title=f"Order {order.order_number} placed",
-        body="We have received your order. Payment is due on delivery.",
+        body=(
+            "We have received your order. Complete the payment to confirm it — "
+            f"your items are held for {settings.payment_reservation_minutes} minutes."
+            if online
+            else "We have received your order. Payment is due on delivery."
+        ),
         link=f"/orders/{order.id}",
     )
     db.commit()
@@ -237,6 +276,9 @@ def _order_options():
     return (
         selectinload(Order.items),
         selectinload(Order.history),
+        # Detail views show the attempt history (retry / refund state); list
+        # queries deliberately skip it.
+        selectinload(Order.payments),
     )
 
 
@@ -351,7 +393,19 @@ def get_admin_order(db: Session, order_id: int) -> Order:
 
 
 def update_order_status(db: Session, order: Order, payload: StatusUpdateIn, actor: User) -> Order:
-    """Advance an order along its status timeline (append-only history)."""
+    """Advance an order along its status timeline (append-only history).
+
+    The order row is locked first: a payment callback arriving mid-cancel
+    (which locks the same row) must either see the order alive and pay it, or
+    see it cancelled and flag the payment for refund — never both half-way.
+    """
+    db.execute(
+        select(Order)
+        .where(Order.id == order.id)
+        .with_for_update()
+        .execution_options(populate_existing=True)
+    )
+
     if payload.status == order.status:
         raise ConflictError(f"Order is already '{order.status.value}'")
 
@@ -366,16 +420,27 @@ def update_order_status(db: Session, order: Order, payload: StatusUpdateIn, acto
     provider = payment_registry.get(order.payment_method)
 
     if payload.status == OrderStatus.CANCELLED and order.status in CANCELLABLE_STATUSES:
-        _restock_order(db, order)
+        # Releases what is still held (online, unpaid) and shelves again what
+        # was already taken (COD / paid) — see inventory.reservations.
+        restock_order(db, order)
 
     order.status = payload.status
 
-    if payload.status == OrderStatus.DELIVERED and order.payment_status == PaymentStatus.PENDING:
+    if (
+        payload.status == OrderStatus.DELIVERED
+        and order.payment_status == PaymentStatus.PENDING
+        and not provider.is_online
+    ):
+        # Only an offline provider settles here; an online order must have been
+        # verified by its callback before we may call it paid.
         result = provider.capture(order, order.total)
         order.payment_status = result.status
-    elif payload.status == OrderStatus.CANCELLED and order.payment_status == PaymentStatus.PAID:
-        result = provider.refund(order, order.total)
-        order.payment_status = result.status
+        payments_service.mark_cod_captured(db, order)
+    elif payload.status == OrderStatus.CANCELLED and order.payment_status in (
+        PaymentStatus.PAID,
+        PaymentStatus.PARTIALLY_REFUNDED,
+    ):
+        payments_service.refund_order_payments(db, order, reason=payload.note or "Order cancelled")
 
     # `order=order` (not order_id): the parent's collection may already be
     # loaded, and back_populates keeps it in sync so the response this mutation
@@ -441,27 +506,6 @@ def cancel_customer_order(db: Session, order: Order, user: User) -> Order:
         StatusUpdateIn(status=OrderStatus.CANCELLED, note="Cancelled by the customer"),
         user,
     )
-
-
-def _restock_order(db: Session, order: Order) -> None:
-    variant_ids = sorted(i.variant_id for i in order.items if i.variant_id is not None)
-    if not variant_ids:
-        return
-    rows = db.execute(
-        select(Inventory)
-        .where(Inventory.variant_id.in_(variant_ids))
-        .order_by(Inventory.variant_id)
-        .with_for_update()
-        .execution_options(populate_existing=True)
-    ).scalars()
-    by_variant = {row.variant_id: row for row in rows}
-    for item in order.items:
-        if item.variant_id is None:
-            continue
-        row = by_variant.get(item.variant_id)
-        if row is None:
-            row = ensure_inventory(db, item.variant_id, 0)
-        row.quantity += item.quantity
 
 
 def order_to_detail(order: Order) -> OrderDetail:
