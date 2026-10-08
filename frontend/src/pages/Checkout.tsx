@@ -7,6 +7,7 @@ import {
   useDeleteAddress,
   usePlaceOrder,
 } from "@/hooks/queries/checkout";
+import { useInitiatePayment } from "@/hooks/queries/payments";
 import { ApiError } from "@/lib/api";
 import { cn } from "@/lib/cn";
 import { money } from "@/lib/format";
@@ -30,10 +31,17 @@ const EMPTY_ADDRESS: AddressIn = {
   is_default: false,
 };
 
+/** One line of copy per payment method (unknown codes get a generic one). */
+const METHOD_HINTS: Record<string, string> = {
+  cod: "Hand the exact amount to our delivery partner.",
+  zarinpal: "Card or wallet via Zarinpal — you confirm on the gateway, then land right back here.",
+};
+
 export function CheckoutPage() {
   const summary = useCheckoutSummary();
   const addresses = useAddresses();
   const placeOrder = usePlaceOrder();
+  const initiate = useInitiatePayment();
   const navigate = useNavigate();
 
   const [mode, setMode] = useState<"saved" | "new">("saved");
@@ -148,7 +156,21 @@ export function CheckoutPage() {
           : { address: form, save_address: saveAddress }),
         note: note.trim() ? note.trim() : undefined,
       });
-      navigate(`/orders/${order.id}?placed=1`, { replace: true });
+
+      if (paymentCode === "cod") {
+        navigate(`/orders/${order.id}?placed=1`, { replace: true });
+        return;
+      }
+
+      // Online: the order (and its stock hold) exists — now open the attempt
+      // and hand the browser to the gateway. Any failure here leaves a Pending
+      // order with a working "Retry payment" button, so we still navigate.
+      try {
+        const started = await initiate.mutateAsync(order.id);
+        window.location.assign(started.redirect_url);
+      } catch {
+        navigate(`/orders/${order.id}?placed=1`, { replace: true });
+      }
     } catch (err) {
       if (err instanceof ApiError && err.fieldErrors) {
         setFormErrors(err.fieldErrors());
@@ -174,7 +196,11 @@ export function CheckoutPage() {
       <div className="pb-1">
         <p className="label text-brand-600">Almost there</p>
         <h1 className="mt-1.5 text-3xl">Checkout</h1>
-        <p className="mt-1.5 text-sm text-ink-muted">Cash on delivery — pay when your order arrives.</p>
+        <p className="mt-1.5 text-sm text-ink-muted">
+          {paymentCode === "cod"
+            ? "Cash on delivery — pay when your order arrives."
+            : "Pay securely online — your items are reserved while you complete the payment."}
+        </p>
       </div>
 
       {/* Form + order summary: a flex row of two boxes. The form grows, the
@@ -412,9 +438,7 @@ export function CheckoutPage() {
                         {method.name}
                       </span>
                       <span className="mt-0.5 block text-ink-muted">
-                        {method.code === "cod"
-                          ? "Hand the exact amount to our delivery partner."
-                          : "Pay securely at checkout."}
+                        {METHOD_HINTS[method.code] ?? "Pay securely at checkout."}
                       </span>
                     </span>
                   </label>
@@ -530,16 +554,21 @@ export function CheckoutPage() {
                 type="submit"
                 size="lg"
                 block
-                loading={placeOrder.isPending}
+                loading={placeOrder.isPending || initiate.isPending}
                 disabled={
                   cartSummary.items.some((i) => i.available < i.quantity) ||
                   (mode === "saved" && addressId === null)
                 }
               >
-                Place order · {money(cartSummary.total)}
+                {paymentCode === "cod" ? "Place order" : "Continue to payment"} ·{" "}
+                {money(cartSummary.total)}
               </Button>
               <p className="mt-3 text-center text-[0.75rem] text-ink-muted">
-                Cash on delivery — you pay when the order reaches you.
+                {paymentCode === "cod"
+                  ? "Cash on delivery — you pay when the order reaches you."
+                  : `Nothing is charged until you confirm on the gateway. Your items are held for ${
+                      cartSummary.payment_reservation_minutes ?? 15
+                    } minutes.`}
               </p>
             </div>
           </div>
