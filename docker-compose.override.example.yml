@@ -8,3 +8,14 @@ services:
   redis:
     ports:
       - "127.0.0.1:17500:6379"
+---
+# If WinNAT also excludes host port 8000 (range 7981-8080 on some machines),
+# the api's host mapping cannot bind either. The web proxy and the api
+# healthcheck stay on `api:8000` inside the Compose network, so only host
+# tooling (curl, /docs) needs the new port. Append to the same override file;
+# `!override` replaces the base ports list instead of appending to it:
+#
+# services:
+#   api:
+#     ports: !override
+#       - "127.0.0.1:18000:8000"

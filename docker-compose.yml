@@ -80,7 +80,10 @@ services:
         condition: service_healthy
       redis:
         condition: service_healthy
-    command: celery -A app.core.celery_app worker --loglevel=info --concurrency=2
+    # -B embeds celery beat so the every-minute reservation sweeper actually
+    # runs; there is no separate beat service, and without it expired payment
+    # holds stay "active" forever and silently leak demo stock.
+    command: celery -A app.core.celery_app worker --loglevel=info --concurrency=2 -B
 
   web:
     build: ./frontend

@@ -43,3 +43,6 @@ home-*.png
 /step0/
 /card-*.png
 /design-*.png
+
+# Celery beat runtime state
+celerybeat-schedule*
