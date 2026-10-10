@@ -50,6 +50,10 @@ class Settings(BaseSettings):
     zarinpal_currency: str = "TOMAN"
     zarinpal_timeout_seconds: float = 15.0
 
+    # --- Delivery zones / slots -------------------------------------------
+    # A slot is bookable only until this many hours before it starts.
+    delivery_slot_cutoff_hours: int = 2
+
     # Celery: the broker is `redis_url`. Tests flip this on so tasks execute
     # in-process — no worker and no broker connection anywhere in pytest.
     celery_task_always_eager: bool = False
