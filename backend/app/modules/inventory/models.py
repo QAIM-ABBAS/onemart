@@ -13,6 +13,7 @@ from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.core.db import Base
 from app.core.types import TimestampMixin, string_enum
+from app.modules.catalog.models import ProductVariant
 
 
 class ReservationStatus(enum.StrEnum):
@@ -43,7 +44,10 @@ class Inventory(Base):
         DateTime(timezone=True), server_default=func.now(), onupdate=func.now(), nullable=False
     )
 
-    variant = relationship("ProductVariant", back_populates="inventory")
+    # Imported for real (not just by name) so the mapper configures in any
+    # process that touches Inventory — the celery worker never imports the
+    # catalog routers and used to crash resolving this relationship.
+    variant = relationship(ProductVariant, back_populates="inventory")
 
     @property
     def available(self) -> int:
