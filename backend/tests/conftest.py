@@ -52,15 +52,18 @@ def clean_db(engine):
     # a product read in one test would leak into the next (ratings especially).
     # The reports overview caches the same way — clear both before each test.
     from app.modules.catalog.service import invalidate_catalog_cache
+    from app.modules.flash.service import invalidate_flash_cache
     from app.modules.reports.service import invalidate_report_cache
 
     invalidate_catalog_cache()
     invalidate_report_cache()
+    invalidate_flash_cache()
     tables = ", ".join(f'"{t.name}"' for t in Base.metadata.sorted_tables)
     with engine.begin() as conn:
         conn.execute(text(f"TRUNCATE {tables} RESTART IDENTITY CASCADE"))
     yield
     invalidate_catalog_cache()
+    invalidate_flash_cache()
 
 
 @pytest.fixture()
