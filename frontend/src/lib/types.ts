@@ -285,6 +285,8 @@ export interface CartItemOut {
   sku: string;
   image_url?: string | null;
   unit_price: number;
+  /** Live flash-deal unit price for this line; null when not on a deal */
+  deal_price?: number | null;
   quantity: number;
   line_total: number;
   available: number;
@@ -304,6 +306,8 @@ export interface CartOut {
   id: number;
   items: CartItemOut[];
   subtotal: number;
+  /** Flash-deal cut (list price minus deal price), before any other layer */
+  flash_discount: number;
   /** Automatic (no-code) discount rules applied before any coupon */
   auto_discount: number;
   discount: number;
@@ -323,6 +327,8 @@ export interface PaymentMethodInfo {
 export interface CheckoutSummary {
   items: CartItemOut[];
   subtotal: number;
+  /** Flash-deal cut, before automatic discounts and the coupon */
+  flash_discount: number;
   auto_discount: number;
   discount: number;
   coupon: CouponOut | null;
@@ -332,6 +338,114 @@ export interface CheckoutSummary {
   payment_methods: PaymentMethodInfo[];
   /** How long an online order holds its stock while payment is pending. */
   payment_reservation_minutes: number;
+  /** False = zones exist but none covers the address → checkout is blocked. */
+  serviceable: boolean;
+  /** False = no zones configured (bootstrap mode, legacy flat fee applies). */
+  delivery_configured: boolean;
+  delivery_method: string;
+  delivery_zone: { id: number; name: string } | null;
+}
+
+export interface ZoneMatchOut {
+  serviceable: boolean;
+  configured: boolean;
+  zone: {
+    id: number;
+    name: string;
+    postal_codes: string[];
+    cities: string[];
+    base_fee: number;
+    express_fee: number;
+    free_delivery_threshold: number | null;
+    is_active: boolean;
+  } | null;
+}
+
+export type SlotState = "available" | "limited" | "full" | "closed";
+
+export interface DeliverySlotOut {
+  id: number;
+  date: string;
+  start: string;
+  end: string;
+  capacity: number;
+  booked_count: number;
+  state: SlotState;
+}
+
+// ---- Admin delivery (zones, templates, blocked dates, board) ----
+
+export interface ZoneAdminOut {
+  id: number;
+  name: string;
+  postal_codes: string[];
+  cities: string[];
+  base_fee: number;
+  express_fee: number;
+  free_delivery_threshold: number | null;
+  is_active: boolean;
+}
+
+export interface ZoneWrite {
+  name: string;
+  postal_codes: string[];
+  cities: string[];
+  base_fee: number;
+  express_fee: number;
+  free_delivery_threshold?: number | null;
+  is_active: boolean;
+}
+
+export interface ZoneTemplateOut {
+  id: number;
+  zone_id: number;
+  weekday: number;
+  start_time: string;
+  end_time: string;
+  capacity: number;
+}
+
+export interface ZoneTemplateWrite {
+  weekday: number;
+  start_time: string;
+  end_time: string;
+  capacity: number;
+}
+
+export interface BlockedDateOut {
+  id: number;
+  zone_id: number;
+  blocked_date: string;
+  reason?: string | null;
+}
+
+export interface DeliveryBoardEntry {
+  order_id: number;
+  order_number: string;
+  status: OrderStatus;
+  recipient_name: string;
+  phone: string;
+  address: string;
+  slot_id: number | null;
+  slot_start?: string | null;
+  slot_end?: string | null;
+  method: string;
+  total: number;
+  payment_status: PaymentStatus;
+}
+
+export interface DeliveryBoardGroup {
+  slot_id: number | null;
+  start?: string | null;
+  end?: string | null;
+  orders: DeliveryBoardEntry[];
+}
+
+export interface DeliveryBoard {
+  date: string;
+  zone_id: number;
+  unscheduled: DeliveryBoardEntry[];
+  groups: DeliveryBoardGroup[];
 }
 
 export interface AddressIn {
@@ -356,6 +470,9 @@ export interface CheckoutIn {
   address?: AddressIn;
   save_address?: boolean;
   note?: string;
+  /** standard | express | scheduled (scheduled also needs slot_id). */
+  delivery_method?: string;
+  slot_id?: number;
 }
 
 export interface StatusEventOut {
@@ -428,6 +545,15 @@ export interface OrderDetail {
   customer_note?: string | null;
   /** Online payments: when the stock hold lapses (null for COD). */
   payment_deadline?: string | null;
+  /** Delivery method the customer chose (standard | express | scheduled). */
+  delivery_method: string;
+  /** The booked delivery window (null for standard/express). */
+  delivery_slot?: {
+    id: number;
+    slot_date: string;
+    start_time: string;
+    end_time: string;
+  } | null;
   created_at: string;
   placed_at: string;
   items: OrderItemOut[];
@@ -669,6 +795,102 @@ export interface ReportOverview {
   recent_orders: ReportRecentOrder[];
   recent_activity: ReportActivity[];
   generated_at: string;
+}
+
+/* ── Flash deals ─────────────────────────────────────────────────────────── */
+
+/** Public strip payload: one live deal with its claimable items. */
+export interface FlashDealItemOut {
+  id: number;
+  variant_id: number;
+  product_id: number;
+  product_name: string;
+  product_slug: string;
+  image_url?: string | null;
+  variant_name: string;
+  /** Decimal-serialized money (strings) — parse before arithmetic */
+  list_price: string;
+  /** Effective deal unit price, always present (price or percent resolved) */
+  deal_price: string;
+  percent_off: string;
+  stock_limit: number;
+  stock_sold: number;
+  remaining: number;
+  claimed_percent: string;
+  per_user_limit: number | null;
+  /** Signed-in only: how many more this customer may claim (null = no limit) */
+  per_user_remaining?: number | null;
+}
+
+export interface ActiveFlashDeal {
+  id: number;
+  name: string;
+  starts_at: string | null;
+  /** Server end time — the countdown ticks locally against this */
+  ends_at: string | null;
+  items: FlashDealItemOut[];
+}
+
+export type FlashDealStatus = "live" | "scheduled" | "ended" | "inactive";
+
+export interface FlashDealAdminOut {
+  id: number;
+  name: string;
+  starts_at: string | null;
+  ends_at: string | null;
+  is_active: boolean;
+  status: FlashDealStatus;
+  item_count: number;
+  stock_sold: number;
+  stock_limit: number;
+  created_at: string;
+}
+
+export interface FlashDealWrite {
+  name: string;
+  starts_at: string | null;
+  ends_at: string | null;
+  is_active: boolean;
+}
+
+export interface FlashDealItemAdminOut {
+  id: number;
+  deal_id: number;
+  variant_id: number;
+  product_name: string;
+  product_slug: string;
+  variant_name: string;
+  sku: string;
+  list_price: number;
+  deal_price: number | null;
+  deal_percent: number | null;
+  effective_price: number;
+  stock_limit: number;
+  stock_sold: number;
+  remaining: number;
+  claimed_percent: number;
+  per_user_limit: number | null;
+}
+
+export interface FlashDealItemWrite {
+  variant_id: number;
+  deal_price?: number | null;
+  deal_percent?: number | null;
+  deal_stock_limit: number;
+  per_user_limit?: number | null;
+}
+
+export interface FlashVariantRow {
+  variant_id: number;
+  product_id: number;
+  product_name: string;
+  product_slug: string;
+  variant_name: string;
+  sku: string;
+  price: number;
+  image_url?: string | null;
+  /** Name of the live deal already claiming this variant, or null */
+  in_live_deal: string | null;
 }
 
 export interface ErrorEnvelope {
