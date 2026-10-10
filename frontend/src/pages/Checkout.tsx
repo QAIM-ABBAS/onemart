@@ -5,18 +5,25 @@ import {
   useAddresses,
   useCheckoutSummary,
   useDeleteAddress,
+  useDeliverySlots,
   usePlaceOrder,
 } from "@/hooks/queries/checkout";
 import { useInitiatePayment } from "@/hooks/queries/payments";
 import { ApiError } from "@/lib/api";
 import { cn } from "@/lib/cn";
 import { money } from "@/lib/format";
-import type { AddressIn } from "@/lib/types";
+import type { AddressIn, DeliverySlotOut } from "@/lib/types";
 
 import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
 import { Checkbox, Field, Input, Textarea } from "@/components/ui/Form";
-import { BanknoteIcon, PinIcon, TrashIcon } from "@/components/ui/Icon";
+import {
+  BanknoteIcon,
+  ClockIcon,
+  PinIcon,
+  TrashIcon,
+  TruckIcon,
+} from "@/components/ui/Icon";
 import { EmptyState, ErrorState, InlineError, Skeleton } from "@/components/ui/States";
 
 const EMPTY_ADDRESS: AddressIn = {
@@ -37,8 +44,22 @@ const METHOD_HINTS: Record<string, string> = {
   zarinpal: "Card or wallet via Zarinpal — you confirm on the gateway, then land right back here.",
 };
 
+/** Delivery methods the checkout may choose (fees come from the zone quote). */
+const DELIVERY_METHODS: Array<{ code: string; name: string; hint: string }> = [
+  { code: "standard", name: "Standard delivery", hint: "The everyday option — arrives in 2–4 days." },
+  { code: "express", name: "Express delivery", hint: "Faster, priority handling for a higher fee." },
+  { code: "scheduled", name: "Scheduled slot", hint: "Pick a day and a time window that suits you." },
+];
+
+/** Human label for a slot state chip. */
+const SLOT_STATE_LABELS: Record<string, string> = {
+  available: "Available",
+  limited: "Few left",
+  full: "Fully booked",
+  closed: "Closed",
+};
+
 export function CheckoutPage() {
-  const summary = useCheckoutSummary();
   const addresses = useAddresses();
   const placeOrder = usePlaceOrder();
   const initiate = useInitiatePayment();
@@ -51,8 +72,30 @@ export function CheckoutPage() {
   const [note, setNote] = useState("");
   const [formErrors, setFormErrors] = useState<Record<string, string>>({});
   const [paymentCode, setPaymentCode] = useState<string>("");
+  const [deliveryMethod, setDeliveryMethod] = useState<string>("standard");
+  const [slotId, setSlotId] = useState<number | null>(null);
+  const [slotDate, setSlotDate] = useState<string | null>(null);
 
   const addressList = useMemo(() => addresses.data ?? [], [addresses.data]);
+
+  // The address the customer is shipping to right now (saved pick or new form)
+  // decides the zone quote, the fee, and whether checkout is even possible.
+  const activeAddress = useMemo<AddressIn | null>(() => {
+    if (mode === "new") return form;
+    return addressList.find((a) => a.id === addressId) ?? null;
+  }, [mode, form, addressList, addressId]);
+
+  const quoteParams = useMemo(
+    () => ({
+      postal_code: activeAddress?.postal_code || undefined,
+      city: activeAddress?.city || undefined,
+      delivery_method: deliveryMethod,
+    }),
+    [activeAddress?.postal_code, activeAddress?.city, deliveryMethod],
+  );
+  const summary = useCheckoutSummary(quoteParams);
+  const zoneId = summary.data?.delivery_zone?.id ?? null;
+  const slots = useDeliverySlots(deliveryMethod === "scheduled" ? zoneId : null);
 
   useEffect(() => {
     if (addressId === null && addressList.length > 0) {
@@ -147,10 +190,20 @@ export function CheckoutPage() {
       setFormErrors({ address: "Choose a delivery address or add a new one" });
       return;
     }
+    if (summary.data && !summary.data.serviceable) {
+      setFormErrors({ address: "We do not deliver to this address yet" });
+      return;
+    }
+    if (deliveryMethod === "scheduled" && slotId === null) {
+      setFormErrors({ slot: "Pick a delivery time slot" });
+      return;
+    }
 
     try {
       const order = await placeOrder.mutateAsync({
         payment_method: paymentCode,
+        delivery_method: deliveryMethod,
+        ...(deliveryMethod === "scheduled" && slotId !== null ? { slot_id: slotId } : {}),
         ...(mode === "saved"
           ? { address_id: addressId ?? undefined }
           : { address: form, save_address: saveAddress }),
@@ -402,6 +455,85 @@ export function CheckoutPage() {
             </div>
           </section>
 
+          {/* Delivery: method + (when scheduled) the bookable slot grid. */}
+          {summary.data?.delivery_configured ? (
+            <section className="rounded-md bg-surface border border-line">
+              <div className="flex items-center gap-2 px-5 py-4">
+                <h2 className="flex items-center gap-2 text-lg">
+                  <TruckIcon width={17} height={17} className="text-brand-600" />
+                  Delivery
+                </h2>
+                {summary.data.delivery_zone ? (
+                  <Badge tone="info">{summary.data.delivery_zone.name}</Badge>
+                ) : null}
+              </div>
+              <div className="px-5 py-5">
+                {!summary.data.serviceable ? (
+                  <InlineError>
+                    We do not deliver to this address yet. Choose a different address to continue.
+                  </InlineError>
+                ) : (
+                  <div className="space-y-3">
+                    {DELIVERY_METHODS.map((method) => {
+                      const selected = deliveryMethod === method.code;
+                      return (
+                        <label
+                          key={method.code}
+                          className={cn(
+                            "flex cursor-pointer items-start gap-3 rounded-md bg-surface p-4 border border-line transition hover:shadow-lift",
+                            selected && "bg-surface ring-2 ring-brand-600/40",
+                          )}
+                        >
+                          <input
+                            type="radio"
+                            name="delivery"
+                            checked={selected}
+                            onChange={() => {
+                              setDeliveryMethod(method.code);
+                              if (method.code !== "scheduled") {
+                                setSlotId(null);
+                                setSlotDate(null);
+                              }
+                            }}
+                            className="mt-1 size-4 accent-brand-700"
+                          />
+                          <span className="text-sm">
+                            <span
+                              className={cn(
+                                "block",
+                                selected ? "font-semibold text-ink" : "font-medium text-ink-muted",
+                              )}
+                            >
+                              {method.name}
+                            </span>
+                            <span className="mt-0.5 block text-ink-muted">{method.hint}</span>
+                          </span>
+                        </label>
+                      );
+                    })}
+
+                    {deliveryMethod === "scheduled" ? (
+                      <div className="mt-4 rounded-md bg-surface-2/50 p-4">
+                        <p className="label text-ink-muted">Pick a day</p>
+                        <SlotGrid
+                          slots={slots.data ?? []}
+                          loading={slots.isLoading}
+                          error={slots.error}
+                          onRetry={() => void slots.refetch()}
+                          selectedSlotId={slotId}
+                          selectedDate={slotDate}
+                          onSelectDate={setSlotDate}
+                          onSelectSlot={setSlotId}
+                        />
+                        {formErrors.slot ? <InlineError>{formErrors.slot}</InlineError> : null}
+                      </div>
+                    ) : null}
+                  </div>
+                )}
+              </div>
+            </section>
+          ) : null}
+
           <section className="rounded-md bg-surface border border-line">
             <div className="flex items-center gap-2 px-5 py-4">
               <h2 className="flex items-center gap-2 text-lg">
@@ -475,7 +607,20 @@ export function CheckoutPage() {
                     <span className="block truncate font-medium">{item.product_name}</span>
                     <span className="block text-[0.8125rem] text-ink-muted">{item.variant_name}</span>
                   </span>
-                  <span className="num shrink-0">{money(item.line_total)}</span>
+                  <span className="shrink-0 text-right">
+                    {item.deal_price != null ? (
+                      <>
+                        <span className="num block font-semibold text-deal">
+                          {money(item.deal_price * item.quantity)}
+                        </span>
+                        <span className="num block text-[0.75rem] text-ink-muted line-through">
+                          {money(item.line_total)}
+                        </span>
+                      </>
+                    ) : (
+                      <span className="num">{money(item.line_total)}</span>
+                    )}
+                  </span>
                 </li>
               ))}
             </ul>
@@ -484,6 +629,12 @@ export function CheckoutPage() {
                 <dt className="text-ink-muted">Subtotal</dt>
                 <dd className="num font-medium">{money(cartSummary.subtotal)}</dd>
               </div>
+              {cartSummary.flash_discount > 0 ? (
+                <div className="flex justify-between">
+                  <dt className="text-ink-muted">Flash deal</dt>
+                  <dd className="num font-medium text-deal">−{money(cartSummary.flash_discount)}</dd>
+                </div>
+              ) : null}
               {cartSummary.auto_discount > 0 ? (
                 <div className="flex justify-between">
                   <dt className="text-ink-muted">Discount</dt>
@@ -557,7 +708,9 @@ export function CheckoutPage() {
                 loading={placeOrder.isPending || initiate.isPending}
                 disabled={
                   cartSummary.items.some((i) => i.available < i.quantity) ||
-                  (mode === "saved" && addressId === null)
+                  (mode === "saved" && addressId === null) ||
+                  cartSummary.serviceable === false ||
+                  (deliveryMethod === "scheduled" && slotId === null)
                 }
               >
                 {paymentCode === "cod" ? "Place order" : "Continue to payment"} ·{" "}
@@ -599,5 +752,148 @@ function DeleteAddressButton({
     >
       <TrashIcon width={16} height={16} />
     </button>
+  );
+}
+
+/**
+ * Date picker + slot grid for scheduled delivery. Slots are grouped by date;
+ * each slot shows its state (available / limited / full / closed) and the
+ * remaining seats. Full and closed slots are not selectable.
+ */
+function SlotGrid({
+  slots,
+  loading,
+  error,
+  onRetry,
+  selectedSlotId,
+  selectedDate,
+  onSelectDate,
+  onSelectSlot,
+}: {
+  slots: DeliverySlotOut[];
+  loading: boolean;
+  error: unknown;
+  onRetry: () => void;
+  selectedSlotId: number | null;
+  selectedDate: string | null;
+  onSelectDate: (date: string | null) => void;
+  onSelectSlot: (slotId: number | null) => void;
+}) {
+  const dates = useMemo(() => {
+    const map = new Map<string, DeliverySlotOut[]>();
+    for (const slot of slots) {
+      const list = map.get(slot.date) ?? [];
+      list.push(slot);
+      map.set(slot.date, list);
+    }
+    return [...map.entries()].sort(([a], [b]) => a.localeCompare(b));
+  }, [slots]);
+
+  if (loading) {
+    return (
+      <div className="mt-3 space-y-2">
+        <Skeleton className="h-9 w-full" />
+        <div className="flex gap-2">
+          <Skeleton className="h-16 w-32" />
+          <Skeleton className="h-16 w-32" />
+          <Skeleton className="h-16 w-32" />
+        </div>
+      </div>
+    );
+  }
+  if (error) {
+    return (
+      <div className="mt-3">
+        <InlineError>
+          Could not load delivery slots.{" "}
+          <button type="button" onClick={onRetry} className="underline underline-offset-2">
+            Retry
+          </button>
+        </InlineError>
+      </div>
+    );
+  }
+  if (dates.length === 0) {
+    return (
+      <p className="mt-3 text-sm text-ink-muted">
+        No delivery slots available for this address right now. Try Standard or Express instead.
+      </p>
+    );
+  }
+
+  const activeDate = selectedDate ?? dates[0][0];
+  const activeSlots = dates.find(([d]) => d === activeDate)?.[1] ?? [];
+
+  return (
+    <div className="mt-3">
+      <div className="flex gap-2 overflow-x-auto pb-1">
+        {dates.map(([date, daySlots]) => {
+          const bookable = daySlots.some((s) => s.state === "available" || s.state === "limited");
+          return (
+            <button
+              key={date}
+              type="button"
+              onClick={() => onSelectDate(date)}
+              className={cn(
+                "shrink-0 rounded-md border px-3 py-2 text-left text-sm transition",
+                activeDate === date
+                  ? "border-brand-600 bg-surface ring-2 ring-brand-600/40"
+                  : "border-line bg-surface hover:shadow-lift",
+                !bookable && "opacity-50",
+              )}
+            >
+              <span className="block font-medium">
+                {new Date(`${date}T00:00:00`).toLocaleDateString(undefined, {
+                  weekday: "short",
+                  month: "short",
+                  day: "numeric",
+                })}
+              </span>
+              <span className="block text-[0.75rem] text-ink-muted">
+                {bookable ? `${daySlots.filter((s) => s.state !== "full" && s.state !== "closed").length} windows` : "Fully booked"}
+              </span>
+            </button>
+          );
+        })}
+      </div>
+
+      <div className="mt-3 grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
+        {activeSlots.map((slot) => {
+          const selectable = slot.state === "available" || slot.state === "limited";
+          const selected = selectedSlotId === slot.id;
+          const remaining = slot.capacity - slot.booked_count;
+          return (
+            <button
+              key={slot.id}
+              type="button"
+              disabled={!selectable}
+              onClick={() => onSelectSlot(selected ? null : slot.id)}
+              className={cn(
+                "rounded-md border p-3 text-left transition",
+                selected
+                  ? "border-brand-600 bg-surface ring-2 ring-brand-600/40"
+                  : "border-line bg-surface",
+                selectable ? "hover:shadow-lift" : "cursor-not-allowed opacity-60",
+              )}
+            >
+              <span className="flex items-center justify-between gap-2">
+                <span className="flex items-center gap-1.5 text-sm font-medium">
+                  <ClockIcon width={14} height={14} className="text-brand-600" />
+                  {slot.start.slice(0, 5)} – {slot.end.slice(0, 5)}
+                </span>
+                <Badge tone={slot.state === "limited" ? "warning" : slot.state === "available" ? "positive" : "neutral"}>
+                  {SLOT_STATE_LABELS[slot.state] ?? slot.state}
+                </Badge>
+              </span>
+              {selectable ? (
+                <span className="mt-1 block text-[0.75rem] text-ink-muted">
+                  {remaining} {remaining === 1 ? "seat" : "seats"} left
+                </span>
+              ) : null}
+            </button>
+          );
+        })}
+      </div>
+    </div>
   );
 }

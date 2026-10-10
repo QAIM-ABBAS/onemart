@@ -6,14 +6,45 @@ import type {
   AddressOut,
   CheckoutIn,
   CheckoutSummary,
+  DeliverySlotOut,
   OrderDetail,
+  ZoneMatchOut,
 } from "@/lib/types";
 
-export function useCheckoutSummary() {
+export type DeliveryQuoteParams = {
+  postal_code?: string;
+  city?: string;
+  delivery_method?: string;
+};
+
+export function useCheckoutSummary(params?: DeliveryQuoteParams) {
+  const query = params ?? {};
   return useQuery({
-    queryKey: ["checkout-summary"],
-    queryFn: () => api.get<CheckoutSummary>("/checkout/summary"),
+    queryKey: ["checkout-summary", query],
+    queryFn: () => api.get<CheckoutSummary>("/checkout/summary", query),
     staleTime: 5_000,
+  });
+}
+
+/** Zone match for an address (checkout asks as the customer types). */
+export function useZoneMatch(params?: { postal_code?: string; city?: string }) {
+  const query = params ?? {};
+  return useQuery({
+    queryKey: ["zone-match", query],
+    queryFn: () => api.get<ZoneMatchOut>("/delivery/zones/match", query),
+    staleTime: 30_000,
+    enabled: Boolean(query.postal_code || query.city),
+  });
+}
+
+/** The bookable slot grid for a zone (full/limited/available/closed states). */
+export function useDeliverySlots(zoneId?: number | null) {
+  return useQuery({
+    queryKey: ["delivery-slots", zoneId],
+    queryFn: () =>
+      api.get<DeliverySlotOut[]>("/delivery/slots", { zone_id: zoneId as number }),
+    enabled: Boolean(zoneId),
+    staleTime: 30_000,
   });
 }
 

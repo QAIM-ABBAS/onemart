@@ -397,6 +397,26 @@ export function OrderDetailPage() {
               <span className="num">{o.postal_code}</span>, {o.country}
             </p>
           </div>
+          <div className="mt-4 flex flex-wrap items-center gap-2 text-sm">
+            <span className="label text-ink-muted">Method</span>
+            <Badge tone="info">
+              {o.delivery_method === "express"
+                ? "Express delivery"
+                : o.delivery_method === "scheduled"
+                  ? "Scheduled slot"
+                  : "Standard delivery"}
+            </Badge>
+            {o.delivery_slot ? (
+              <span className="num text-ink-muted">
+                {new Date(`${o.delivery_slot.slot_date}T00:00:00`).toLocaleDateString(undefined, {
+                  weekday: "short",
+                  month: "short",
+                  day: "numeric",
+                })}
+                , {o.delivery_slot.start_time.slice(0, 5)}–{o.delivery_slot.end_time.slice(0, 5)}
+              </span>
+            ) : null}
+          </div>
           {o.customer_note ? (
             <div className="mt-4 rounded-md bg-surface-2/50 px-3 py-2.5 ">
               <p className="label text-ink-muted">Your note</p>
