@@ -151,7 +151,17 @@ export function CartPage() {
                     {item.variant_name} · SKU <span className="num">{item.sku}</span>
                   </p>
                   <p className="num mt-1 text-[0.8125rem] text-ink-muted">
-                    {money(item.unit_price)} each
+                    {item.deal_price != null ? (
+                      <>
+                        <span className="font-semibold text-deal">{money(item.deal_price)} each</span>{" "}
+                        <span className="line-through">{money(item.unit_price)}</span>{" "}
+                        <span className="label rounded-xs bg-deal px-1.5 py-0.5 text-surface">
+                          Flash deal
+                        </span>
+                      </>
+                    ) : (
+                      <>{money(item.unit_price)} each</>
+                    )}
                   </p>
 
                   {missing ? (
@@ -188,7 +198,16 @@ export function CartPage() {
                 </div>
 
                 <div className="sm:text-right">
-                  <Price value={item.line_total} size="lg" />
+                  {item.deal_price != null ? (
+                    <div>
+                      <Price value={item.deal_price * item.quantity} size="lg" className="text-deal" />
+                      <p className="num text-[0.8125rem] text-ink-muted line-through">
+                        {money(item.line_total)}
+                      </p>
+                    </div>
+                  ) : (
+                    <Price value={item.line_total} size="lg" />
+                  )}
                 </div>
               </article>
             );
@@ -258,6 +277,12 @@ export function CartPage() {
                 <dt className="text-ink-muted">Subtotal</dt>
                 <dd className="num font-medium">{money(data.subtotal)}</dd>
               </div>
+              {data.flash_discount > 0 ? (
+                <div className="flex justify-between">
+                  <dt className="text-ink-muted">Flash deal</dt>
+                  <dd className="num font-medium text-deal">−{money(data.flash_discount)}</dd>
+                </div>
+              ) : null}
               {data.auto_discount > 0 ? (
                 <div className="flex justify-between">
                   <dt className="text-ink-muted">Discount</dt>

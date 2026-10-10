@@ -5,6 +5,7 @@ import { useHome } from "@/hooks/queries/catalog";
 
 import { CategoryCarousel } from "@/components/home/CategoryCarousel";
 import { FeaturedBrands } from "@/components/home/FeaturedBrands";
+import { FlashStrip } from "@/components/home/FlashStrip";
 import { HeroSlider } from "@/components/home/HeroSlider";
 import { PromoBanner } from "@/components/home/PromoBanner";
 import { ProductCardSkeleton } from "@/components/catalog/ProductCard";
@@ -60,6 +61,9 @@ export function HomePage() {
           <HeroSlider slides={HERO_BANNERS} />
           <PromoBanner promo={PROMO_BANNER} />
         </div>
+
+        {/* Live flash deal — hides itself when nothing is on. */}
+        <FlashStrip />
 
         <CategoryCarousel />
         <FeaturedBrands />

@@ -3,11 +3,13 @@ import { Link, useParams } from "react-router-dom";
 
 import { useAddToCart } from "@/hooks/queries/cart";
 import { useProduct } from "@/hooks/queries/catalog";
+import { useActiveDeals } from "@/hooks/queries/deals";
 import { pushRecent } from "@/hooks/useRecentlyViewed";
 import { useWishlist } from "@/hooks/useWishlist";
 import { cn } from "@/lib/cn";
 import { ApiError } from "@/lib/api";
-import { pluralize } from "@/lib/format";
+import { money, pluralize } from "@/lib/format";
+import type { FlashDealItemOut } from "@/lib/types";
 
 import { Button } from "@/components/ui/Button";
 import { CheckIcon, HeartIcon } from "@/components/ui/Icon";
@@ -45,6 +47,7 @@ export function ProductPage() {
   const product = useProduct(slug);
   const addToCart = useAddToCart();
   const wishlist = useWishlist();
+  const activeDeals = useActiveDeals();
 
   const [variantId, setVariantId] = useState<number | null>(null);
   const [qty, setQty] = useState(1);
@@ -53,6 +56,16 @@ export function ProductPage() {
   const [error, setError] = useState<string | null>(null);
 
   const variants = useMemo(() => product.data?.variants ?? [], [product.data]);
+
+  /* Live flash deals → variant_id lookup, so the price block and the
+     variant picker both honour the deal while the server says it is live. */
+  const dealByVariant = useMemo(() => {
+    const map = new Map<number, FlashDealItemOut>();
+    for (const deal of activeDeals.data ?? []) {
+      for (const item of deal.items) map.set(item.variant_id, item);
+    }
+    return map;
+  }, [activeDeals.data]);
 
   useEffect(() => {
     if (variantId === null && variants.length > 0) {
@@ -133,6 +146,7 @@ export function ProductPage() {
 
   const p = product.data;
   const selected = variants.find((v) => v.id === variantId) ?? null;
+  const selectedDeal = selected ? dealByVariant.get(selected.id) : undefined;
   const selectedAvailable = selected?.available ?? 0;
   const maxQty = Math.max(1, Math.min(selectedAvailable, 99));
   const outOfStock = !p.in_stock || selectedAvailable <= 0;
@@ -250,10 +264,20 @@ export function ProductPage() {
 
           <div className="mt-4 flex flex-wrap items-center gap-x-5 gap-y-2">
             <Price
-              value={selected?.price ?? p.price}
-              compareAt={selected?.compare_at_price ?? p.compare_at_price}
+              value={selectedDeal ? Number(selectedDeal.deal_price) : (selected?.price ?? p.price)}
+              compareAt={
+                selectedDeal
+                  ? Number(selectedDeal.list_price)
+                  : (selected?.compare_at_price ?? p.compare_at_price)
+              }
               size="xl"
+              className={selectedDeal ? "text-deal" : undefined}
             />
+            {selectedDeal ? (
+              <span className="label rounded-xs bg-deal px-2 py-0.5 text-surface">
+                Flash deal −{Math.round(Number(selectedDeal.percent_off) || 0)}%
+              </span>
+            ) : null}
             {outOfStock ? (
               <Badge tone="negative">Out of stock</Badge>
             ) : selectedAvailable <= 10 ? (
@@ -262,6 +286,24 @@ export function ProductPage() {
               <Badge tone="positive">In stock</Badge>
             )}
           </div>
+
+          {/* Claimed meter — only while this variant is on a live deal. */}
+          {selectedDeal ? (
+            <div className="mt-3 max-w-80" data-testid="flash-deal-meter">
+              <div className="h-1.5 overflow-hidden rounded-full bg-deal-50">
+                <div
+                  className="h-full rounded-full bg-deal-600"
+                  style={{
+                    width: `${Math.min(100, Math.max(0, Number(selectedDeal.claimed_percent) || 0))}%`,
+                  }}
+                />
+              </div>
+              <p className="num mt-1.5 text-xs text-ink-muted">
+                {Math.round(Number(selectedDeal.claimed_percent) || 0)}% claimed ·{" "}
+                {selectedDeal.remaining} left in this deal
+              </p>
+            </div>
+          ) : null}
 
           {variants.length > 0 ? (
             <div className="mt-6">
@@ -274,6 +316,7 @@ export function ProductPage() {
                 {variants.map((v) => {
                   const vAvailable = v.available ?? 0;
                   const active = v.id === variantId;
+                  const vDeal = dealByVariant.get(v.id);
                   return (
                     <button
                       key={v.id}
@@ -296,12 +339,17 @@ export function ProductPage() {
                       >
                         {v.name}
                       </span>
-                      <span className="num text-[0.8125rem] text-ink-muted">
-                        {new Intl.NumberFormat("en-IN", {
-                          style: "currency",
-                          currency: "INR",
-                          maximumFractionDigits: 2,
-                        }).format(v.price)}
+                      <span className="num text-[0.8125rem]">
+                        {vDeal ? (
+                          <>
+                            <span className="font-semibold text-deal">
+                              {money(Number(vDeal.deal_price))}
+                            </span>{" "}
+                            <span className="text-ink-muted line-through">{money(v.price)}</span>
+                          </>
+                        ) : (
+                          <span className="text-ink-muted">{money(v.price)}</span>
+                        )}
                       </span>
                       {vAvailable <= 0 ? (
                         <span className="label mt-0.5 text-danger">Sold out</span>

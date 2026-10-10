@@ -253,6 +253,15 @@ export function ClockIcon(props: IconProps) {
   );
 }
 
+/** Lightning bolt — flash deals (countdown urgency, limited stock). */
+export function BoltIcon(props: IconProps) {
+  return (
+    <svg {...base(props)}>
+      <path d="M13.5 2.5 4.8 13.4a.6.6 0 0 0 .47.97H11l-.9 7.13a.4.4 0 0 0 .72.31l8.66-10.84a.6.6 0 0 0-.47-.97H13l.9-7.13a.4.4 0 0 0-.72-.31Z" />
+    </svg>
+  );
+}
+
 export function PhoneIcon(props: IconProps) {
   return (
     <svg {...base(props)}>
