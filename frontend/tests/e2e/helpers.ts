@@ -27,9 +27,11 @@ export async function login(page: Page, user: { email: string; password: string 
 /** Start from a known state: no items left over from an earlier run. */
 export async function emptyCart(page: Page) {
   await page.goto("/cart");
+  // 30s: a cold Vite dev server can spend ~25s compiling the route chunk on
+  // this Windows bind mount before the SPA boots and renders any of this.
   await expect(
     page.getByText("Your cart is empty").or(page.locator("article")).first(),
-  ).toBeVisible();
+  ).toBeVisible({ timeout: 30_000 });
 
   for (let i = 0; i < 40; i += 1) {
     // Scoped to the item list so the coupon's own Remove button is never clicked.
