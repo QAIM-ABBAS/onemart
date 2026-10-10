@@ -23,6 +23,8 @@ import { AdminProductsPage } from "@/pages/admin/Products";
 import { AdminPaymentsPage } from "@/pages/admin/Payments";
 import { AdminReviewsPage } from "@/pages/admin/Reviews";
 import { AdminCouponsPage } from "@/pages/admin/Coupons";
+import { AdminDeliveryPage } from "@/pages/admin/Delivery";
+import { AdminFlashPage } from "@/pages/admin/Flash";
 import { AdminDiscountsPage } from "@/pages/admin/Discounts";
 import { AdminReportsPage } from "@/pages/admin/Reports";
 import { AdminStockPage } from "@/pages/admin/Stock";
@@ -272,6 +274,26 @@ export function App() {
             <RequireAuth staffOnly>
               <AdminShell>
                 <AdminPaymentsPage />
+              </AdminShell>
+            </RequireAuth>
+          }
+        />
+        <Route
+          path="/admin/delivery"
+          element={
+            <RequireAuth staffOnly>
+              <AdminShell>
+                <AdminDeliveryPage />
+              </AdminShell>
+            </RequireAuth>
+          }
+        />
+        <Route
+          path="/admin/flash-deals"
+          element={
+            <RequireAuth staffOnly>
+              <AdminShell>
+                <AdminFlashPage />
               </AdminShell>
             </RequireAuth>
           }

@@ -5,6 +5,7 @@ import { cn } from "@/lib/cn";
 
 import {
   BanknoteIcon,
+  BoltIcon,
   BoxesIcon,
   ChartIcon,
   ClipboardIcon,
@@ -14,6 +15,7 @@ import {
   StarIcon,
   StoreIcon,
   TagIcon,
+  TruckIcon,
 } from "@/components/ui/Icon";
 import { Toaster } from "@/components/ui/Toaster";
 import { useAuth } from "@/stores/auth";
@@ -24,9 +26,11 @@ const NAV = [
   { to: "/admin/stock", label: "Stock", icon: BoxesIcon },
   { to: "/admin/orders", label: "Orders", icon: ClipboardIcon },
   { to: "/admin/payments", label: "Payments", icon: BanknoteIcon },
+  { to: "/admin/delivery", label: "Delivery", icon: TruckIcon },
   { to: "/admin/reports", label: "Reports", icon: ChartIcon },
   { to: "/admin/coupons", label: "Coupons", icon: TagIcon },
   { to: "/admin/discounts", label: "Discounts", icon: PercentIcon },
+  { to: "/admin/flash-deals", label: "Flash deals", icon: BoltIcon },
   { to: "/admin/reviews", label: "Reviews", icon: StarIcon },
 ] as const;
 
