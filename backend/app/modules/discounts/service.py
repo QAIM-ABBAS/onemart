@@ -28,11 +28,13 @@ from app.modules.discounts.pricing import (
     HUNDRED,
     ZERO,
     CouponSpec,
+    DeliverySpec,
     Pricing,
     cart_subtotal,
     money,
     price_cart,
 )
+from app.modules.flash import service as flash_service
 
 __all__ = [
     "active_coupon",
@@ -65,6 +67,7 @@ def spec_for(coupon: Coupon) -> CouponSpec:
         kind=coupon.kind.value,
         value=coupon.value,
         max_discount=coupon.max_discount,
+        exclude_flash_deals=coupon.exclude_flash_deals,
     )
 
 
@@ -172,7 +175,9 @@ def _rule_amount(rule: Discount, base: Decimal) -> Decimal:
     return money(min(rule.value, base))
 
 
-def auto_discount_total(db: Session, cart: Cart) -> Decimal:
+def auto_discount_total(
+    db: Session, cart: Cart, *, exclude_variant_ids: frozenset[int] = frozenset()
+) -> Decimal:
     """The automatic (no-code) discount for this cart — the pricing engine's
     first layer, applied before any coupon.
 
@@ -181,6 +186,10 @@ def auto_discount_total(db: Session, cart: Cart) -> Decimal:
       * within the winning scope the single best rule wins (percent and fixed
         compared by the rupees they would actually take) — nothing stacks;
       * a ``fixed`` rule pays once per product/category group, not per line.
+
+    ``exclude_variant_ids`` holds the flash-deal lines: flash beats the
+    automatic layer, so those lines are never put forward for a rule (they
+    would otherwise double-discount the same rupee).
     """
     if not cart.items:
         return ZERO
@@ -188,7 +197,9 @@ def auto_discount_total(db: Session, cart: Cart) -> Decimal:
     from app.modules.catalog.models import Product, ProductVariant
 
     now = datetime.now(UTC)
-    variant_ids = {item.variant_id for item in cart.items}
+    variant_ids = {item.variant_id for item in cart.items} - set(exclude_variant_ids)
+    if not variant_ids:
+        return ZERO
     variant_product = dict(
         db.execute(
             select(ProductVariant.id, ProductVariant.product_id).where(
@@ -274,14 +285,32 @@ def auto_discount_total(db: Session, cart: Cart) -> Decimal:
     return money(min(total, cart_subtotal(cart_lines(cart))))
 
 
-def price_for_cart(db: Session, cart: Cart) -> Pricing:
-    """Price the cart with its automatic discounts and (still valid) coupon."""
+def price_for_cart(
+    db: Session,
+    cart: Cart,
+    *,
+    delivery: DeliverySpec | None = None,
+    flash=None,
+) -> Pricing:
+    """Price the cart with live flash deals, automatic discounts and coupon.
+
+    ``delivery`` is the zone/method quote from the delivery module; ``None``
+    keeps the store-wide default rule (what a cart without an address shows).
+    ``flash`` may pass a precomputed :class:`flash_service.FlashCart` (the
+    caller needs the same view for line-level display); otherwise it is read
+    here.
+    """
     coupon = active_coupon(db, cart)
-    auto = auto_discount_total(db, cart)
+    if flash is None:
+        flash = flash_service.flash_cart(db, cart)
+    auto = auto_discount_total(db, cart, exclude_variant_ids=flash.variant_ids)
     return price_cart(
         cart_lines(cart),
         spec_for(coupon) if coupon is not None else None,
         auto_discount=auto,
+        delivery=delivery,
+        flash_discount=flash.discount,
+        flash_value=flash.value,
     )
 
 

@@ -242,7 +242,7 @@ PRODUCTS = [
         "Pampers Diapers", "diapers", "Pampers",
         "All-round protection diapers with up to 12 hours of dryness. Soft and breathable.",
         False,
-        [("Medium — pack of 34", "PAM-M34", 749, 22, {"size": "M", "pack": "34 pcs"}),
+        [("Medium — pack of 34", "PAM-M34", 749, 100, {"size": "M", "pack": "34 pcs"}),
          ("Large — pack of 62", "PAM-L62", 1299, 12, {"size": "L", "pack": "62 pcs"})],
     ),
     (
@@ -308,12 +308,160 @@ def ensure_demo_coupons(db: Session) -> None:
         db.commit()
 
 
+def ensure_demo_delivery(db: Session) -> None:
+    """Seed one Bengaluru zone with weekly templates and generated slots.
+
+    Idempotent: an existing zone leaves templates and slots untouched; a
+    re-seed only tops up slots that have not been generated yet.
+    """
+    from datetime import date as date_type
+    from datetime import time as time_type
+
+    from app.modules.delivery import service as delivery_service
+    from app.modules.delivery.models import DeliverySlotTemplate, DeliveryZone
+
+    zone = db.scalar(select(DeliveryZone).where(DeliveryZone.name == "Bengaluru Metro"))
+    if zone is None:
+        zone = DeliveryZone(
+            name="Bengaluru Metro",
+            postal_codes=["560", "561", "562"],
+            cities=["Bengaluru", "Bangalore"],
+            base_fee=Decimal("40"),
+            express_fee=Decimal("90"),
+            free_delivery_threshold=Decimal("999"),
+            is_active=True,
+        )
+        db.add(zone)
+        db.flush()
+        # Two windows a day, Mon–Sat; Sunday closed for deliveries.
+        for weekday in range(6):  # Monday=0 .. Saturday=6
+            for start_h, end_h in ((9, 12), (17, 20)):
+                db.add(
+                    DeliverySlotTemplate(
+                        zone_id=zone.id,
+                        weekday=weekday,
+                        start_time=time_type(start_h, 0),
+                        end_time=time_type(end_h, 0),
+                        capacity=10,
+                    )
+                )
+        db.flush()
+
+    delivery_service.generate_slots(
+        db, zone_id=zone.id, date_from=date_type.today(), days=14
+    )
+    db.commit()
+
+
+def ensure_demo_flash(db: Session) -> None:
+    """One demo flash deal (3 items) so the storefront strip has something live.
+
+    Idempotent: an existing deal keeps its items and counters; a lapsed window
+    is refreshed (now → +6h) so tomorrow's dev run still shows the strip
+    instead of a dead event.
+    """
+    from app.modules.flash.models import FlashDeal, FlashDealItem
+    from app.modules.flash.service import invalidate_flash_cache
+
+    now = datetime.now(UTC)
+    deal = db.scalar(select(FlashDeal).where(FlashDeal.name == "Weekend Flash Sale"))
+    changed = False
+    if deal is None:
+        deal = FlashDeal(
+            name="Weekend Flash Sale",
+            starts_at=now - timedelta(minutes=5),
+            ends_at=now + timedelta(hours=6),
+            is_active=True,
+        )
+        db.add(deal)
+        db.flush()
+        changed = True
+    else:
+        ends_at = deal.ends_at
+        if ends_at is not None and ends_at.tzinfo is None:
+            ends_at = ends_at.replace(tzinfo=UTC)
+        if ends_at is None or ends_at <= now:
+            deal.starts_at = now - timedelta(minutes=5)
+            deal.ends_at = now + timedelta(hours=6)
+            deal.is_active = True
+            changed = True
+
+    # One absolute price and two percents, so both shapes stay exercised.
+    items_spec = [
+        ("OM-SURF-1000", {"deal_percent": Decimal("20")}),
+        ("OM-CDM-150", {"deal_price": Decimal("99.00")}),
+        ("OM-TATA-TEA-250", {"deal_percent": Decimal("15")}),
+    ]
+    for sku, pricing in items_spec:
+        variant = db.scalar(select(ProductVariant.id).where(ProductVariant.sku == sku))
+        if variant is None:
+            continue
+        taken = db.scalar(
+            select(FlashDealItem.id).where(
+                FlashDealItem.deal_id == deal.id,
+                FlashDealItem.variant_id == variant,
+            )
+        )
+        if taken is None:
+            db.add(
+                FlashDealItem(
+                    deal_id=deal.id,
+                    variant_id=variant,
+                    deal_stock_limit=100,
+                    per_user_limit=5,
+                    **pricing,
+                )
+            )
+            changed = True
+
+    if changed:
+        db.commit()
+        invalidate_flash_cache()
+
+
+def ensure_demo_stock(db: Session) -> None:
+    """Top the shelf back up to the seeded quantities on re-seed.
+
+    Inventory only ever goes down while you drive the storefront — every
+    completed checkout permanently consumes units — so a long-lived dev
+    database eventually sells out the demo catalog and everything downstream
+    (storefront, E2E) trips over "Out of stock". A restart restores each SKU
+    to at least its seeded count; anything stocked higher (by hand, via
+    Admin ▸ Stock) is left alone. Seeded demo orders keep their own
+    consumption: this runs only when the catalog already exists.
+    """
+    wanted: dict[str, int] = {
+        f"OM-{suffix}": stock
+        for *_, variants in PRODUCTS
+        for (_, suffix, _, stock, _) in variants
+    }
+    rows = db.execute(
+        select(ProductVariant.id, ProductVariant.sku, Inventory.quantity)
+        .join(Inventory, Inventory.variant_id == ProductVariant.id)
+        .where(ProductVariant.sku.in_(list(wanted)))
+    ).all()
+    for variant_id, sku, quantity in rows:
+        if quantity < wanted[sku]:
+            inventory = db.get(Inventory, variant_id)
+            if inventory is not None:
+                inventory.quantity = wanted[sku]
+    db.commit()
+
+
 def seed(db: Session) -> None:
     # Coupons first: they must exist even when the catalog is already seeded,
     # otherwise an existing dev database has no code to try at checkout.
     ensure_demo_coupons(db)
+    # Same idea for delivery: one zone, weekly templates, and 14 days of
+    # bookable slots — a re-seed tops up whatever window is missing.
+    ensure_demo_delivery(db)
 
     if db.scalar(select(Product.id).limit(1)) is not None:
+        # Catalog already there — still keep the demo usable: refill the
+        # shelf (dev databases accumulate consumed checkouts) and make sure
+        # the flash strip has its demo deal.
+        ensure_demo_stock(db)
+        ensure_demo_flash(db)
         return
 
     categories: dict[str, Category] = {}
@@ -383,6 +531,7 @@ def seed(db: Session) -> None:
 
     _seed_orders(db, users["customer"], variants_by_sku)
     db.commit()
+    ensure_demo_flash(db)
 
 
 def _seed_users(db: Session) -> dict[str, User]:

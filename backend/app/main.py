@@ -98,7 +98,11 @@ from fastapi import Query  # noqa: E402
 
 from app.modules.catalog.admin_router import router as catalog_admin_router  # noqa: E402
 from app.modules.catalog.router import router as catalog_router  # noqa: E402
+from app.modules.delivery.admin_router import router as delivery_admin_router  # noqa: E402
+from app.modules.delivery.router import router as delivery_router  # noqa: E402
 from app.modules.discounts.admin_router import router as discounts_admin_router  # noqa: E402
+from app.modules.flash.admin_router import router as flash_admin_router  # noqa: E402
+from app.modules.flash.router import router as flash_router  # noqa: E402
 from app.modules.inventory.router import router as inventory_admin_router  # noqa: E402
 from app.modules.notifications.router import router as notifications_router  # noqa: E402
 from app.modules.orders.admin_router import router as orders_admin_router  # noqa: E402
@@ -131,6 +135,10 @@ app.include_router(wishlist_router, prefix=f"{API_PREFIX}")
 app.include_router(notifications_router, prefix=f"{API_PREFIX}")
 app.include_router(payments_router, prefix=f"{API_PREFIX}")
 app.include_router(payments_admin_router, prefix=f"{API_PREFIX}")
+app.include_router(delivery_router, prefix=f"{API_PREFIX}")
+app.include_router(delivery_admin_router, prefix=f"{API_PREFIX}")
+app.include_router(flash_router, prefix=f"{API_PREFIX}")
+app.include_router(flash_admin_router, prefix=f"{API_PREFIX}")
 
 
 @app.get("/api/health")

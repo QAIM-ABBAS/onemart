@@ -45,6 +45,9 @@ class Coupon(TimestampMixin, Base):
     usage_limit: Mapped[int | None] = mapped_column(Integer)
     per_user_limit: Mapped[int | None] = mapped_column(Integer)
     used_count: Mapped[int] = mapped_column(Integer, default=0, nullable=False)
+    # A coupon flagged with this computes its goods discount on the non-flash
+    # part of the basket only (flash-deal prices already beat the stack).
+    exclude_flash_deals: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
     is_active: Mapped[bool] = mapped_column(default=True, nullable=False)
 
     redemptions: Mapped[list["CouponRedemption"]] = relationship(

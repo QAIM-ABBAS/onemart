@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import date, datetime, time
 from decimal import Decimal
 
 from pydantic import BaseModel, ConfigDict, Field, model_validator
@@ -8,12 +8,26 @@ from app.modules.payments.schemas import PaymentAttemptOut
 from app.modules.users.schemas import AddressIn
 
 
+class OrderSlotOut(BaseModel):
+    """The booked delivery window shown on the order summary/detail."""
+
+    model_config = ConfigDict(from_attributes=True)
+
+    id: int
+    slot_date: date
+    start_time: time
+    end_time: time
+
+
 class CheckoutIn(BaseModel):
     payment_method: str = "cod"
     address_id: int | None = None
     address: AddressIn | None = None
     save_address: bool = False
     note: str | None = Field(default=None, max_length=500)
+    # Delivery: standard | express | scheduled (scheduled also needs slot_id).
+    delivery_method: str = "standard"
+    slot_id: int | None = None
 
     @model_validator(mode="after")
     def _require_address(self):
@@ -99,6 +113,9 @@ class OrderDetail(BaseModel):
     customer_note: str | None = None
     # Online payments: when the stock hold lapses (null for COD).
     payment_deadline: datetime | None = None
+    # Delivery: method + the booked window (null for standard/express).
+    delivery_method: str = "standard"
+    delivery_slot: OrderSlotOut | None = None
     created_at: datetime
     placed_at: datetime
     items: list[OrderItemOut]

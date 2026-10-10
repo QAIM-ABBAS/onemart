@@ -15,6 +15,10 @@ class CartItemOut(BaseModel):
     sku: str
     image_url: str | None = None
     unit_price: float
+    # Live flash-deal unit price for this line (None = not on a deal): the
+    # cart shows it struck against unit_price; the rupees live in
+    # CartOut.flash_discount so line and totals always agree.
+    deal_price: float | None = None
     quantity: int
     line_total: float
     available: int
@@ -25,6 +29,7 @@ class CartOut(BaseModel):
     id: int
     items: list[CartItemOut]
     subtotal: float
+    flash_discount: float = 0.0
     auto_discount: float = 0.0
     discount: float = 0.0
     coupon: CouponOut | None = None

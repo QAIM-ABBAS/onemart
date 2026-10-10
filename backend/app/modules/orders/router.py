@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, Request, Response
+from fastapi import APIRouter, Depends, Query, Request, Response
 from sqlalchemy.orm import Session
 
 from app.core.config import settings
@@ -8,6 +8,7 @@ from app.modules.cart import service as cart_service
 from app.modules.cart.models import Cart
 from app.modules.cart.schemas import AddItemIn, CartOut, UpdateItemIn
 from app.modules.catalog.service import invalidate_catalog_cache
+from app.modules.delivery import service as delivery_service
 from app.modules.discounts import service as discounts_service
 from app.modules.discounts.schemas import CouponApplyIn
 from app.modules.orders import service as orders_service
@@ -143,19 +144,49 @@ def checkout_summary(
     response: Response,
     db: Session = Depends(get_db),
     user: User | None = Depends(get_current_user_optional),
+    postal_code: str | None = Query(None, max_length=20),
+    city: str | None = Query(None, max_length=120),
+    delivery_method: str = "standard",
 ):
     cart = cart_service.resolve_cart(db, request, response, user)
+
+    # With an address in play the fee comes from the matching zone (the same
+    # quote checkout re-resolves server-side); without one the store-wide
+    # default rule applies and the UI shows the fee as an estimate.
+    method = delivery_service.validate_method(delivery_method)
+    zone, spec, serviceable = delivery_service.quote(
+        db, postal_code=postal_code, city=city, method=method
+    )
+
     db.commit()
     summary = _cart_response(db, cart)
+    delivery_fee = summary.delivery_fee
+    total = summary.total
+
+    if (postal_code or city) and serviceable and zone is not None:
+        # Re-price with the zone's fee rules so the number shown here is the
+        # number checkout will charge (both go through price_cart).
+        priced = discounts_service.price_for_cart(db, cart, delivery=spec)
+        delivery_fee = float(priced.delivery)
+        total = float(priced.total)
+
     return {
         "items": summary.items,
         "subtotal": summary.subtotal,
+        "flash_discount": summary.flash_discount,
         "auto_discount": summary.auto_discount,
         "discount": summary.discount,
         "coupon": summary.coupon,
-        "delivery_fee": summary.delivery_fee,
-        "total": summary.total,
         "item_count": summary.item_count,
+        "delivery_fee": delivery_fee,
+        "total": total,
+        # Delivery resolution for the checkout UI: whether the address is
+        # deliverable, whether zones are configured at all (bootstrap mode
+        # falls back to the flat fee), and which zone matched.
+        "serviceable": serviceable,
+        "delivery_configured": delivery_service.zones_configured(db),
+        "delivery_method": method,
+        "delivery_zone": ({"id": zone.id, "name": zone.name} if zone is not None else None),
         "payment_methods": [
             PaymentMethodInfo(code=code, name=payment_registry.get(code).display_name)
             for code in payment_registry.codes

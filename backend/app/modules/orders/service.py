@@ -9,8 +9,11 @@ from app.core.exceptions import AppError, ConflictError, NotFoundError
 from app.core.pagination import Page, PaginationParams
 from app.modules.audit import service as audit_service
 from app.modules.cart.models import Cart, CartItem
+from app.modules.delivery import service as delivery_service
+from app.modules.delivery.models import METHOD_SCHEDULED
 from app.modules.discounts import service as discounts_service
 from app.modules.discounts.pricing import price_cart
+from app.modules.flash import service as flash_service
 from app.modules.inventory.models import Inventory, ReservationStatus, StockReservation
 from app.modules.inventory.reservations import restock_order
 from app.modules.notifications import service as notifications_service
@@ -75,6 +78,22 @@ def checkout(db: Session, user: User, cart: Cart, payload: CheckoutIn) -> Order:
     provider = payment_registry.get(payload.payment_method)
     address = _resolve_address(db, user, payload)
 
+    # Zone match: where the address lands decides the fee, and an address no
+    # zone covers blocks checkout outright (unless the store has no zones
+    # configured yet — bootstrap mode keeps the legacy flat fee).
+    method = delivery_service.validate_method(payload.delivery_method)
+    zone, delivery_quote, serviceable = delivery_service.quote(
+        db, postal_code=address["postal_code"], city=address["city"], method=method
+    )
+    if not serviceable:
+        raise AppError(
+            "Sorry, we do not deliver to this address yet. "
+            "Choose a different address to continue.",
+            details={"postal_code": address["postal_code"], "city": address["city"]},
+        )
+    if method == METHOD_SCHEDULED and payload.slot_id is None:
+        raise AppError("Pick a delivery time slot for scheduled delivery")
+
     variant_ids = sorted({item.variant_id for item in cart.items})
     # Lock the stock rows for this transaction. populate_existing is required: the
     # session may already hold these rows in its identity map (cart -> variant ->
@@ -121,13 +140,28 @@ def checkout(db: Session, user: User, cart: Cart, payload: CheckoutIn) -> Order:
 
     # Re-validate the applied coupon against the cart as it stands right now and
     # price it with the shared engine: the order total must be exactly the total
-    # the customer saw in the cart (and in /checkout/summary).
+    # the customer saw in the cart (and in /checkout/summary). The zone quote
+    # carries the delivery fee rules for this address + method.
+    #
+    # Flash deals: read the live deal prices first (before claiming, so our own
+    # increment can't make the lookup think the deal sold out), then take the
+    # deal stock with a conditional UPDATE — of two customers racing for the
+    # last unit exactly one gets the order, the loser rolls back with a clear
+    # 409. The claim sits between the inventory locks (lock order) and the
+    # order-item inserts (per-user limits must not count this very order).
+    flash = flash_service.flash_cart(db, cart)
     coupon = discounts_service.active_coupon(db, cart, strict=True)
     pricing = price_cart(
         discounts_service.cart_lines(cart),
         discounts_service.spec_for(coupon) if coupon is not None else None,
-        auto_discount=discounts_service.auto_discount_total(db, cart),
+        auto_discount=discounts_service.auto_discount_total(
+            db, cart, exclude_variant_ids=flash.variant_ids
+        ),
+        delivery=delivery_quote,
+        flash_discount=flash.discount,
+        flash_value=flash.value,
     )
+    flash_service.claim_for_checkout(db, user, cart, flash)
 
     order = Order(
         order_number="PENDING",
@@ -149,11 +183,23 @@ def checkout(db: Session, user: User, cart: Cart, payload: CheckoutIn) -> Order:
         coupon_id=pricing.coupon_id,
         coupon_code=pricing.coupon_code,
         customer_note=payload.note,
+        delivery_method=method,
+        delivery_zone_id=zone.id if zone is not None else None,
     )
     db.add(order)
     db.flush()
 
     order.order_number = f"OM-{datetime.now(UTC):%Y%m%d}-{order.id:06d}"
+
+    # Scheduled delivery: claim the slot last in the lock order (inventory
+    # rows are already locked above). book_slot re-checks capacity/cutoff
+    # under its own row lock — two checkouts racing for the last seat
+    # serialise here and exactly one wins.
+    if method == METHOD_SCHEDULED:
+        slot = delivery_service.book_slot(db, int(payload.slot_id))  # type: ignore[arg-type]
+        if slot.zone_id != order.delivery_zone_id:
+            raise AppError("That time slot is not available for this address")
+        order.delivery_slot_id = slot.id
 
     # An online order exists before the money does: hold the stock for the
     # payment window instead of taking it off the shelf. COD takes it now.
@@ -171,6 +217,7 @@ def checkout(db: Session, user: User, cart: Cart, payload: CheckoutIn) -> Order:
     for item in cart.items:
         variant = item.variant
         product = variant.product
+        flash_line = flash.lines.get(variant.id)
         db.add(
             OrderItem(
                 order_id=order.id,
@@ -184,6 +231,11 @@ def checkout(db: Session, user: User, cart: Cart, payload: CheckoutIn) -> Order:
                 unit_price=variant.price,
                 quantity=item.quantity,
                 line_total=variant.price * item.quantity,
+                # The deal this line was priced from: lets cancellation hand
+                # the deal unit back and per-user limits count this order.
+                # The rupees themselves live in order.discount_total (flash +
+                # automatic + coupon), same as every other discount layer.
+                flash_deal_item_id=flash_line.item.id if flash_line else None,
             )
         )
         row = inventory[variant.id]
@@ -423,6 +475,12 @@ def update_order_status(db: Session, order: Order, payload: StatusUpdateIn, acto
         # Releases what is still held (online, unpaid) and shelves again what
         # was already taken (COD / paid) — see inventory.reservations.
         restock_order(db, order)
+        # Hands back any flash-deal units (idempotent via orders.flash_released
+        # under this row lock, so the sweeper racing us can't pay out twice).
+        flash_service.release_for_order(db, order)
+        # ...and frees the booked delivery window so another customer can take
+        # the seat (conditional UPDATE — a double-cancel never goes negative).
+        delivery_service.release_slot_for_order(db, order)
 
     order.status = payload.status
 

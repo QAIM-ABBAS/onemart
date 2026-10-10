@@ -9,6 +9,7 @@ from app.modules.cart.schemas import CartItemOut, CartOut, price
 from app.modules.discounts import service as discounts_service
 from app.modules.discounts.pricing import free_delivery_gap, money
 from app.modules.discounts.schemas import CouponOut
+from app.modules.flash import service as flash_service
 from app.modules.inventory.models import Inventory
 from app.modules.users.models import User
 
@@ -117,6 +118,10 @@ def serialize_cart(db: Session, cart: Cart) -> CartOut:
     here rather than showing a discount the checkout would refuse.
     """
     inventory = {i.variant_id: i for i in (item.variant.inventory for item in cart.items) if i}
+    # One flash lookup serves both the per-line deal price and the totals, so
+    # the badge on the line and the "Flash deal" row in the summary can never
+    # disagree (price_for_cart reuses this exact view).
+    flash = flash_service.flash_cart(db, cart)
     items: list[CartItemOut] = []
     count = 0
     for item in cart.items:
@@ -124,6 +129,7 @@ def serialize_cart(db: Session, cart: Cart) -> CartOut:
         product = variant.product
         available = inventory[item.variant_id].available if item.variant_id in inventory else 0
         count += item.quantity
+        flash_line = flash.lines.get(item.variant_id)
         items.append(
             CartItemOut(
                 id=item.id,
@@ -135,6 +141,7 @@ def serialize_cart(db: Session, cart: Cart) -> CartOut:
                 sku=variant.sku,
                 image_url=product.images[0].url if product.images else None,
                 unit_price=price(variant.price),
+                deal_price=float(flash_line.unit_price) if flash_line else None,
                 quantity=item.quantity,
                 line_total=float(money(item.unit_price) * item.quantity),
                 available=available,
@@ -142,12 +149,13 @@ def serialize_cart(db: Session, cart: Cart) -> CartOut:
             )
         )
 
-    pricing = discounts_service.price_for_cart(db, cart)
+    pricing = discounts_service.price_for_cart(db, cart, flash=flash)
     coupon = cart.coupon if pricing.has_coupon else None
     return CartOut(
         id=cart.id,
         items=items,
         subtotal=float(pricing.subtotal),
+        flash_discount=float(pricing.flash_discount),
         auto_discount=float(pricing.auto_discount),
         discount=float(pricing.discount),
         coupon=(

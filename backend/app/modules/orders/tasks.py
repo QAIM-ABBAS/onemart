@@ -14,6 +14,8 @@ from sqlalchemy import select
 
 from app.core.celery_app import celery
 from app.core.db import SessionLocal
+from app.modules.delivery.service import release_slot_for_order
+from app.modules.flash.service import release_for_order as release_flash_for_order
 from app.modules.inventory.reservations import (
     consume_for_order,
     expired_order_ids,
@@ -65,7 +67,11 @@ def sweep_expired_reservations(db) -> dict:
 
             if order.status == OrderStatus.CANCELLED:
                 # Already gone: clear any hold a racing cancel left behind.
+                # The flash release is guarded by orders.flash_released under
+                # this lock, so it only pays out if the cancel never did.
                 release_for_order(db, order)
+                release_flash_for_order(db, order)
+                release_slot_for_order(db, order)
                 db.commit()
                 continue
 
@@ -77,6 +83,8 @@ def sweep_expired_reservations(db) -> dict:
                 continue
 
             released = release_for_order(db, order)
+            release_flash_for_order(db, order)
+            release_slot_for_order(db, order)
             _fail_open_attempts(db, order)
             order.status = OrderStatus.CANCELLED
             order.payment_status = PaymentStatus.FAILED

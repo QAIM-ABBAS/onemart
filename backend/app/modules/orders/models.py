@@ -3,6 +3,7 @@ from datetime import datetime
 from decimal import Decimal
 
 from sqlalchemy import (
+    Boolean,
     DateTime,
     ForeignKey,
     Index,
@@ -19,8 +20,14 @@ from app.core.db import Base
 from app.core.exceptions import AppError
 from app.core.types import TimestampMixin, string_enum
 
+# Registers the DeliveryZone/DeliverySlot mappers (Order.delivery_slot ref)
+from app.modules.delivery import models as delivery_models  # noqa: F401
+
 # Registers the Coupon/CouponRedemption mappers (referenced by Order and Cart)
 from app.modules.discounts import models as discounts_models  # noqa: F401
+
+# Registers the FlashDeal/FlashDealItem mappers (OrderItem.flash_deal_item ref)
+from app.modules.flash import models as flash_models  # noqa: F401
 
 # Registers the Payment mapper (Order.payments back-references it)
 from app.modules.payments import models as payments_models  # noqa: F401
@@ -106,11 +113,34 @@ class Order(TimestampMixin, Base):
     # Online payments only: when the stock reservation lapses. Null for COD.
     payment_deadline: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
 
+    # Delivery snapshot/refs (Phase 2). Zone/slot are SET NULL so an admin
+    # deleting config never destroys an order's record; the fee itself lives
+    # in delivery_fee above.
+    delivery_method: Mapped[str] = mapped_column(
+        String(20), default="standard", nullable=False
+    )
+    delivery_zone_id: Mapped[int | None] = mapped_column(
+        ForeignKey("delivery_zones.id", ondelete="SET NULL"), index=True
+    )
+    delivery_slot_id: Mapped[int | None] = mapped_column(
+        ForeignKey("delivery_slots.id", ondelete="SET NULL"), index=True
+    )
+
+    # Flash deal stock given back when this order died. Released under the
+    # order row lock (both the cancel path and the sweeper take it first),
+    # so the flag makes the release idempotent even when two paths race.
+    flash_released: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
+
     placed_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), server_default=func.now(), nullable=False
     )
 
     user = relationship("User", lazy="selectin")
+    # Kept eager: the slot window is shown in lists and details alike, and a
+    # selectin costs one extra small query per page (never row-by-row).
+    delivery_slot: Mapped["DeliverySlot | None"] = relationship(  # noqa: F821
+        lazy="selectin"
+    )
     items: Mapped[list["OrderItem"]] = relationship(
         back_populates="order", cascade="all, delete-orphan", lazy="selectin"
     )
@@ -149,6 +179,12 @@ class OrderItem(Base):
     unit_price: Mapped[Decimal] = mapped_column(Numeric(12, 2), nullable=False)
     quantity: Mapped[int] = mapped_column(Integer, nullable=False)
     line_total: Mapped[Decimal] = mapped_column(Numeric(12, 2), nullable=False)
+    # The flash-deal item this line was priced from. SET NULL keeps the order
+    # snapshot intact if the deal is deleted; while it exists, cancelling the
+    # order gives the deal unit back and per-user limits can count history.
+    flash_deal_item_id: Mapped[int | None] = mapped_column(
+        ForeignKey("flash_deal_items.id", ondelete="SET NULL"), index=True
+    )
 
     order: Mapped[Order] = relationship(back_populates="items")
 
