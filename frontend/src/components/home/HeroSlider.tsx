@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Link } from "react-router-dom";
+import { useTranslation } from "react-i18next";
 
 import type { BannerSlide } from "@/content/home";
 import { useDirection } from "@/hooks/useDirection";
@@ -15,6 +16,7 @@ export function HeroSlider({ slides }: { slides: BannerSlide[] }) {
   const pointerStart = useRef<number | null>(null);
   const count = slides.length;
   const { dir } = useDirection();
+  const { t } = useTranslation("home");
 
   const go = useCallback(
     (next: number) => setIndex((next + count) % count),
@@ -35,7 +37,7 @@ export function HeroSlider({ slides }: { slides: BannerSlide[] }) {
   return (
     <section
       aria-roledescription="carousel"
-      aria-label="Featured offers"
+      aria-label={t("hero.label")}
       className="relative h-[360px] overflow-hidden rounded-md bg-surface-2 border border-line sm:h-[380px] lg:h-[300px]"
       onMouseEnter={() => setPaused(true)}
       onMouseLeave={() => setPaused(false)}
@@ -85,10 +87,10 @@ export function HeroSlider({ slides }: { slides: BannerSlide[] }) {
             <div className="flex h-full items-center px-6 sm:px-10 lg:px-12">
               <div className="relative z-10 max-w-[56%] sm:max-w-[52%]">
                 <h2 className="text-2xl leading-tight sm:text-3xl lg:text-[2.1rem]">
-                  {slide.title}
+                  {t(`hero.slides.${slide.id}.title`)}
                 </h2>
                 <p className="mt-3 hidden max-w-md text-sm leading-relaxed opacity-75 sm:block">
-                  {slide.subtitle}
+                  {t(`hero.slides.${slide.id}.subtitle`)}
                 </p>
                 <Link
                   to={slide.cta_url}
@@ -99,7 +101,7 @@ export function HeroSlider({ slides }: { slides: BannerSlide[] }) {
                       : "bg-brand-700 text-surface hover:bg-brand-800",
                   )}
                 >
-                  {slide.cta_label}
+                  {t(`hero.slides.${slide.id}.cta`)}
                 </Link>
               </div>
             </div>
@@ -123,7 +125,7 @@ export function HeroSlider({ slides }: { slides: BannerSlide[] }) {
         <div className="flex items-center gap-1.5 rounded-full bg-surface/90 px-3 py-2 border border-line">
           <button
             type="button"
-            aria-label="Previous slide"
+            aria-label={t("hero.prev")}
             onClick={() => go(index - 1)}
             className="grid size-7 place-items-center rounded-full text-ink transition hover:bg-surface-2 hover:text-brand-700"
           >
@@ -134,7 +136,7 @@ export function HeroSlider({ slides }: { slides: BannerSlide[] }) {
               <button
                 key={slide.id}
                 type="button"
-                aria-label={`Go to slide ${i + 1}`}
+                aria-label={t("hero.goTo", { index: i + 1 })}
                 aria-current={i === index}
                 onClick={() => setIndex(i)}
                 className={cn(
@@ -146,7 +148,7 @@ export function HeroSlider({ slides }: { slides: BannerSlide[] }) {
           </div>
           <button
             type="button"
-            aria-label="Next slide"
+            aria-label={t("hero.next")}
             onClick={() => go(index + 1)}
             className="grid size-7 place-items-center rounded-full text-ink transition hover:bg-surface-2 hover:text-brand-700"
           >
@@ -156,7 +158,7 @@ export function HeroSlider({ slides }: { slides: BannerSlide[] }) {
       </div>
 
       <p aria-live="off" className="sr-only">
-        {active ? active.title : ""}
+        {active ? t(`hero.slides.${active.id}.title`) : ""}
       </p>
     </section>
   );

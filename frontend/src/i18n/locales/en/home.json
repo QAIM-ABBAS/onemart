@@ -1,0 +1,99 @@
+{
+  "title": "OneMart — everything you need, in one place",
+  "hero": {
+    "label": "Featured offers",
+    "prev": "Previous slide",
+    "next": "Next slide",
+    "goTo": "Go to slide {{index, number}}",
+    "slides": {
+      "fresh-week": {
+        "title": "Fresh picks for the week",
+        "subtitle": "Fruit, vegetables and daily essentials — priced for the everyday shop.",
+        "cta": "Shop now"
+      },
+      "dairy-breakfast": {
+        "title": "Breakfast, sorted in one basket",
+        "subtitle": "Milk, eggs, bread and butter from the brands you already buy.",
+        "cta": "Shop now"
+      },
+      "pantry-stockup": {
+        "title": "Stock up the pantry for less",
+        "subtitle": "Snacks, staples and household refills with cash on delivery.",
+        "cta": "Shop now"
+      }
+    }
+  },
+  "promo": {
+    "eyebrow": "This week only",
+    "title": "20% off featured picks",
+    "subtitle": "A hand-picked shelf of everyday favourites, discounted while stocks last.",
+    "cta": "Shop the offer"
+  },
+  "flash": {
+    "fallback": "Flash deals",
+    "limited": "Limited stock",
+    "items": "Flash deal items",
+    "claimed": "{{claimed, number}}% claimed",
+    "left_one": "{{count, number}} left",
+    "left_other": "{{count, number}} left",
+    "dealPrice": "{{name}}, deal price {{price}}"
+  },
+  "countdown": {
+    "expiresIn": "Expires in",
+    "expired": "Expired",
+    "soon": "Offer ends soon"
+  },
+  "categories": {
+    "title": "Browse by category",
+    "all": "All categories",
+    "seeAll": "See all",
+    "label": "Product categories"
+  },
+  "brands": {
+    "title": "Featured offers",
+    "all": "All offers",
+    "label": "Featured offers",
+    "offers": {
+      "offer-1": {
+        "label": "Fresh today",
+        "title": "Fruit and vegetables, picked this morning"
+      },
+      "offer-2": {
+        "label": "Bakery",
+        "title": "Bread and bakes for the whole family"
+      },
+      "offer-3": {
+        "label": "Beverages",
+        "title": "Juices, tea and coffee from ₹99"
+      },
+      "offer-4": {
+        "label": "Stock up",
+        "title": "Snacks and sweets, buy more save more"
+      }
+    }
+  },
+  "topsaver": {
+    "title": "Top saver today",
+    "all": "All offers",
+    "empty": "No deals right now",
+    "emptyBody": "Today's offers are being restocked — check back soon."
+  },
+  "shelves": {
+    "best": "Best seller",
+    "new": "Just landing",
+    "all": "All",
+    "empty": "Nothing here yet",
+    "emptyBody": "No products in this shelf right now — try another category.",
+    "updating": "Updating products",
+    "back": "Scroll {{title}} backwards",
+    "forward": "Scroll {{title}} forwards"
+  },
+  "promises": {
+    "codTitle": "Cash on delivery",
+    "codBody": "Pay when your order arrives at your door — no cards, no wallets.",
+    "freeTitle": "Free delivery over ₹999",
+    "freeBody": "A flat ₹40 delivery fee below that, shown upfront at checkout.",
+    "trackTitle": "Status you can follow",
+    "trackBody": "Every order carries a timeline — packed, shipped, delivered."
+  }
+}
