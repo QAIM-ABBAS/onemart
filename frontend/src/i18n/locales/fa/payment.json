@@ -1,0 +1,22 @@
+{
+  "success": {
+    "eyebrow": "پرداخت کامل شد",
+    "title": "متشکریم — سفارش شما تأیید شد",
+    "body": "ما مبلغ <span class=\"num font-semibold\">{{amount}}</span> را برای سفارش <span class=\"num font-semibold\">{{orderNumber}}</span> دریافت کردیم. یک تأییدیه در اعلان‌های شما ارسال شد.",
+    "viewOrder": "مشاهده سفارش",
+    "keepShopping": "ادامه خرید"
+  },
+  "failed": {
+    "eyebrow": "پرداخت انجام نشد",
+    "title": "این پرداخت موفق نبود",
+    "body": "هیچ مبلغی از سفارش <span class=\"num font-semibold\">{{orderNumber}}</span> کسر نشد. کالاها همچنان برای شما رزرو هستند — همین الان دوباره تلاش کنید، یا بعداً از صفحه سفارش پرداخت کنید.",
+    "retry": "تلاش مجدد برای پرداخت",
+    "backToOrder": "بازگشت به سفارش"
+  },
+  "pending": {
+    "eyebrow": "پرداخت در انتظار تأیید",
+    "title": "در حال تکمیل پرداخت شما…",
+    "body": "ما در حال تأیید مبلغ <span class=\"num font-semibold\">{{amount}}</span> برای سفارش <span class=\"num font-semibold\">{{orderNumber}}</span> هستیم. این صفحه به‌صورت خودکار به‌روز می‌شود — می‌توانید با خیال راحت منتظر بمانید.",
+    "viewOrder": "مشاهده سفارش"
+  }
+}

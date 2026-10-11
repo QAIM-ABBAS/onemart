@@ -1,8 +1,9 @@
 import { type ReactNode } from "react";
 import { Link, useSearchParams } from "react-router-dom";
+import { useTranslation } from "react-i18next";
 
 import { useInitiatePayment, usePaymentStatus } from "@/hooks/queries/payments";
-import { money } from "@/lib/format";
+import { formatPrice } from "@/lib/format";
 
 import { Button } from "@/components/ui/Button";
 import { CheckIcon, ClockIcon, CloseIcon } from "@/components/ui/Icon";
@@ -16,6 +17,7 @@ import { ErrorState, Skeleton } from "@/components/ui/States";
  * that never happened, and a slow callback never shows a wrong answer.
  */
 export function PaymentResultPage() {
+  const { t } = useTranslation("payment");
   const [sp] = useSearchParams();
   const paymentId = sp.get("payment_id");
   const hint = sp.get("status");
@@ -71,24 +73,23 @@ export function PaymentResultPage() {
       <ResultShell
         tone="success"
         icon={<CheckIcon width={26} height={26} />}
-        eyebrow="Payment complete"
-        title="Thank you — your order is confirmed"
+        eyebrow={t("success.eyebrow")}
+        title={t("success.title")}
         body={
           <>
-            We received <span className="num font-semibold">{money(data.amount)}</span> for order{" "}
-            <span className="num font-semibold">{data.order_number}</span>. A confirmation is in
-            your notifications.
+            {t("success.body", {
+              amount: formatPrice(data.amount),
+              orderNumber: data.order_number,
+            })}
           </>
         }
         actions={
           <>
             <Link to={`/orders/${data.order_id}`}>
-              <Button size="lg">View order</Button>
+              <Button size="lg">{t("success.viewOrder")}</Button>
             </Link>
             <Link to="/products">
-              <Button variant="secondary" size="lg">
-                Keep shopping
-              </Button>
+              <Button variant="secondary" size="lg">{t("success.keepShopping")}</Button>
             </Link>
           </>
         }
@@ -101,22 +102,24 @@ export function PaymentResultPage() {
       <ResultShell
         tone="danger"
         icon={<CloseIcon width={24} height={24} />}
-        eyebrow="Payment not completed"
-        title="That payment didn't go through"
+        eyebrow={t("failed.eyebrow")}
+        title={t("failed.title")}
         body={
           <>
-            Nothing was charged for order <span className="num font-semibold">{data.order_number}</span>
-            . Your items are still held — retry now, or pay later from the order page.
+            {t("failed.body", {
+              amount: formatPrice(data.amount),
+              orderNumber: data.order_number,
+            })}
           </>
         }
         actions={
           <>
             <Button size="lg" loading={retry.isPending} onClick={doRetry}>
-              Retry payment
+              {t("failed.retry")}
             </Button>
             <Link to={`/orders/${data.order_id}`}>
               <Button variant="secondary" size="lg">
-                Back to order
+                {t("failed.backToOrder")}
               </Button>
             </Link>
           </>
@@ -129,19 +132,20 @@ export function PaymentResultPage() {
     <ResultShell
       tone="info"
       icon={<ClockIcon width={24} height={24} />}
-      eyebrow="Payment pending"
-      title="Finishing your payment…"
+      eyebrow={t("pending.eyebrow")}
+      title={t("pending.title")}
       body={
         <>
-          We are waiting to confirm <span className="num font-semibold">{money(data.amount)}</span>{" "}
-          for order <span className="num font-semibold">{data.order_number}</span>. This page
-          updates itself — you can safely keep it open.
+          {t("pending.body", {
+            amount: formatPrice(data.amount),
+            orderNumber: data.order_number,
+          })}
         </>
       }
       actions={
         <Link to={`/orders/${data.order_id}`}>
           <Button variant="secondary" size="lg">
-            View order
+            {t("pending.viewOrder")}
           </Button>
         </Link>
       }
