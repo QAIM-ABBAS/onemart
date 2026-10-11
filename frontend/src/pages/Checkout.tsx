@@ -11,9 +11,9 @@ import {
 import { useInitiatePayment } from "@/hooks/queries/payments";
 import { ApiError } from "@/lib/api";
 import { cn } from "@/lib/cn";
-import i18n from "@/i18n";
-import { money } from "@/lib/format";
+import { formatDate, formatPrice } from "@/lib/format";
 import { normalizeDigits } from "@/lib/text";
+import { useTranslation } from "react-i18next";
 import type { AddressIn, DeliverySlotOut } from "@/lib/types";
 
 import { Badge } from "@/components/ui/Badge";
@@ -41,27 +41,22 @@ const EMPTY_ADDRESS: AddressIn = {
 };
 
 /** One line of copy per payment method (unknown codes get a generic one). */
-const METHOD_HINTS: Record<string, string> = {
-  cod: "Hand the exact amount to our delivery partner.",
-  zarinpal: "Card or wallet via Zarinpal — you confirm on the gateway, then land right back here.",
-};
+const getMethodHints = (t: (key: string) => string): Record<string, string> => ({
+  cod: t("paymentHints.cod"),
+  zarinpal: t("paymentHints.zarinpal"),
+});
 
 /** Delivery methods the checkout may choose (fees come from the zone quote). */
-const DELIVERY_METHODS: Array<{ code: string; name: string; hint: string }> = [
-  { code: "standard", name: "Standard delivery", hint: "The everyday option — arrives in 2–4 days." },
-  { code: "express", name: "Express delivery", hint: "Faster, priority handling for a higher fee." },
-  { code: "scheduled", name: "Scheduled slot", hint: "Pick a day and a time window that suits you." },
+const getDeliveryMethods = (t: (key: string) => string): Array<{ code: string; name: string; hint: string }> => [
+  { code: "standard", name: t("deliveryMethods.standard.name"), hint: t("deliveryMethods.standard.hint") },
+  { code: "express", name: t("deliveryMethods.express.name"), hint: t("deliveryMethods.express.hint") },
+  { code: "scheduled", name: t("deliveryMethods.scheduled.name"), hint: t("deliveryMethods.scheduled.hint") },
 ];
 
-/** Human label for a slot state chip. */
-const SLOT_STATE_LABELS: Record<string, string> = {
-  available: "Available",
-  limited: "Few left",
-  full: "Fully booked",
-  closed: "Closed",
-};
-
 export function CheckoutPage() {
+  const { t } = useTranslation("checkout");
+  const METHOD_HINTS = getMethodHints(t);
+  const DELIVERY_METHODS = getDeliveryMethods(t);
   const addresses = useAddresses();
   const placeOrder = usePlaceOrder();
   const initiate = useInitiatePayment();
@@ -189,15 +184,15 @@ export function CheckoutPage() {
 
     if (mode === "new" && !validateNewAddress()) return;
     if (mode === "saved" && addressId === null) {
-      setFormErrors({ address: "Choose a delivery address or add a new one" });
+      setFormErrors({ address: t("validation.address") });
       return;
     }
     if (summary.data && !summary.data.serviceable) {
-      setFormErrors({ address: "We do not deliver to this address yet" });
+      setFormErrors({ address: t("validation.notServiceable") });
       return;
     }
     if (deliveryMethod === "scheduled" && slotId === null) {
-      setFormErrors({ slot: "Pick a delivery time slot" });
+      setFormErrors({ slot: t("validation.slot") });
       return;
     }
 
@@ -256,12 +251,12 @@ export function CheckoutPage() {
   return (
     <div className="mx-auto max-w-6xl px-4 py-8 lg:py-12">
       <div className="pb-1">
-        <p className="label text-brand-600">Almost there</p>
-        <h1 className="mt-1.5 text-3xl">Checkout</h1>
+        <p className="label text-brand-600">{t("eyebrow")}</p>
+        <h1 className="mt-1.5 text-3xl">{t("title")}</h1>
         <p className="mt-1.5 text-sm text-ink-muted">
           {paymentCode === "cod"
-            ? "Cash on delivery — pay when your order arrives."
-            : "Pay securely online — your items are reserved while you complete the payment."}
+            ? t("codBlurb")
+            : t("onlineBlurb")}
         </p>
       </div>
 
@@ -273,7 +268,7 @@ export function CheckoutPage() {
             <div className="flex items-center justify-between px-5 py-4">
               <h2 className="flex items-center gap-2 text-lg">
                 <PinIcon width={17} height={17} className="text-brand-600" />
-                Delivery address
+                {t("address.title")}
               </h2>
               {addressList.length > 0 ? (
                 <div className="flex gap-1 rounded-md bg-surface-2 p-1 shadow-pressed">
@@ -287,7 +282,7 @@ export function CheckoutPage() {
                         : "text-ink-muted hover:bg-surface-2 hover:text-ink",
                     )}
                   >
-                    Saved
+                    {t("address.saved")}
                   </button>
                   <button
                     type="button"
@@ -299,7 +294,7 @@ export function CheckoutPage() {
                         : "text-ink-muted hover:bg-surface-2 hover:text-ink",
                     )}
                   >
-                    New address
+                    {t("address.new")}
                   </button>
                 </div>
               ) : null}
@@ -314,13 +309,13 @@ export function CheckoutPage() {
                   </div>
                 ) : addressList.length === 0 ? (
                   <div className="text-sm text-ink-muted">
-                    No saved addresses yet.{" "}
+                    {t("address.noSaved")}{" "}
                     <button
                       type="button"
                       onClick={() => setMode("new")}
                       className="text-brand-600 underline underline-offset-2"
                     >
-                      Add one
+                      {t("address.addOne")}
                     </button>
                     .
                   </div>
@@ -342,7 +337,7 @@ export function CheckoutPage() {
                             checked={selected}
                             onChange={() => setAddressId(addr.id)}
                             className="mt-1 size-4 accent-brand-700"
-                            aria-label={`Select address of ${addr.full_name}`}
+                            aria-label={t("address.selectOne", { name: addr.full_name })}
                           />
                           <div className="min-w-0 flex-1 text-sm">
                             <p
@@ -352,7 +347,7 @@ export function CheckoutPage() {
                               )}
                             >
                               {addr.full_name}
-                              {addr.is_default ? <Badge tone="info">Default</Badge> : null}
+                              {addr.is_default ? <Badge tone="info">{t("address.default")}</Badge> : null}
                             </p>
                             <p dir="ltr" className="num mt-0.5 text-ink-muted">{addr.phone}</p>
                             <p className="mt-1 text-ink-muted">
@@ -366,6 +361,7 @@ export function CheckoutPage() {
                             onDeleted={() => {
                               if (addressId === addr.id) setAddressId(null);
                             }}
+                            t={t}
                           />
                         </div>
                       );
@@ -477,7 +473,7 @@ export function CheckoutPage() {
               <div className="flex items-center gap-2 px-5 py-4">
                 <h2 className="flex items-center gap-2 text-lg">
                   <TruckIcon width={17} height={17} className="text-brand-600" />
-                  Delivery
+                  {t("delivery.title")}
                 </h2>
                 {summary.data.delivery_zone ? (
                   <Badge tone="info">{summary.data.delivery_zone.name}</Badge>
@@ -486,7 +482,7 @@ export function CheckoutPage() {
               <div className="px-5 py-5">
                 {!summary.data.serviceable ? (
                   <InlineError>
-                    We do not deliver to this address yet. Choose a different address to continue.
+                    {t("delivery.notServiceable")}
                   </InlineError>
                 ) : (
                   <div className="space-y-3">
@@ -530,8 +526,10 @@ export function CheckoutPage() {
 
                     {deliveryMethod === "scheduled" ? (
                       <div className="mt-4 rounded-md bg-surface-2/50 p-4">
-                        <p className="label text-ink-muted">Pick a day</p>
+                        <p className="label text-ink-muted">{t("delivery.pickDay")}</p>
                         <SlotGrid
+                          t={t}
+                          formatDate={formatDate}
                           slots={slots.data ?? []}
                           loading={slots.isLoading}
                           error={slots.error}
@@ -554,7 +552,7 @@ export function CheckoutPage() {
             <div className="flex items-center gap-2 px-5 py-4">
               <h2 className="flex items-center gap-2 text-lg">
                 <BanknoteIcon width={17} height={17} className="text-brand-600" />
-                Payment
+                {t("payment.title")}
               </h2>
             </div>
             <div className="px-5 py-5">
@@ -586,17 +584,17 @@ export function CheckoutPage() {
                         {method.name}
                       </span>
                       <span className="mt-0.5 block text-ink-muted">
-                        {METHOD_HINTS[method.code] ?? "Pay securely at checkout."}
+                        {METHOD_HINTS[method.code] ?? t("payment.secureFallback")}
                       </span>
                     </span>
                   </label>
                 ))}
               </div>
-              <Field label="Order note (optional)" htmlFor="note" className="mt-5">
+              <Field label={t("payment.note")} htmlFor="note" className="mt-5">
                 <Textarea
                   id="note"
                   rows={3}
-                  placeholder="Gate code, best time to deliver…"
+                  placeholder={t("payment.notePlaceholder")}
                   value={note}
                   onChange={(e) => setNote(e.target.value)}
                   maxLength={500}
@@ -627,14 +625,14 @@ export function CheckoutPage() {
                     {item.deal_price != null ? (
                       <>
                         <span className="num block font-semibold text-deal">
-                          {money(item.deal_price * item.quantity)}
+                          {formatPrice(item.deal_price * item.quantity)}
                         </span>
                         <span className="num block text-[0.75rem] text-ink-muted line-through">
-                          {money(item.line_total)}
+                          {formatPrice(item.line_total)}
                         </span>
                       </>
                     ) : (
-                      <span className="num">{money(item.line_total)}</span>
+                      <span className="num">{formatPrice(item.line_total)}</span>
                     )}
                   </span>
                 </li>
@@ -642,57 +640,57 @@ export function CheckoutPage() {
             </ul>
             <dl className="space-y-3 bg-surface-2/50 px-5 py-4 text-sm ">
               <div className="flex justify-between">
-                <dt className="text-ink-muted">Subtotal</dt>
-                <dd className="num font-medium">{money(cartSummary.subtotal)}</dd>
+                <dt className="text-ink-muted">{t("summary.subtotal")}</dt>
+                <dd className="num font-medium">{formatPrice(cartSummary.subtotal)}</dd>
               </div>
               {cartSummary.flash_discount > 0 ? (
                 <div className="flex justify-between">
-                  <dt className="text-ink-muted">Flash deal</dt>
-                  <dd className="num font-medium text-deal"><span dir="ltr">−{money(cartSummary.flash_discount)}</span></dd>
+                  <dt className="text-ink-muted">{t("summary.flashDeal")}</dt>
+                  <dd className="num font-medium text-deal"><span dir="ltr">−{formatPrice(cartSummary.flash_discount)}</span></dd>
                 </div>
               ) : null}
               {cartSummary.auto_discount > 0 ? (
                 <div className="flex justify-between">
-                  <dt className="text-ink-muted">Discount</dt>
-                  <dd className="num font-medium text-deal"><span dir="ltr">−{money(cartSummary.auto_discount)}</span></dd>
+                  <dt className="text-ink-muted">{t("summary.discount")}</dt>
+                  <dd className="num font-medium text-deal"><span dir="ltr">−{formatPrice(cartSummary.auto_discount)}</span></dd>
                 </div>
               ) : null}
               {cartSummary.coupon?.kind === "free_delivery" ? (
                 <div className="flex items-center justify-between gap-3">
                   <dt className="text-ink-muted">
-                    Coupon{" "}
+                    {t("summary.coupon")}{" "}
                     <span dir="ltr" className="rounded-md bg-highlight px-1.5 py-0.5 text-[0.6875rem] font-semibold text-highlight-ink">
                       {cartSummary.coupon.code}
                     </span>
                   </dt>
-                  <dd className="num shrink-0 font-medium text-brand-600">Free delivery</dd>
+                  <dd className="num shrink-0 font-medium text-brand-600">{t("summary.freeDelivery")}</dd>
                 </div>
               ) : cartSummary.discount > 0 ? (
                 <div className="flex items-center justify-between gap-3">
                   <dt className="text-ink-muted">
-                    Coupon{" "}
+                    {t("summary.coupon")}{" "}
                     <span dir="ltr" className="rounded-md bg-highlight px-1.5 py-0.5 text-[0.6875rem] font-semibold text-highlight-ink">
                       {cartSummary.coupon?.code}
                     </span>
                   </dt>
                   <dd className="num shrink-0 font-medium text-deal">
-                    <span dir="ltr">−{money(cartSummary.discount)}</span>
+                    <span dir="ltr">−{formatPrice(cartSummary.discount)}</span>
                   </dd>
                 </div>
               ) : null}
               <div className="flex justify-between">
-                <dt className="text-ink-muted">Delivery</dt>
+                <dt className="text-ink-muted">{t("summary.delivery")}</dt>
                 <dd className="num font-medium">
                   {cartSummary.delivery_fee === 0 ? (
-                    <span className="text-brand-600">Free</span>
+                    <span className="text-brand-600">{t("summary.free")}</span>
                   ) : (
-                    money(cartSummary.delivery_fee)
+                    formatPrice(cartSummary.delivery_fee)
                   )}
                 </dd>
               </div>
               <div className="flex justify-between pt-3 text-base">
-                <dt className="font-medium">Total</dt>
-                <dd className="num font-semibold">{money(cartSummary.total)}</dd>
+                <dt className="font-medium">{t("summary.total")}</dt>
+                <dd className="num font-semibold">{formatPrice(cartSummary.total)}</dd>
               </div>
             </dl>
 
@@ -729,15 +727,13 @@ export function CheckoutPage() {
                   (deliveryMethod === "scheduled" && slotId === null)
                 }
               >
-                {paymentCode === "cod" ? "Place order" : "Continue to payment"} ·{" "}
-                {money(cartSummary.total)}
+                {paymentCode === "cod" ? t("submit.cod") : t("submit.online")} ·{" "}
+                {formatPrice(cartSummary.total)}
               </Button>
               <p className="mt-3 text-center text-[0.75rem] text-ink-muted">
                 {paymentCode === "cod"
-                  ? "Cash on delivery — you pay when the order reaches you."
-                  : `Nothing is charged until you confirm on the gateway. Your items are held for ${
-                      cartSummary.payment_reservation_minutes ?? 15
-                    } minutes.`}
+                  ? t("submit.codHint")
+                  : t("submit.onlineHint", { minutes: cartSummary.payment_reservation_minutes ?? 15 })}
               </p>
             </div>
           </div>
@@ -750,18 +746,20 @@ export function CheckoutPage() {
 function DeleteAddressButton({
   addressId,
   onDeleted,
+  t,
 }: {
   addressId: number;
   onDeleted: () => void;
+  t: (key: string) => string;
 }) {
   const del = useDeleteAddress();
   return (
     <button
       type="button"
-      aria-label="Remove address"
+      aria-label={t("removeAddress")}
       disabled={del.isPending}
       onClick={() => {
-        if (!window.confirm(i18n.t("confirmDeleteAddress"))) return;
+        if (!window.confirm(t("confirmDeleteAddress"))) return;
         del.mutate(addressId, { onSuccess: onDeleted });
       }}
       className="text-ink-muted transition-colors hover:text-danger disabled:opacity-40"
@@ -776,16 +774,9 @@ function DeleteAddressButton({
  * each slot shows its state (available / limited / full / closed) and the
  * remaining seats. Full and closed slots are not selectable.
  */
-function SlotGrid({
-  slots,
-  loading,
-  error,
-  onRetry,
-  selectedSlotId,
-  selectedDate,
-  onSelectDate,
-  onSelectSlot,
-}: {
+interface SlotGridProps {
+  t: (key: string, options?: Record<string, unknown>) => string;
+  formatDate: (d: string | Date, opts?: Intl.DateTimeFormatOptions) => string;
   slots: DeliverySlotOut[];
   loading: boolean;
   error: unknown;
@@ -794,7 +785,20 @@ function SlotGrid({
   selectedDate: string | null;
   onSelectDate: (date: string | null) => void;
   onSelectSlot: (slotId: number | null) => void;
-}) {
+}
+
+function SlotGrid({
+  t,
+  formatDate,
+  slots,
+  loading,
+  error,
+  onRetry,
+  selectedSlotId,
+  selectedDate,
+  onSelectDate,
+  onSelectSlot,
+}: SlotGridProps) {
   const dates = useMemo(() => {
     const map = new Map<string, DeliverySlotOut[]>();
     for (const slot of slots) {
@@ -821,9 +825,9 @@ function SlotGrid({
     return (
       <div className="mt-3">
         <InlineError>
-          Could not load delivery slots.{" "}
+          {t("slot.couldNotLoad")}{" "}
           <button type="button" onClick={onRetry} className="underline underline-offset-2">
-            Retry
+            {t("retry")}
           </button>
         </InlineError>
       </div>
@@ -832,7 +836,7 @@ function SlotGrid({
   if (dates.length === 0) {
     return (
       <p className="mt-3 text-sm text-ink-muted">
-        No delivery slots available for this address right now. Try Standard or Express instead.
+        {t("slot.noSlots")}
       </p>
     );
   }
@@ -859,14 +863,10 @@ function SlotGrid({
               )}
             >
               <span className="block font-medium">
-                {new Date(`${date}T00:00:00`).toLocaleDateString(undefined, {
-                  weekday: "short",
-                  month: "short",
-                  day: "numeric",
-                })}
+                {formatDate(date, { weekday: "short", month: "short", day: "numeric" })}
               </span>
               <span className="block text-[0.75rem] text-ink-muted">
-                {bookable ? `${daySlots.filter((s) => s.state !== "full" && s.state !== "closed").length} windows` : "Fully booked"}
+                {bookable ? `${daySlots.filter((s) => s.state !== "full" && s.state !== "closed").length} ${t("slot.windows")}` : t("slotStates.full")}
               </span>
             </button>
           );
@@ -898,12 +898,12 @@ function SlotGrid({
                   {slot.start.slice(0, 5)} – {slot.end.slice(0, 5)}
                 </span>
                 <Badge tone={slot.state === "limited" ? "warning" : slot.state === "available" ? "positive" : "neutral"}>
-                  {SLOT_STATE_LABELS[slot.state] ?? slot.state}
+                  {t(`slotStates.${slot.state}`)}
                 </Badge>
               </span>
               {selectable ? (
                 <span className="mt-1 block text-[0.75rem] text-ink-muted">
-                  {remaining} {remaining === 1 ? "seat" : "seats"} left
+                  {remaining} {t("slotStates.seat", { count: remaining })} {t("slotStates.left")}
                 </span>
               ) : null}
             </button>

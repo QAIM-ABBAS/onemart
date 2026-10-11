@@ -1,0 +1,107 @@
+{
+  "eyebrow": "Almost there",
+  "title": "Checkout",
+  "codBlurb": "Cash on delivery — pay when your order arrives.",
+  "onlineBlurb": "Pay securely online — your items are reserved while you complete the payment.",
+  "address": {
+    "title": "Delivery address",
+    "saved": "Saved",
+    "new": "New address",
+    "noSaved": "No saved addresses yet.",
+    "addOne": "Add one",
+    "default": "Default",
+    "selectOne": "Select address of {{name}}"
+  },
+  "form": {
+    "fullName": "Full name",
+    "phone": "Phone",
+    "pin": "PIN code",
+    "street": "Street address",
+    "streetPlaceholder": "House no., street",
+    "landmark": "Landmark (optional)",
+    "city": "City",
+    "state": "State",
+    "saveAddress": "Save this address to my account",
+    "setDefault": "Set as default"
+  },
+  "validation": {
+    "fullName": "Enter the recipient's name",
+    "phone": "Enter a valid phone number",
+    "line1": "Enter the street address",
+    "city": "Enter the city",
+    "state": "Enter the state",
+    "postal": "Enter the PIN code",
+    "address": "Choose a delivery address or add a new one",
+    "notServiceable": "We do not deliver to this address yet",
+    "slot": "Pick a delivery time slot"
+  },
+  "delivery": {
+    "title": "Delivery",
+    "notServiceable": "We do not deliver to this address yet. Choose a different address to continue.",
+    "pickDay": "Pick a day",
+    "chooseZone": "Choose delivery zone"
+  },
+  "slot": {
+    "available": "Available",
+    "limited": "Few left",
+    "full": "Fully booked",
+    "closed": "Closed",
+    "seats_one": "{{count, number}} seat left",
+    "seats_other": "{{count, number}} seats left",
+    "pickSlot": "Pick a delivery time slot"
+  },
+  "payment": {
+    "title": "Payment",
+    "note": "Order note (optional)",
+    "notePlaceholder": "Gate code, best time to deliver…",
+    "secureFallback": "Pay securely at checkout."
+  },
+  "summary": {
+    "title": "Your order",
+    "subtotal": "Subtotal",
+    "flashDeal": "Flash deal",
+    "discount": "Discount",
+    "coupon": "Coupon",
+    "freeDelivery": "Free delivery",
+    "delivery": "Delivery",
+    "free": "Free",
+    "total": "Total",
+    "shortage": "{{product}} ({{variant}}) — {{count, number}} left",
+    "backToCart": "Back to cart"
+  },
+  "submit": {
+    "cod": "Place order",
+    "online": "Continue to payment",
+    "codHint": "Cash on delivery — you pay when the order reaches you.",
+    "onlineHint": "Nothing is charged until you confirm on the gateway. Your items are held for {{minutes, number}} minutes."
+  },
+  "removeAddress": "Remove address",
+  "slotStates": {
+    "available": "Available",
+    "limited": "Few left",
+    "full": "Fully booked",
+    "closed": "Closed",
+    "windows": "windows",
+    "seat_one": "seat",
+    "seat_other": "seats",
+    "left": "left"
+  },
+  "paymentHints": {
+    "cod": "Hand the exact amount to our delivery partner.",
+    "zarinpal": "Card or wallet via Zarinpal — you confirm on the gateway, then land right back here."
+  },
+  "deliveryMethods": {
+    "standard": { "name": "Standard delivery", "hint": "The everyday option — arrives in 2–4 days." },
+    "express": { "name": "Express delivery", "hint": "Faster, priority handling for a higher fee." },
+    "scheduled": { "name": "Scheduled slot", "hint": "Pick a day and a time window that suits you." }
+  },
+  "slot": {
+    "couldNotLoad": "Could not load delivery slots.",
+    "noSlots": "No delivery slots available for this address right now. Try Standard or Express instead.",
+    "pickSlot": "Pick a delivery time slot",
+    "windows": "windows",
+    "seat_one": "seat",
+    "seat_other": "seats",
+    "left": "left"
+  }
+}
