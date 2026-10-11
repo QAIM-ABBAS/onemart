@@ -23,6 +23,7 @@ import {
 } from "@/components/ui/Icon";
 
 import { AccountMenu } from "./AccountMenu";
+import { LanguageSwitcher } from "@/components/LanguageSwitcher";
 import { MegaMenu } from "./MegaMenu";
 import { MiniCart } from "./MiniCart";
 import { SearchBar } from "./SearchBar";
@@ -241,6 +242,7 @@ export function Header() {
 
           <div className="ms-auto flex items-center gap-2 md:ms-0">
             <Hotline />
+            <LanguageSwitcher className="hidden sm:inline-flex" />
             <NotificationBell />
             <AccountMenu />
             <WishlistLink />
@@ -323,6 +325,9 @@ export function Header() {
       {mobileOpen ? (
         <div className="border-b border-brand-800 bg-brand-900 text-brand-50 lg:hidden">
           <div className="page py-4">
+            <div className="flex items-center justify-between pb-2">
+              <LanguageSwitcher />
+            </div>
             <div className="flex flex-col divide-y divide-brand-800">
               <Link to="/products" className="py-3 text-sm font-medium">
                 All products

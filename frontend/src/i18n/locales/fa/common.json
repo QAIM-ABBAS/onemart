@@ -1,0 +1,11 @@
+{
+  "currency": "₹",
+  "language": {
+    "fa": "فارسی",
+    "en": "English"
+  },
+  "loading": "در حال بارگذاری…",
+  "retry": "تلاش مجدد",
+  "save": "ذخیره",
+  "cancel": "انصراف"
+}

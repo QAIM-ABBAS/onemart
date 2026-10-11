@@ -224,3 +224,14 @@
     scroll-behavior: auto !important;
   }
 }
+
+@theme {
+  --font-sans: var(--font-body);
+}
+
+html[lang='fa'] { --font-body: 'Vazirmatn Variable', 'Inter', system-ui, sans-serif; }
+html[lang='en'] { --font-body: 'Inter', system-ui, sans-serif; }
+body { font-family: var(--font-body); }
+/* Persian script must never have letter-spacing (it breaks letter joining) */
+html[lang='fa'] * { letter-spacing: normal !important; }
+html[lang='fa'] body { line-height: 1.75; }
