@@ -11,6 +11,7 @@ import {
 import { useInitiatePayment } from "@/hooks/queries/payments";
 import { ApiError } from "@/lib/api";
 import { cn } from "@/lib/cn";
+import i18n from "@/i18n";
 import { money } from "@/lib/format";
 import { normalizeDigits } from "@/lib/text";
 import type { AddressIn, DeliverySlotOut } from "@/lib/types";
@@ -760,7 +761,7 @@ function DeleteAddressButton({
       aria-label="Remove address"
       disabled={del.isPending}
       onClick={() => {
-        if (!window.confirm("Remove this address from your account?")) return;
+        if (!window.confirm(i18n.t("confirmDeleteAddress"))) return;
         del.mutate(addressId, { onSuccess: onDeleted });
       }}
       className="text-ink-muted transition-colors hover:text-danger disabled:opacity-40"

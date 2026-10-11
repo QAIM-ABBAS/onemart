@@ -1,5 +1,6 @@
 import { useEffect, type ReactNode } from "react";
 import { createPortal } from "react-dom";
+import { useTranslation } from "react-i18next";
 
 import { cn } from "@/lib/cn";
 
@@ -22,6 +23,7 @@ export function Modal({
   footer?: ReactNode;
   className?: string;
 }) {
+  const { t } = useTranslation();
   useEffect(() => {
     if (!open) return;
     const onKey = (e: KeyboardEvent) => {
@@ -61,7 +63,7 @@ export function Modal({
           </div>
           <button
             type="button"
-            aria-label="Close dialog"
+            aria-label={t("close")}
             onClick={onClose}
             className="grid size-8 place-items-center rounded-lg text-ink-muted transition hover:bg-surface-2 hover:text-ink"
           >

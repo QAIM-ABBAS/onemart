@@ -170,11 +170,11 @@ export function ProductPage() {
 
   return (
     <div className="mx-auto max-w-6xl px-4 py-6 lg:py-10">
-      <nav aria-label="Breadcrumb" className="text-[0.8125rem] text-ink-muted">
+      <nav aria-label={t("breadcrumb")} className="text-[0.8125rem] text-ink-muted">
         <ol className="flex flex-wrap items-center gap-1.5">
           <li>
             <Link to="/" className="hover:text-ink hover:underline underline-offset-2">
-              Home
+              {t("nav:home")}
             </Link>
           </li>
           <li aria-hidden="true">/</li>

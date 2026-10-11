@@ -1,0 +1,11 @@
+{
+  "card": {
+    "add": "Add to cart",
+    "adding": "Adding…",
+    "outOfStock": "Out of stock",
+    "reviews_one": "{{count, number}} review",
+    "reviews_other": "{{count, number}} reviews",
+    "descriptionFallback": "Fresh {{category}} — quality you can trust.",
+    "unit": "per unit"
+  }
+}

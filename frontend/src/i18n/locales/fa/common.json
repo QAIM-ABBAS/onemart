@@ -1,7 +1,7 @@
 {
   "currency": "₹",
   "discount": {
-    "badge": "{{percent}}٪ تخفیف"
+    "badge": "{{percent, number}}٪ تخفیف"
   },
   "language": {
     "fa": "فارسی",
@@ -9,6 +9,73 @@
   },
   "loading": "در حال بارگذاری…",
   "retry": "تلاش مجدد",
+  "tryAgain": "تلاش مجدد",
   "save": "ذخیره",
-  "cancel": "انصراف"
+  "cancel": "انصراف",
+  "close": "بستن",
+  "delete": "حذف",
+  "edit": "ویرایش",
+  "confirm": "تأیید",
+  "dismiss": "بستن اعلان",
+  "status": {
+    "pending": "در انتظار تأیید",
+    "confirmed": "تأیید شده",
+    "processing": "در حال پردازش",
+    "packed": "در حال پردازش",
+    "ready_for_delivery": "آماده ارسال",
+    "shipped": "در مسیر تحویل",
+    "out_for_delivery": "در مسیر تحویل",
+    "delivered": "تحویل شده",
+    "cancelled": "لغو شده"
+  },
+  "payment": {
+    "pending": "در انتظار",
+    "paid": "پرداخت شده",
+    "failed": "ناموفق",
+    "refunded": "بازگشت داده شده",
+    "partially_refunded": "بازگشت جزئی",
+    "initiated": "آغاز شده"
+  },
+  "role": {
+    "customer": "مشتری",
+    "staff": "کارمند",
+    "admin": "مدیر"
+  },
+  "empty": {
+    "title": "چیزی این‌جا نیست"
+  },
+  "error": {
+    "title": "بارگذاری ممکن نشد",
+    "body": "هنگام بارگذاری این بخش مشکلی پیش آمد."
+  },
+  "pagination": {
+    "label": "صفحه‌بندی",
+    "prev": "صفحه قبلی",
+    "next": "صفحه بعدی",
+    "showing": "نمایش {{from}} تا {{to}} از {{total}}"
+  },
+  "stepper": {
+    "decrease": "کاهش تعداد",
+    "increase": "افزایش تعداد"
+  },
+  "stars": {
+    "label": "{{rating}} از ۵ ستاره",
+    "pick_one": "{{count, number}} ستاره",
+    "pick_other": "{{count, number}} ستاره",
+    "yourRating": "امتیاز شما"
+  },
+  "wishlist": {
+    "add": "افزودن {{name}} به علاقه‌مندی‌ها",
+    "remove": "حذف {{name}} از علاقه‌مندی‌ها"
+  },
+  "breadcrumb": "مسیر صفحه",
+  "seeAll": "مشاهده همه",
+  "confirmDeleteReview": "این نظر حذف شود؟ این کار قابل بازگشت نیست.",
+  "confirmDeleteAddress": "این آدرس از حساب شما حذف شود؟",
+  "toast": {
+    "addedToCart": "{{quantity}} × {{name}} اضافه شد — {{price}}",
+    "noOption": "این کالا در حال حاضر گزینه‌ای برای خرید ندارد.",
+    "addFailed": "افزودن این کالا به سبد ممکن نشد.",
+    "undo": "بازگردانی"
+  }
 }

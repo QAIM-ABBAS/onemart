@@ -3,17 +3,18 @@
     "tagline": "همه‌چیز را یک‌جا پیدا کنید.",
     "home": "صفحه اصلی وان‌مارت"
   },
+  "home": "خانه",
   "hotline": {
     "support": "پشتیبانی ۲۴ ساعته"
   },
   "cart": {
     "basket": "سبد خرید",
-    "open_one": "باز کردن سبد خرید، {{count}} کالا",
-    "open_other": "باز کردن سبد خرید، {{count}} کالا"
+    "open_one": "باز کردن سبد خرید، {{count, number}} کالا",
+    "open_other": "باز کردن سبد خرید، {{count, number}} کالا"
   },
   "wishlist": {
-    "open_one": "علاقه‌مندی‌ها، {{count}} کالا",
-    "open_other": "علاقه‌مندی‌ها، {{count}} کالا"
+    "open_one": "علاقه‌مندی‌ها، {{count, number}} کالا",
+    "open_other": "علاقه‌مندی‌ها، {{count, number}} کالا"
   },
   "recent": {
     "title": "بازدیدهای اخیر",
@@ -59,8 +60,8 @@
   },
   "notifications": {
     "label": "اعلان‌ها",
-    "unread_one": "{{count}} خوانده‌نشده",
-    "unread_other": "{{count}} خوانده‌نشده",
+    "unread_one": "{{count, number}} خوانده‌نشده",
+    "unread_other": "{{count, number}} خوانده‌نشده",
     "allRead": "همه خوانده شده‌اند",
     "error": "بارگذاری اعلان‌ها ممکن نشد.",
     "retry": "تلاش مجدد",

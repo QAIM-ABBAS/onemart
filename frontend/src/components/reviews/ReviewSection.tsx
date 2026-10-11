@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 
+import i18n from "@/i18n";
 import { toast } from "@/stores/toast";
 import { useAuth } from "@/stores/auth";
 
@@ -59,7 +60,7 @@ export function ReviewSection({ slug }: { slug: string }) {
     editingId != null ? (data?.items.find((r) => r.id === editingId) ?? null) : null;
 
   function handleDelete(id: number) {
-    if (!window.confirm("Delete this review? This cannot be undone.")) return;
+    if (!window.confirm(i18n.t("confirmDeleteReview"))) return;
     remove.mutate(id, {
       onSuccess: () => {
         toast("Review deleted.", { tone: "positive" });

@@ -1,7 +1,7 @@
 import type { ReactNode } from "react";
+import { useTranslation } from "react-i18next";
 
 import { cn } from "@/lib/cn";
-import { ORDER_STATUS_LABELS } from "@/lib/format";
 import type { OrderStatus, PaymentAttemptStatus, PaymentStatus } from "@/lib/types";
 
 export type Tone = "neutral" | "info" | "positive" | "warning" | "negative";
@@ -63,6 +63,7 @@ export const STATUS_STYLE: Record<OrderStatus, { chip: string; dot: string; ring
 };
 
 export function StatusBadge({ status, className }: { status: OrderStatus; className?: string }) {
+  const { t } = useTranslation();
   const style = STATUS_STYLE[status];
   return (
     <span
@@ -73,7 +74,7 @@ export function StatusBadge({ status, className }: { status: OrderStatus; classN
       )}
     >
       <span aria-hidden="true" className={cn("size-1.5 shrink-0 rounded-full", style.dot)} />
-      {ORDER_STATUS_LABELS[status]}
+      {t(`status.${status}`)}
     </span>
   );
 }
@@ -83,6 +84,7 @@ export function PaymentBadge({
 }: {
   status: PaymentStatus | PaymentAttemptStatus;
 }) {
+  const { t } = useTranslation();
   const tone: Tone =
     status === "paid"
       ? "positive"
@@ -91,5 +93,5 @@ export function PaymentBadge({
         : status === "refunded" || status === "partially_refunded"
           ? "warning"
           : "neutral";
-  return <Badge tone={tone}>{status.replace(/_/g, " ")}</Badge>;
+  return <Badge tone={tone}>{t(`payment.${status}`)}</Badge>;
 }

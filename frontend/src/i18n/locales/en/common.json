@@ -1,7 +1,7 @@
 {
   "currency": "₹",
   "discount": {
-    "badge": "{{percent}}% off"
+    "badge": "{{percent, number}}% off"
   },
   "language": {
     "fa": "فارسی",
@@ -9,6 +9,73 @@
   },
   "loading": "Loading…",
   "retry": "Retry",
+  "tryAgain": "Try again",
   "save": "Save",
-  "cancel": "Cancel"
+  "cancel": "Cancel",
+  "close": "Close",
+  "delete": "Delete",
+  "edit": "Edit",
+  "confirm": "Confirm",
+  "dismiss": "Dismiss notification",
+  "status": {
+    "pending": "Pending",
+    "confirmed": "Confirmed",
+    "processing": "Processing",
+    "packed": "Processing",
+    "ready_for_delivery": "Ready for delivery",
+    "shipped": "Out for delivery",
+    "out_for_delivery": "Out for delivery",
+    "delivered": "Delivered",
+    "cancelled": "Cancelled"
+  },
+  "payment": {
+    "pending": "Pending",
+    "paid": "Paid",
+    "failed": "Failed",
+    "refunded": "Refunded",
+    "partially_refunded": "Partially refunded",
+    "initiated": "Initiated"
+  },
+  "role": {
+    "customer": "Customer",
+    "staff": "Staff",
+    "admin": "Admin"
+  },
+  "empty": {
+    "title": "Nothing here"
+  },
+  "error": {
+    "title": "Could not load",
+    "body": "Something went wrong while loading this section."
+  },
+  "pagination": {
+    "label": "Pagination",
+    "prev": "Previous page",
+    "next": "Next page",
+    "showing": "Showing {{from}}–{{to}} of {{total}}"
+  },
+  "stepper": {
+    "decrease": "Decrease quantity",
+    "increase": "Increase quantity"
+  },
+  "stars": {
+    "label": "{{rating}} out of 5 stars",
+    "pick_one": "{{count, number}} star",
+    "pick_other": "{{count, number}} stars",
+    "yourRating": "Your rating"
+  },
+  "wishlist": {
+    "add": "Add {{name}} to wishlist",
+    "remove": "Remove {{name}} from wishlist"
+  },
+  "breadcrumb": "Breadcrumb",
+  "seeAll": "See all",
+  "confirmDeleteReview": "Delete this review? This cannot be undone.",
+  "confirmDeleteAddress": "Remove this address from your account?",
+  "toast": {
+    "addedToCart": "Added {{quantity}} × {{name}} — {{price}}",
+    "noOption": "This product has no available option right now.",
+    "addFailed": "Could not add that to your cart.",
+    "undo": "Undo"
+  }
 }

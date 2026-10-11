@@ -1,3 +1,4 @@
+import { useTranslation } from "react-i18next";
 import { useToasts } from "@/stores/toast";
 import { cn } from "@/lib/cn";
 
@@ -10,6 +11,7 @@ const toneClasses = {
 } as const;
 
 export function Toaster() {
+  const { t } = useTranslation();
   const { toasts, dismiss } = useToasts();
 
   return (
@@ -42,7 +44,7 @@ export function Toaster() {
           ) : null}
           <button
             type="button"
-            aria-label="Dismiss notification"
+            aria-label={t("dismiss")}
             onClick={() => dismiss(item.id)}
             className="shrink-0 opacity-70 transition-opacity hover:opacity-100"
           >

@@ -2,8 +2,9 @@ import { useCallback } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 
 import { useAddToCart, useRemoveCartItem } from "@/hooks/queries/cart";
+import i18n from "@/i18n";
 import { api } from "@/lib/api";
-import { money } from "@/lib/format";
+import { formatNumber, formatPrice } from "@/lib/format";
 import type { CartOut, ProductDetail, ProductListItem } from "@/lib/types";
 import { toast } from "@/stores/toast";
 
@@ -21,31 +22,37 @@ export function useQuickAdd() {
       });
       const variant = detail.variants.find((v) => v.is_default) ?? detail.variants[0];
       if (!variant) {
-        toast("This product has no available option right now.", { tone: "negative" });
+        toast(i18n.t("toast.noOption"), { tone: "negative" });
         return;
       }
 
       try {
         const cart = await addToCart.mutateAsync({ variant_id: variant.id, quantity });
         const line = cart.items.find((entry) => entry.variant_id === variant.id);
-        toast(`Added ${quantity} × ${item.name} — ${money(item.price * quantity)}`, {
-          tone: "positive",
-          action: line
-            ? {
-                label: "Undo",
-                onClick: () => {
-                  removeItem.mutate(line.id, {
-                    onSuccess: (next) => qc.setQueryData<CartOut>(["cart"], next),
-                  });
-                },
-              }
-            : undefined,
-        });
-      } catch (error) {
         toast(
-          error instanceof Error ? error.message : "Could not add that to your cart.",
-          { tone: "negative" },
+          i18n.t("toast.addedToCart", {
+            quantity: formatNumber(quantity),
+            name: item.name,
+            price: formatPrice(item.price * quantity),
+          }),
+          {
+            tone: "positive",
+            action: line
+              ? {
+                  label: i18n.t("toast.undo"),
+                  onClick: () => {
+                    removeItem.mutate(line.id, {
+                      onSuccess: (next) => qc.setQueryData<CartOut>(["cart"], next),
+                    });
+                  },
+                }
+              : undefined,
+          },
         );
+      } catch (error) {
+        toast(error instanceof Error ? error.message : i18n.t("toast.addFailed"), {
+          tone: "negative",
+        });
       }
     },
     [addToCart, removeItem, qc],

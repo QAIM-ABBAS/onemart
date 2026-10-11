@@ -72,7 +72,7 @@ export function paymentStatusLabel(status: PaymentStatus): string {
 }
 
 export function roleName(role: UserRole): string {
-  return role === "admin" ? "Admin" : role === "staff" ? "Staff" : "Customer";
+  return i18n.t(`common:role.${role}`);
 }
 
 export function pluralize(count: number, singular: string, plural?: string): string {
