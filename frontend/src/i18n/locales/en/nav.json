@@ -1,0 +1,101 @@
+{
+  "brand": {
+    "tagline": "Everything you need, in one place",
+    "home": "OneMart home"
+  },
+  "hotline": {
+    "support": "Support 24/7"
+  },
+  "cart": {
+    "basket": "Basket",
+    "open_one": "Open cart, {{count}} item",
+    "open_other": "Open cart, {{count}} items"
+  },
+  "wishlist": {
+    "open_one": "Wishlist, {{count}} item",
+    "open_other": "Wishlist, {{count}} items"
+  },
+  "recent": {
+    "title": "Recently viewed",
+    "dialog": "Recently viewed products",
+    "empty": "Products you open will show up here for quick access."
+  },
+  "menu": {
+    "open": "Open menu",
+    "close": "Close menu"
+  },
+  "shopByCategory": "Shop by category",
+  "main": "Main",
+  "links": {
+    "all": "All products",
+    "bestsellers": "Best sellers",
+    "new": "New arrivals",
+    "featured": "Featured"
+  },
+  "mobile": {
+    "signin": "Sign in / Create account",
+    "signedInAs": "Signed in as {{name}} · {{role}}"
+  },
+  "account": {
+    "signin": "Sign in",
+    "orders": "My orders",
+    "wishlist": "Wishlist",
+    "notifications": "Notifications",
+    "admin": "Admin console",
+    "signout": "Sign out"
+  },
+  "search": {
+    "scope": "Search within a category",
+    "allCategories": "All categories",
+    "placeholder": "Search for atta, dal, soap, biscuits…",
+    "label": "Search products",
+    "submit": "Search",
+    "categories": "Categories",
+    "products": "Products"
+  },
+  "mega": {
+    "empty": "No subcategories",
+    "browseAll": "Browse the full catalogue"
+  },
+  "notifications": {
+    "label": "Notifications",
+    "unread_one": "{{count}} unread",
+    "unread_other": "{{count}} unread",
+    "allRead": "All read",
+    "error": "Could not load notifications.",
+    "retry": "Try again",
+    "empty": "No notifications yet",
+    "emptyBody": "Order updates and store news will show up here.",
+    "viewAll": "View all notifications"
+  },
+  "newsletter": {
+    "title": "Newsletter",
+    "heading": "Weekly offers, straight to your inbox",
+    "email": "Email address",
+    "subscribe": "Subscribe",
+    "thanks": "Thanks — offers are on their way to your inbox."
+  },
+  "footer": {
+    "about": "Everything you need, in one place — groceries, home care and daily essentials, delivered with cash on delivery.",
+    "support": "Support 24/7",
+    "shop": "Shop",
+    "allProducts": "All products",
+    "serviceTitle": "Customer service",
+    "service": {
+      "track": "Track an order",
+      "delivery": "Delivery & fees",
+      "signin": "Sign in",
+      "register": "Create an account"
+    },
+    "infoTitle": "Good to know",
+    "info": {
+      "cod": "Cash on delivery",
+      "freeDelivery": "Free delivery over ₹999",
+      "timeline": "Live order timeline"
+    },
+    "rights": "© {{year}} OneMart. All rights reserved."
+  },
+  "language": {
+    "label": "Language"
+  }
+}

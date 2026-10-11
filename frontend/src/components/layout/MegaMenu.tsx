@@ -1,5 +1,6 @@
 import { useEffect, useRef } from "react";
 import { Link } from "react-router-dom";
+import { useTranslation } from "react-i18next";
 
 import { useCategories } from "@/hooks/queries/catalog";
 import { cn } from "@/lib/cn";
@@ -17,6 +18,7 @@ export function MegaMenu({
   className?: string;
 }) {
   const categories = useCategories();
+  const { t } = useTranslation("nav");
   const panelRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -85,7 +87,7 @@ export function MegaMenu({
                     </li>
                   ))}
                   {(root.children ?? []).length === 0 ? (
-                    <li className="py-1 text-[0.8125rem] text-ink-muted">No subcategories</li>
+                    <li className="py-1 text-[0.8125rem] text-ink-muted">{t("mega.empty")}</li>
                   ) : null}
                 </ul>
               </div>
@@ -96,7 +98,7 @@ export function MegaMenu({
             onClick={onClose}
             className="label inline-flex items-center gap-2 rounded-lg px-2 py-1 text-brand-700 transition-colors hover:bg-surface-2 hover:text-brand-600"
           >
-            Browse the full catalogue
+            {t("mega.browseAll")}
             <ChevronRightIcon width={14} height={14} className="rtl:-scale-x-100" />
           </Link>
         </div>

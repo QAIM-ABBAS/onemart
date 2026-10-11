@@ -3,7 +3,7 @@ import { cn } from '@/lib/cn';
 import type { Lang } from '@/i18n';
 
 export function LanguageSwitcher({ className }: { className?: string }) {
-  const { i18n } = useTranslation();
+  const { t, i18n } = useTranslation("nav");
   const current: Lang = i18n.language === 'en' ? 'en' : 'fa';
 
   const set = (lng: Lang) => {
@@ -13,7 +13,7 @@ export function LanguageSwitcher({ className }: { className?: string }) {
   return (
     <div
       role="group"
-      aria-label="Language"
+      aria-label={t("language.label")}
       className={cn(
         'inline-flex items-center rounded-md border border-brand-700 bg-brand-800 p-0.5 text-xs font-semibold',
         className,

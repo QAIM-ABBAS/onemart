@@ -28,6 +28,7 @@ export interface BrandOffer {
 }
 
 export interface NavItem {
+  key: string;
   label: string;
   href: string;
   children?: { label: string; href: string }[];
@@ -136,10 +137,10 @@ export const BRAND_OFFERS: BrandOffer[] = [
 ];
 
 export const STATIC_NAV: NavItem[] = [
-  { label: "All products", href: "/products" },
-  { label: "Best sellers", href: "/products?sort=bestselling" },
-  { label: "New arrivals", href: "/products?sort=newest" },
-  { label: "Featured", href: "/products?featured=1" },
+  { key: "links.all", label: "All products", href: "/products" },
+  { key: "links.bestsellers", label: "Best sellers", href: "/products?sort=bestselling" },
+  { key: "links.new", label: "New arrivals", href: "/products?sort=newest" },
+  { key: "links.featured", label: "Featured", href: "/products?featured=1" },
 ];
 
 export const DEAL_SLOTS: DealSlot[] = [
@@ -156,22 +157,28 @@ export const DEAL_ENDS_AT = new Date(Date.now() + DEAL_DURATION_MS).toISOString(
 
 export const SHELF_TAB_LIMIT = 7;
 
-export const FOOTER_LINKS: { title: string; links: { label: string; href: string }[] }[] = [
+export const FOOTER_LINKS: {
+  key: string;
+  title: string;
+  links: { key: string; label: string; href: string }[];
+}[] = [
   {
+    key: "serviceTitle",
     title: "Customer service",
     links: [
-      { label: "Track an order", href: "/orders" },
-      { label: "Delivery & fees", href: "/cart" },
-      { label: "Sign in", href: "/login" },
-      { label: "Create an account", href: "/register" },
+      { key: "service.track", label: "Track an order", href: "/orders" },
+      { key: "service.delivery", label: "Delivery & fees", href: "/cart" },
+      { key: "service.signin", label: "Sign in", href: "/login" },
+      { key: "service.register", label: "Create an account", href: "/register" },
     ],
   },
   {
+    key: "infoTitle",
     title: "Good to know",
     links: [
-      { label: "Cash on delivery", href: "/cart" },
-      { label: "Free delivery over ₹999", href: "/cart" },
-      { label: "Live order timeline", href: "/orders" },
+      { key: "info.cod", label: "Cash on delivery", href: "/cart" },
+      { key: "info.freeDelivery", label: "Free delivery over ₹999", href: "/cart" },
+      { key: "info.timeline", label: "Live order timeline", href: "/orders" },
     ],
   },
 ];

@@ -1,5 +1,6 @@
 import { useState, type FormEvent } from "react";
 import { Link } from "react-router-dom";
+import { useTranslation } from "react-i18next";
 
 import { FOOTER_LINKS } from "@/content/home";
 import { useCategories } from "@/hooks/queries/catalog";
@@ -16,6 +17,7 @@ const PAYMENTS = ["UPI", "Visa", "Mastercard", "RuPay", "Cash on delivery"] as c
  * white on the #FAF8F4 canvas.
  */
 export function Footer() {
+  const { t } = useTranslation("nav");
   const { data: categories } = useCategories();
   const { user } = useAuth();
   const [email, setEmail] = useState("");
@@ -25,7 +27,7 @@ export function Footer() {
     event.preventDefault();
     if (!email.trim()) return;
     setEmail("");
-    toast("Thanks — offers are on their way to your inbox.", { tone: "positive" });
+    toast(t("newsletter.thanks"), { tone: "positive" });
   }
 
   return (
@@ -33,14 +35,14 @@ export function Footer() {
       <div className="border-b border-brand-800 bg-brand-800">
         <div className="page flex flex-col gap-4 py-6 md:flex-row md:items-center md:justify-between">
           <div>
-            <p className="label text-brand-200">Newsletter</p>
+            <p className="label text-brand-200">{t("newsletter.title")}</p>
             <p className="mt-1.5 font-display text-xl font-semibold text-surface">
-              Weekly offers, straight to your inbox
+              {t("newsletter.heading")}
             </p>
           </div>
           <form onSubmit={onNewsletter} className="flex w-full max-w-md gap-2" noValidate>
             <label htmlFor="newsletter-email" className="sr-only">
-              Email address
+              {t("newsletter.email")}
             </label>
             <input
               id="newsletter-email"
@@ -54,7 +56,7 @@ export function Footer() {
               className="h-11 w-full rounded-md border-0 bg-surface px-4 text-sm text-ink placeholder:text-ink-faint transition focus:outline-none focus:ring-2 focus:ring-brand-400/60"
             />
             <Button type="submit" className="shrink-0">
-              Subscribe
+              {t("newsletter.subscribe")}
             </Button>
           </form>
         </div>
@@ -71,26 +73,25 @@ export function Footer() {
             </span>
           </Link>
           <p className="mt-3 text-sm leading-relaxed text-brand-200">
-            Everything you need, in one place — groceries, home care and daily essentials,
-            delivered with cash on delivery.
+            {t("footer.about")}
           </p>
           <p className="mt-4 text-sm text-brand-200">
-            <span className="label block text-surface">Support 24/7</span>
-            <a href="tel:1800000000" className="num mt-1 block transition-colors hover:text-surface">
+            <span className="label block text-surface">{t("footer.support")}</span>
+            <a href="tel:1800000000" dir="ltr" className="num mt-1 block transition-colors hover:text-surface">
               1800 000 000
             </a>
-            <a href="mailto:hello@onemart.example" className="mt-0.5 block transition-colors hover:text-surface">
+            <a href="mailto:hello@onemart.example" dir="ltr" className="mt-0.5 block transition-colors hover:text-surface">
               hello@onemart.example
             </a>
           </p>
         </div>
 
         <div>
-          <p className="label text-brand-200">Shop</p>
+          <p className="label text-brand-200">{t("footer.shop")}</p>
           <ul className="mt-3 space-y-2 text-sm">
             <li>
               <Link to="/products" className="text-brand-200 transition-colors hover:text-surface">
-                All products
+                {t("footer.allProducts")}
               </Link>
             </li>
             {top.map((cat) => (
@@ -107,23 +108,23 @@ export function Footer() {
         </div>
 
         {FOOTER_LINKS.map((column) => (
-          <div key={column.title}>
-            <p className="label text-brand-200">{column.title}</p>
+          <div key={column.key}>
+            <p className="label text-brand-200">{t(`footer.${column.key}`)}</p>
             <ul className="mt-3 space-y-2 text-sm">
               {column.links.map((link) => (
-                <li key={link.label}>
+                <li key={link.key}>
                   <Link
                     to={link.href}
                     className="text-brand-200 transition-colors hover:text-surface"
                   >
-                    {link.label}
+                    {t(`footer.${link.key}`)}
                   </Link>
                 </li>
               ))}
-              {column.title === "Account" && user && isStaff(user) ? (
+              {column.key === "serviceTitle" && user && isStaff(user) ? (
                 <li>
                   <Link to="/admin/products" className="text-brand-200 transition-colors hover:text-surface">
-                    Admin console
+                    {t("account.admin")}
                   </Link>
                 </li>
               ) : null}
@@ -135,7 +136,7 @@ export function Footer() {
       <div className="border-t border-brand-800">
         <div className="page flex flex-col items-start justify-between gap-3 py-4 sm:flex-row sm:items-center">
           <p className="text-[0.75rem] text-brand-200">
-            © {new Date().getFullYear()} OneMart. All rights reserved.
+            {t("footer.rights", { year: new Date().getFullYear() })}
           </p>
           <ul className="flex flex-wrap items-center gap-2">
             {PAYMENTS.map((method) => (

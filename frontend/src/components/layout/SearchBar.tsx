@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useRef, useState, type FormEvent } from "react";
 import { useNavigate } from "react-router-dom";
+import { useTranslation } from "react-i18next";
 
 import { useCategories } from "@/hooks/queries/catalog";
 import { useSuggest } from "@/hooks/useSuggest";
@@ -25,6 +26,7 @@ interface SearchBarProps {
 }
 
 export function SearchBar({ className, autoFocus, onComplete }: SearchBarProps) {
+  const { t } = useTranslation("nav");
   const navigate = useNavigate();
   const categories = useCategories();
   const [term, setTerm] = useState("");
@@ -78,14 +80,14 @@ export function SearchBar({ className, autoFocus, onComplete }: SearchBarProps) 
     <div ref={wrapRef} className={cn("relative w-full", className)}>
       <form onSubmit={onSubmit} role="search" className="flex w-full items-stretch rounded-md bg-surface border border-line transition focus-within:shadow-lift">
         <label className="relative hidden shrink-0 items-center lg:flex">
-          <span className="sr-only">Search within a category</span>
+          <span className="sr-only">{t("search.scope")}</span>
           <select
             value={scope}
             onChange={(event) => setScope(event.target.value)}
             className="h-11 appearance-none bg-transparent pe-8 ps-3.5 text-[0.8125rem] font-medium text-ink focus:outline-none"
-            aria-label="Search within a category"
+            aria-label={t("search.scope")}
           >
-            <option value="">All categories</option>
+            <option value="">{t("search.allCategories")}</option>
             {options.map(({ node, depth }) => (
               <option key={node.id} value={node.slug}>
                 {depth > 0 ? `${"— ".repeat(depth)}${node.name}` : node.name}
@@ -115,8 +117,8 @@ export function SearchBar({ className, autoFocus, onComplete }: SearchBarProps) 
               setOpen(true);
             }}
             onFocus={() => setOpen(true)}
-            placeholder="Search for atta, dal, soap, biscuits…"
-            aria-label="Search products"
+            placeholder={t("search.placeholder")}
+            aria-label={t("search.label")}
             aria-expanded={showPanel}
             aria-controls="search-suggestions"
             role="combobox"
@@ -127,7 +129,7 @@ export function SearchBar({ className, autoFocus, onComplete }: SearchBarProps) 
 
         <button
           type="submit"
-          aria-label="Search"
+          aria-label={t("search.submit")}
           className="grid w-11 shrink-0 place-items-center rounded-md bg-brand-700 text-surface shadow-button transition hover:bg-brand-800"
         >
           <SearchIcon width={17} height={17} />
@@ -150,7 +152,7 @@ export function SearchBar({ className, autoFocus, onComplete }: SearchBarProps) 
             <>
               {suggest.categories.length > 0 ? (
                 <div className="bg-surface py-2">
-                  <p className="label px-3.5 pb-1.5 text-ink-muted">Categories</p>
+                  <p className="label px-3.5 pb-1.5 text-ink-muted">{t("search.categories")}</p>
                   {suggest.categories.map((cat) => (
                     <button
                       key={cat.id}
@@ -170,7 +172,7 @@ export function SearchBar({ className, autoFocus, onComplete }: SearchBarProps) 
               ) : null}
               {suggest.products.length > 0 ? (
                 <div className="py-2">
-                  <p className="label px-3.5 pb-1.5 text-ink-muted">Products</p>
+                  <p className="label px-3.5 pb-1.5 text-ink-muted">{t("search.products")}</p>
                   {suggest.products.map((product) => (
                     <button
                       key={product.id}
