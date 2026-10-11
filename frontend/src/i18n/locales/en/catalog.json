@@ -1,0 +1,51 @@
+{
+  "eyebrow": {
+    "search": "Search",
+    "catalogue": "Catalogue"
+  },
+  "resultsFor": "Results for “{{q}}”",
+  "featured": "Featured products",
+  "all": "All products",
+  "count_one": "{{count, number}} product",
+  "count_other": "{{count, number}} products",
+  "loading": "Loading products…",
+  "filters": "Filters",
+  "sort": "Sort",
+  "sortLabel": "Sort products",
+  "sortOptions": {
+    "newest": "Newest first",
+    "bestselling": "Best selling",
+    "price_asc": "Price: low to high",
+    "price_desc": "Price: high to low",
+    "name_asc": "Name: A to Z",
+    "name_desc": "Name: Z to A"
+  },
+  "panel": {
+    "categories": "Categories",
+    "allCategories": "All categories",
+    "brands": "Brands",
+    "price": "Price",
+    "min": "Min",
+    "minLabel": "Minimum price",
+    "max": "Max",
+    "maxLabel": "Maximum price",
+    "apply": "Apply",
+    "listedFrom": "Listed from {{price}}",
+    "inStock": "In stock only",
+    "clear": "Clear",
+    "clearAll": "Clear all filters"
+  },
+  "empty": {
+    "title": "No products match these filters",
+    "body": "Try removing a filter or searching for something else.",
+    "clear": "Clear filters",
+    "browse": "Browse everything"
+  },
+  "modal": {
+    "title": "Filters",
+    "description": "Narrow down the catalogue",
+    "show_one": "Show {{count, number}} product",
+    "show_other": "Show {{count, number}} products",
+    "showFallback": "Show products"
+  }
+}
