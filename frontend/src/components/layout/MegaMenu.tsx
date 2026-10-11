@@ -79,7 +79,7 @@ export function MegaMenu({
                         <ChevronRightIcon
                           width={13}
                           height={13}
-                          className="opacity-0 transition-opacity group-hover:opacity-100"
+                          className="opacity-0 transition-opacity group-hover:opacity-100 rtl:-scale-x-100"
                         />
                       </Link>
                     </li>
@@ -97,7 +97,7 @@ export function MegaMenu({
             className="label inline-flex items-center gap-2 rounded-lg px-2 py-1 text-brand-700 transition-colors hover:bg-surface-2 hover:text-brand-600"
           >
             Browse the full catalogue
-            <ChevronRightIcon width={14} height={14} />
+            <ChevronRightIcon width={14} height={14} className="rtl:-scale-x-100" />
           </Link>
         </div>
       </div>

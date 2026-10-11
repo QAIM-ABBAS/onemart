@@ -168,7 +168,7 @@ export function AdminCategoriesPage() {
                   key={node.id}
                   className="flex flex-wrap items-center gap-x-4 gap-y-2 px-4 py-3 transition-colors hover:bg-surface-2 sm:grid sm:grid-cols-[1fr_120px_110px_230px]"
                 >
-                  <div className="flex min-w-0 items-center gap-2" style={{ paddingLeft: depth * 18 }}>
+                  <div className="flex min-w-0 items-center gap-2" style={{ paddingInlineStart: depth * 18 }}>
                     {depth > 0 ? (
                       <span aria-hidden="true" className="text-line">
                         └

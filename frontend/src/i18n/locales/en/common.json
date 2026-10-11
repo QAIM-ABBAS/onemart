@@ -1,5 +1,8 @@
 {
   "currency": "₹",
+  "discount": {
+    "badge": "{{percent}}% off"
+  },
   "language": {
     "fa": "فارسی",
     "en": "English"

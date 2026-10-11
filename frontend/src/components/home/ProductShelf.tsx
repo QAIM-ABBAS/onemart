@@ -1,6 +1,7 @@
 import { useState, type ReactNode } from "react";
 
 import { useProducts, type ProductQueryParams } from "@/hooks/queries/catalog";
+import { useDirection } from "@/hooks/useDirection";
 import { cn } from "@/lib/cn";
 import type { CategoryNode } from "@/lib/types";
 
@@ -45,6 +46,7 @@ export function ProductShelf({
 }: ProductShelfProps) {
   const [active, setActive] = useState(0);
   const { ref, scrollBy, canPrev, canNext } = useCarousel<HTMLDivElement>();
+  const { isRTL } = useDirection();
 
   const current = tabs[active];
   const params: ProductQueryParams = {
@@ -129,11 +131,11 @@ export function ProductShelf({
                 onKeyDown={(event) => {
                   if (event.key === "ArrowLeft") {
                     event.preventDefault();
-                    scrollBy(-1);
+                    scrollBy(isRTL ? 1 : -1);
                   }
                   if (event.key === "ArrowRight") {
                     event.preventDefault();
-                    scrollBy(1);
+                    scrollBy(isRTL ? -1 : 1);
                   }
                 }}
               >

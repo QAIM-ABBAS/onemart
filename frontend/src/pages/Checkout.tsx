@@ -12,6 +12,7 @@ import { useInitiatePayment } from "@/hooks/queries/payments";
 import { ApiError } from "@/lib/api";
 import { cn } from "@/lib/cn";
 import { money } from "@/lib/format";
+import { normalizeDigits } from "@/lib/text";
 import type { AddressIn, DeliverySlotOut } from "@/lib/types";
 
 import { Badge } from "@/components/ui/Badge";
@@ -87,7 +88,7 @@ export function CheckoutPage() {
 
   const quoteParams = useMemo(
     () => ({
-      postal_code: activeAddress?.postal_code || undefined,
+      postal_code: (activeAddress?.postal_code ? normalizeDigits(activeAddress.postal_code) : undefined) || undefined,
       city: activeAddress?.city || undefined,
       delivery_method: deliveryMethod,
     }),
@@ -171,12 +172,12 @@ export function CheckoutPage() {
   function validateNewAddress(): boolean {
     const errors: Record<string, string> = {};
     if (form.full_name.trim().length < 2) errors.full_name = "Enter the recipient's name";
-    if (!/^\d{7,15}$/.test(form.phone.replace(/\D/g, "")))
+    if (!/^\d{7,15}$/.test(normalizeDigits(form.phone).replace(/\D/g, "")))
       errors.phone = "Enter a valid phone number";
     if (!form.line1.trim()) errors.line1 = "Enter the street address";
     if (!form.city.trim()) errors.city = "Enter the city";
     if (!form.state.trim()) errors.state = "Enter the state";
-    if (!form.postal_code.trim()) errors.postal_code = "Enter the PIN code";
+    if (!normalizeDigits(form.postal_code).trim()) errors.postal_code = "Enter the PIN code";
     setFormErrors(errors);
     return Object.keys(errors).length === 0;
   }
@@ -206,7 +207,14 @@ export function CheckoutPage() {
         ...(deliveryMethod === "scheduled" && slotId !== null ? { slot_id: slotId } : {}),
         ...(mode === "saved"
           ? { address_id: addressId ?? undefined }
-          : { address: form, save_address: saveAddress }),
+          : {
+              address: {
+                ...form,
+                phone: normalizeDigits(form.phone),
+                postal_code: normalizeDigits(form.postal_code),
+              },
+              save_address: saveAddress,
+            }),
         note: note.trim() ? note.trim() : undefined,
       });
 
@@ -345,11 +353,11 @@ export function CheckoutPage() {
                               {addr.full_name}
                               {addr.is_default ? <Badge tone="info">Default</Badge> : null}
                             </p>
-                            <p className="num mt-0.5 text-ink-muted">{addr.phone}</p>
+                            <p dir="ltr" className="num mt-0.5 text-ink-muted">{addr.phone}</p>
                             <p className="mt-1 text-ink-muted">
                               {addr.line1}
                               {addr.line2 ? `, ${addr.line2}` : ""}, {addr.city}, {addr.state}{" "}
-                              <span className="num">{addr.postal_code}</span>
+                              <span dir="ltr" className="num">{addr.postal_code}</span>
                             </p>
                           </div>
                           <DeleteAddressButton
@@ -371,6 +379,7 @@ export function CheckoutPage() {
                   <Field label="Full name" htmlFor="full_name" error={formErrors.full_name} className="sm:col-span-2">
                     <Input
                       id="full_name"
+                      dir="auto"
                       value={form.full_name}
                       onChange={(e) => setField("full_name", e.target.value)}
                       invalid={Boolean(formErrors.full_name)}
@@ -380,6 +389,7 @@ export function CheckoutPage() {
                   <Field label="Phone" htmlFor="phone" error={formErrors.phone}>
                     <Input
                       id="phone"
+                      dir="ltr"
                       inputMode="tel"
                       value={form.phone}
                       onChange={(e) => setField("phone", e.target.value)}
@@ -390,6 +400,7 @@ export function CheckoutPage() {
                   <Field label="PIN code" htmlFor="postal_code" error={formErrors.postal_code}>
                     <Input
                       id="postal_code"
+                      dir="ltr"
                       inputMode="numeric"
                       value={form.postal_code}
                       onChange={(e) => setField("postal_code", e.target.value)}
@@ -405,6 +416,7 @@ export function CheckoutPage() {
                   >
                     <Input
                       id="line1"
+                      dir="auto"
                       placeholder="House no., street"
                       value={form.line1}
                       onChange={(e) => setField("line1", e.target.value)}
@@ -415,6 +427,7 @@ export function CheckoutPage() {
                   <Field label="Landmark (optional)" htmlFor="line2" className="sm:col-span-2">
                     <Input
                       id="line2"
+                      dir="auto"
                       value={form.line2 ?? ""}
                       onChange={(e) => setField("line2", e.target.value)}
                       autoComplete="address-line2"
@@ -423,6 +436,7 @@ export function CheckoutPage() {
                   <Field label="City" htmlFor="city" error={formErrors.city}>
                     <Input
                       id="city"
+                      dir="auto"
                       value={form.city}
                       onChange={(e) => setField("city", e.target.value)}
                       invalid={Boolean(formErrors.city)}
@@ -432,6 +446,7 @@ export function CheckoutPage() {
                   <Field label="State" htmlFor="state" error={formErrors.state}>
                     <Input
                       id="state"
+                      dir="auto"
                       value={form.state}
                       onChange={(e) => setField("state", e.target.value)}
                       invalid={Boolean(formErrors.state)}
@@ -632,20 +647,20 @@ export function CheckoutPage() {
               {cartSummary.flash_discount > 0 ? (
                 <div className="flex justify-between">
                   <dt className="text-ink-muted">Flash deal</dt>
-                  <dd className="num font-medium text-deal">−{money(cartSummary.flash_discount)}</dd>
+                  <dd className="num font-medium text-deal"><span dir="ltr">−{money(cartSummary.flash_discount)}</span></dd>
                 </div>
               ) : null}
               {cartSummary.auto_discount > 0 ? (
                 <div className="flex justify-between">
                   <dt className="text-ink-muted">Discount</dt>
-                  <dd className="num font-medium text-deal">−{money(cartSummary.auto_discount)}</dd>
+                  <dd className="num font-medium text-deal"><span dir="ltr">−{money(cartSummary.auto_discount)}</span></dd>
                 </div>
               ) : null}
               {cartSummary.coupon?.kind === "free_delivery" ? (
                 <div className="flex items-center justify-between gap-3">
                   <dt className="text-ink-muted">
                     Coupon{" "}
-                    <span className="rounded-md bg-highlight px-1.5 py-0.5 text-[0.6875rem] font-semibold text-highlight-ink">
+                    <span dir="ltr" className="rounded-md bg-highlight px-1.5 py-0.5 text-[0.6875rem] font-semibold text-highlight-ink">
                       {cartSummary.coupon.code}
                     </span>
                   </dt>
@@ -655,12 +670,12 @@ export function CheckoutPage() {
                 <div className="flex items-center justify-between gap-3">
                   <dt className="text-ink-muted">
                     Coupon{" "}
-                    <span className="rounded-md bg-highlight px-1.5 py-0.5 text-[0.6875rem] font-semibold text-highlight-ink">
+                    <span dir="ltr" className="rounded-md bg-highlight px-1.5 py-0.5 text-[0.6875rem] font-semibold text-highlight-ink">
                       {cartSummary.coupon?.code}
                     </span>
                   </dt>
                   <dd className="num shrink-0 font-medium text-deal">
-                    −{money(cartSummary.discount)}
+                    <span dir="ltr">−{money(cartSummary.discount)}</span>
                   </dd>
                 </div>
               ) : null}

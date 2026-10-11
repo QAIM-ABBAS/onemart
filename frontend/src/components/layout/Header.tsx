@@ -271,7 +271,7 @@ export function Header() {
               <ChevronRightIcon
                 width={14}
                 height={14}
-                className={cn("transition-transform", megaOpen && "rotate-90")}
+                className={cn("transition-transform rtl:-scale-x-100", megaOpen && "rotate-90")}
               />
             </button>
 

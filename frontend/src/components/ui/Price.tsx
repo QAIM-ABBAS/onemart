@@ -1,5 +1,5 @@
 import { cn } from "@/lib/cn";
-import { money } from "@/lib/format";
+import { formatPrice } from "@/lib/format";
 
 import { MinusIcon, PlusIcon } from "./Icon";
 
@@ -23,9 +23,9 @@ export function Price({
   const showCompare = compareAt != null && compareAt > value;
   return (
     <span className={cn("inline-flex items-baseline gap-2 num", className)}>
-      <span className={cn("font-semibold", sizes[size])}>{money(value)}</span>
+      <span className={cn("font-semibold", sizes[size])}>{formatPrice(value)}</span>
       {showCompare ? (
-        <span className="text-[0.8125rem] text-ink-muted line-through num">{money(compareAt)}</span>
+        <span className="text-[0.8125rem] text-ink-muted line-through num">{formatPrice(compareAt)}</span>
       ) : null}
     </span>
   );

@@ -83,6 +83,7 @@ export function RevenueOrdersChart({
   const labelEvery = Math.max(Math.ceil(n / 8), 1);
 
   return (
+    <div dir="ltr">
     <svg
       viewBox={`0 0 ${CHART_W} ${CHART_H}`}
       className="h-auto w-full"
@@ -150,6 +151,7 @@ export function RevenueOrdersChart({
         ) : null,
       )}
     </svg>
+    </div>
   );
 }
 
@@ -164,7 +166,7 @@ export function StatusDonut({ counts }: { counts: ReportStatusCount[] }) {
     .filter((row): row is ReportStatusCount => Boolean(row));
 
   return (
-    <div className="flex flex-col items-center gap-5 sm:flex-row sm:items-center">
+    <div dir="ltr" className="flex flex-col items-center gap-5 sm:flex-row sm:items-center">
       <svg viewBox="0 0 160 160" className="size-40 shrink-0" role="img" aria-label="Orders by status">
         <circle
           cx="80"
@@ -236,7 +238,7 @@ export interface BarItem {
 export function BarList({ items }: { items: BarItem[] }) {
   const max = Math.max(...items.map((item) => item.value), 1);
   return (
-    <ul className="space-y-4">
+    <ul dir="ltr" className="space-y-4">
       {items.map((item) => (
         <li key={item.key}>
           <div className="flex items-baseline justify-between gap-3 text-sm">

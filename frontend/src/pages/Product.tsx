@@ -9,6 +9,7 @@ import { useWishlist } from "@/hooks/useWishlist";
 import { cn } from "@/lib/cn";
 import { ApiError } from "@/lib/api";
 import { money, pluralize } from "@/lib/format";
+import { useTranslation } from "react-i18next";
 import type { FlashDealItemOut } from "@/lib/types";
 
 import { Button } from "@/components/ui/Button";
@@ -44,6 +45,7 @@ function SaveButton({ saved, onClick }: { saved: boolean; onClick: () => void })
 
 export function ProductPage() {
   const { slug } = useParams<{ slug: string }>();
+  const { t } = useTranslation();
   const product = useProduct(slug);
   const addToCart = useAddToCart();
   const wishlist = useWishlist();
@@ -275,7 +277,7 @@ export function ProductPage() {
             />
             {selectedDeal ? (
               <span className="label rounded-xs bg-deal px-2 py-0.5 text-surface">
-                Flash deal −{Math.round(Number(selectedDeal.percent_off) || 0)}%
+                {t("discount.badge", { percent: Math.round(Number(selectedDeal.percent_off) || 0) })}
               </span>
             ) : null}
             {outOfStock ? (
@@ -398,7 +400,7 @@ export function ProductPage() {
             <p className="mt-3 text-sm text-brand-600">
               Added to your cart.{" "}
               <Link to="/cart" className="underline underline-offset-2">
-                Go to cart →
+                Go to cart <span aria-hidden="true" className="inline-block rtl:-scale-x-100">→</span>
               </Link>
             </p>
           ) : null}
@@ -406,7 +408,7 @@ export function ProductPage() {
           <dl className="mt-7 divide-y divide-line rounded-md bg-surface px-5 py-1 text-sm border border-line">
             <div className="flex gap-4 py-3">
               <dt className="label w-32 shrink-0 pt-0.5 text-ink-muted">SKU</dt>
-              <dd className="num">{selected?.sku ?? "—"}</dd>
+              <dd dir="ltr" className="num">{selected?.sku ?? "—"}</dd>
             </div>
             <div className="flex gap-4 py-3">
               <dt className="label w-32 shrink-0 pt-0.5 text-ink-muted">Delivery</dt>

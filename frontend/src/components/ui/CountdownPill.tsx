@@ -55,7 +55,7 @@ export function CountdownPill({
       <span className="text-[0.6875rem] tracking-[0.06em]">
         {left > 0 ? "Expires in" : "Expired"}
       </span>
-      <span className="num text-[0.8125rem] font-semibold tracking-[0.08em]">
+      <span dir="ltr" className="num text-[0.8125rem] font-semibold tracking-[0.08em]">
         {hours} : {minutes} : {seconds}
       </span>
     </span>

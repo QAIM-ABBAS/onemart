@@ -267,7 +267,7 @@ export function AdminProductFormPage() {
     <div className="max-w-4xl">
       <div className="border-b border-ink/15 pb-4">
         <Link to="/admin/products" className="label text-ink-muted hover:text-ink">
-          ← Products
+          <span aria-hidden="true" className="inline-block rtl:-scale-x-100">←</span> Products
         </Link>
         <h1 className="mt-2 text-2xl sm:text-3xl">
           {isEdit ? `Edit ${form.name || "product"}` : "New product"}
@@ -296,6 +296,7 @@ export function AdminProductFormPage() {
             <Field label="Product name" htmlFor="p-name" error={fieldErrors.name} className="sm:col-span-2">
               <Input
                 id="p-name"
+                dir="auto"
                 value={form.name}
                 onChange={(e) => patch({ name: e.target.value })}
                 invalid={Boolean(fieldErrors.name)}
@@ -421,6 +422,7 @@ export function AdminProductFormPage() {
                   <Field label="SKU" htmlFor={`sku-${v.uid}`} error={fieldErrors[`sku-${v.uid}`]}>
                     <Input
                       id={`sku-${v.uid}`}
+                      dir="ltr"
                       value={v.sku}
                       onChange={(e) => patchVariant(v.uid, { sku: e.target.value })}
                       invalid={Boolean(fieldErrors[`sku-${v.uid}`])}

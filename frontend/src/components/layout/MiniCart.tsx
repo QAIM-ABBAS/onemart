@@ -146,8 +146,8 @@ export function MiniCart({ open, onClose }: { open: boolean; onClose: () => void
               </div>
               {data.discount > 0 ? (
                 <div className="flex items-center justify-between">
-                  <dt className="text-ink-muted">Coupon {data.coupon?.code}</dt>
-                  <dd className="num font-medium text-deal">−{money(data.discount)}</dd>
+                  <dt className="text-ink-muted">Coupon <span dir="ltr">{data.coupon?.code}</span></dt>
+                  <dd className="num font-medium text-deal"><span dir="ltr">−{money(data.discount)}</span></dd>
                 </div>
               ) : null}
               <div className="flex items-center justify-between">

@@ -103,6 +103,7 @@ export function LoginPage() {
               <Input
                 id="email"
                 type="email"
+                dir="ltr"
                 required
                 autoComplete="email"
                 placeholder="you@example.com"
@@ -114,6 +115,7 @@ export function LoginPage() {
               <Input
                 id="password"
                 type="password"
+                dir="ltr"
                 required
                 autoComplete="current-password"
                 placeholder="••••••••"
@@ -140,12 +142,12 @@ export function LoginPage() {
             <p className="label text-ink-muted">Demo accounts</p>
             <div className="mt-2 space-y-1 text-[0.8125rem] text-ink-muted">
               <p>
-                Customer: <span className="num">demo@onemart.test</span> ·{" "}
-                <span className="num">Demo@1234</span>
+                Customer: <span dir="ltr" className="num">demo@onemart.test</span> ·{" "}
+                <span dir="ltr" className="num">Demo@1234</span>
               </p>
               <p>
-                Admin: <span className="num">admin@onemart.test</span> ·{" "}
-                <span className="num">Admin@1234</span>
+                Admin: <span dir="ltr" className="num">admin@onemart.test</span> ·{" "}
+                <span dir="ltr" className="num">Admin@1234</span>
               </p>
             </div>
           </div>
@@ -219,6 +221,7 @@ export function RegisterPage() {
             <Field label="Full name" htmlFor="full_name" error={fieldErrors.full_name}>
               <Input
                 id="full_name"
+                dir="auto"
                 required
                 autoComplete="name"
                 value={fullName}
@@ -230,6 +233,7 @@ export function RegisterPage() {
               <Input
                 id="reg_email"
                 type="email"
+                dir="ltr"
                 required
                 autoComplete="email"
                 placeholder="you@example.com"
@@ -247,6 +251,7 @@ export function RegisterPage() {
               <Input
                 id="reg_password"
                 type="password"
+                dir="ltr"
                 required
                 autoComplete="new-password"
                 value={password}
@@ -258,6 +263,7 @@ export function RegisterPage() {
               <Input
                 id="confirm"
                 type="password"
+                dir="ltr"
                 required
                 autoComplete="new-password"
                 value={confirm}

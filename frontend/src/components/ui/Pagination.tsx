@@ -49,7 +49,7 @@ export function Pagination({
           onClick={() => onChange(page - 1)}
           className="grid size-9 place-items-center rounded-lg text-ink transition hover:bg-surface-2 disabled:opacity-35"
         >
-          <ChevronLeftIcon width={16} height={16} />
+          <ChevronLeftIcon width={16} height={16} className="rtl:-scale-x-100" />
         </button>
         {pageWindow(page, pages).map((entry, i) =>
           entry === "gap" ? (
@@ -80,7 +80,7 @@ export function Pagination({
           onClick={() => onChange(page + 1)}
           className="grid size-9 place-items-center rounded-lg text-ink transition hover:bg-surface-2 disabled:opacity-35"
         >
-          <ChevronRightIcon width={16} height={16} />
+          <ChevronRightIcon width={16} height={16} className="rtl:-scale-x-100" />
         </button>
       </div>
     </nav>

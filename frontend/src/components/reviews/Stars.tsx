@@ -64,7 +64,7 @@ export function StarPicker({
           <StarIcon width={24} height={24} fill={n <= value ? "currentColor" : "none"} />
         </button>
       ))}
-      <span className="ms-1.5 text-sm text-ink-muted">{value}/5</span>
+      <span dir="ltr" className="ms-1.5 text-sm text-ink-muted">{value}/5</span>
     </div>
   );
 }

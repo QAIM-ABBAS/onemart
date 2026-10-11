@@ -220,7 +220,7 @@ export function AdminStockPage() {
                         </td>
                         <td className="px-4 py-3">
                           <p className="text-ink-muted">{row.variant_name}</p>
-                          <p className="num text-[0.75rem] text-ink-muted">{row.sku}</p>
+                          <p dir="ltr" className="num text-[0.75rem] text-ink-muted">{row.sku}</p>
                         </td>
                         <td className="num px-4 py-3 text-end">{money(row.price)}</td>
                         <td className="num px-4 py-3 text-end">{row.quantity}</td>

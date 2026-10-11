@@ -164,7 +164,7 @@ export function NotificationsPage() {
                         {formatDateTime(n.created_at)}
                       </span>
                     </span>
-                    {n.link ? <span className="label shrink-0 text-brand-600">Open →</span> : null}
+                    {n.link ? <span className="label shrink-0 text-brand-600">Open <span aria-hidden="true" className="inline-block rtl:-scale-x-100">→</span></span> : null}
                   </button>
                 </li>
               ))}

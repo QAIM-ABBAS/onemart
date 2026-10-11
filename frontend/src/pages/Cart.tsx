@@ -9,6 +9,7 @@ import {
   useUpdateCartItem,
 } from "@/hooks/queries/cart";
 import { money } from "@/lib/format";
+import { normalizeDigits } from "@/lib/text";
 
 import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
@@ -80,7 +81,7 @@ export function CartPage() {
 
   const onApplyCoupon = (event: FormEvent) => {
     event.preventDefault();
-    const code = couponCode.trim();
+    const code = normalizeDigits(couponCode).trim();
     if (!code) return;
     applyCoupon.mutate(code, { onSuccess: () => setCouponCode("") });
   };
@@ -228,7 +229,7 @@ export function CartPage() {
             <div className="border-t border-line px-5 py-4">
               {data.coupon ? (
                 <div className="flex flex-wrap items-center justify-between gap-2">
-                  <span className="inline-flex items-center gap-2 rounded-md bg-highlight px-2.5 py-1.5 text-xs font-semibold text-highlight-ink">
+                  <span dir="ltr" className="inline-flex items-center gap-2 rounded-md bg-highlight px-2.5 py-1.5 text-xs font-semibold text-highlight-ink">
                     {data.coupon.code}
                     <span className="font-normal opacity-80">applied</span>
                   </span>
@@ -245,6 +246,7 @@ export function CartPage() {
                 <form onSubmit={onApplyCoupon} className="flex gap-2">
                   <Input
                     id="coupon-code"
+                    dir="ltr"
                     value={couponCode}
                     onChange={(e) => setCouponCode(e.target.value)}
                     placeholder="Coupon code"
@@ -280,28 +282,28 @@ export function CartPage() {
               {data.flash_discount > 0 ? (
                 <div className="flex justify-between">
                   <dt className="text-ink-muted">Flash deal</dt>
-                  <dd className="num font-medium text-deal">−{money(data.flash_discount)}</dd>
+                  <dd className="num font-medium text-deal"><span dir="ltr">−{money(data.flash_discount)}</span></dd>
                 </div>
               ) : null}
               {data.auto_discount > 0 ? (
                 <div className="flex justify-between">
                   <dt className="text-ink-muted">Discount</dt>
-                  <dd className="num font-medium text-deal">−{money(data.auto_discount)}</dd>
+                  <dd className="num font-medium text-deal"><span dir="ltr">−{money(data.auto_discount)}</span></dd>
                 </div>
               ) : null}
               {data.coupon?.kind === "free_delivery" ? (
                 <div className="flex justify-between">
                   <dt className="text-ink-muted">
-                    Coupon <span className="font-medium text-ink">{data.coupon.code}</span>
+                    Coupon <span dir="ltr" className="font-medium text-ink">{data.coupon.code}</span>
                   </dt>
                   <dd className="num font-medium text-brand-600">Free delivery</dd>
                 </div>
               ) : data.discount > 0 ? (
                 <div className="flex justify-between">
                   <dt className="text-ink-muted">
-                    Coupon <span className="font-medium text-ink">{data.coupon?.code}</span>
+                    Coupon <span dir="ltr" className="font-medium text-ink">{data.coupon?.code}</span>
                   </dt>
-                  <dd className="num font-medium text-deal">−{money(data.discount)}</dd>
+                  <dd className="num font-medium text-deal"><span dir="ltr">−{money(data.discount)}</span></dd>
                 </div>
               ) : null}
               <div className="flex justify-between">

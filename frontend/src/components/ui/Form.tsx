@@ -91,7 +91,7 @@ export const Select = forwardRef<HTMLSelectElement, SelectProps>(function Select
       className={cn(
         fieldBase,
         invalid ? fieldError : fieldIdle,
-        "h-11 appearance-none pe-9 bg-[url('data:image/svg+xml;utf8,<svg xmlns=%22http://www.w3.org/2000/svg%22 width=%2216%22 height=%2216%22 fill=%22none%22 stroke=%22%236b6f68%22 stroke-width=%221.7%22><path d=%22m4 6 4 4 4-4%22/></svg>')] bg-[length:16px] bg-[right_0.75rem_center] bg-no-repeat",
+        "h-11 appearance-none pe-9 bg-[url('data:image/svg+xml;utf8,<svg xmlns=%22http://www.w3.org/2000/svg%22 width=%2216%22 height=%2216%22 fill=%22none%22 stroke=%22%236b6f68%22 stroke-width=%221.7%22><path d=%22m4 6 4 4 4-4%22/></svg>')] bg-[length:16px] bg-[right_0.75rem_center] rtl:bg-[left_0.75rem_center] bg-no-repeat",
         className,
       )}
       {...rest}

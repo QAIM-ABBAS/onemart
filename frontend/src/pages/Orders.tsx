@@ -134,7 +134,7 @@ export function OrdersPage() {
                     <p className="num text-base font-semibold sm:text-end">
                       {money(order.total)}
                     </p>
-                    <span className="label text-brand-600 sm:justify-self-end">View →</span>
+                    <span className="label text-brand-600 sm:justify-self-end">View <span aria-hidden="true" className="inline-block rtl:-scale-x-100">→</span></span>
                   </Link>
                 </li>
               ))}
@@ -234,7 +234,7 @@ export function OrderDetailPage() {
         to="/orders"
         className="label text-ink-muted transition-colors hover:text-ink"
       >
-        ← All orders
+        <span aria-hidden="true" className="inline-block rtl:-scale-x-100">←</span> All orders
       </Link>
 
       {placed ? (
@@ -326,7 +326,7 @@ export function OrderDetailPage() {
                   {item.product_name}
                 </Link>
                 <p className="mt-0.5 text-[0.8125rem] text-ink-muted">
-                  {item.variant_name} · SKU <span className="num">{item.sku}</span>
+                  {item.variant_name} · SKU <span dir="ltr" className="num">{item.sku}</span>
                 </p>
                 <p className="num mt-1 text-[0.8125rem] text-ink-muted">
                   {money(item.unit_price)} × {item.quantity}
@@ -370,9 +370,9 @@ export function OrderDetailPage() {
             {o.discount_total > 0 ? (
               <div className="flex justify-between">
                 <dt className="text-ink-muted">
-                  Coupon <span className="font-medium text-ink">{o.coupon_code}</span>
+                  Coupon <span dir="ltr" className="font-medium text-ink">{o.coupon_code}</span>
                 </dt>
-                <dd className="num text-deal">−{money(o.discount_total)}</dd>
+                <dd className="num text-deal"><span dir="ltr">−{money(o.discount_total)}</span></dd>
               </div>
             ) : null}
             <div className="flex justify-between">
@@ -390,11 +390,11 @@ export function OrderDetailPage() {
           <h2 className="text-lg">Delivery address</h2>
           <div className="mt-3 text-sm">
             <p className="font-medium">{o.recipient_name}</p>
-            <p className="num mt-0.5 text-ink-muted">{o.phone}</p>
+            <p dir="ltr" className="num mt-0.5 text-ink-muted">{o.phone}</p>
             <p className="mt-1.5 text-ink-muted">
               {o.line1}
               {o.line2 ? `, ${o.line2}` : ""}, {o.city}, {o.state}{" "}
-              <span className="num">{o.postal_code}</span>, {o.country}
+              <span dir="ltr" className="num">{o.postal_code}</span>, {o.country}
             </p>
           </div>
           <div className="mt-4 flex flex-wrap items-center gap-2 text-sm">

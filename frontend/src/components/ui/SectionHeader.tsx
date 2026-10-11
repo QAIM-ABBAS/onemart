@@ -25,7 +25,7 @@ export function ArrowButton({
       aria-label={label}
       className="grid size-8 shrink-0 place-items-center rounded-lg bg-surface text-ink border border-line transition hover:bg-surface-2 hover:shadow-lift disabled:pointer-events-none disabled:opacity-35"
     >
-      <Icon width={16} height={16} />
+      <Icon width={16} height={16} className="rtl:-scale-x-100" />
     </button>
   );
 }
@@ -67,7 +67,7 @@ export function SectionHeader({
             className="label inline-flex items-center gap-1 border-b border-ink/30 pb-0.5 text-ink-muted transition-colors hover:border-brand-600 hover:text-brand-600"
           >
             {linkLabel}
-            <ChevronRightIcon width={13} height={13} />
+            <ChevronRightIcon width={13} height={13} className="rtl:-scale-x-100" />
           </Link>
         ) : null}
         {children}

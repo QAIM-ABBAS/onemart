@@ -72,7 +72,7 @@ function FilterPanel({ params, update, clearAll }: FilterPanelProps) {
                 ? "font-medium text-ink hover:bg-surface-2"
                 : "text-ink-muted hover:bg-surface-2",
           )}
-          style={depth > 0 ? { paddingLeft: `${0.5 + depth * 0.85}rem` } : undefined}
+          style={depth > 0 ? { paddingInlineStart: `${0.5 + depth * 0.85}rem` } : undefined}
         >
           <span>{cat.name}</span>
           {typeof cat.product_count === "number" ? (

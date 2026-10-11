@@ -4,6 +4,7 @@ import { useSearchParams } from "react-router-dom";
 import { useAdminCoupons, useDeleteCoupon, useSaveCoupon } from "@/hooks/queries/admin";
 import { ApiError } from "@/lib/api";
 import { money } from "@/lib/format";
+import { normalizeDigits } from "@/lib/text";
 import type { CouponAdminOut, CouponWrite } from "@/lib/types";
 import { toast } from "@/stores/toast";
 
@@ -152,7 +153,7 @@ export function AdminCouponsPage() {
     if (Object.keys(next).length > 0) return;
 
     const payload: CouponWrite = {
-      code: form.code.trim(),
+      code: normalizeDigits(form.code).trim(),
       description: form.description.trim() || null,
       kind: form.kind,
       value: form.kind === "free_delivery" ? 0 : Number(form.value),
@@ -412,6 +413,7 @@ export function AdminCouponsPage() {
           <Field label="Code" htmlFor="coupon-code" error={errors.code}>
             <Input
               id="coupon-code"
+              dir="ltr"
               value={form.code}
               onChange={(e) => setForm({ ...form, code: e.target.value })}
               placeholder="WELCOME10"

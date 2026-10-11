@@ -4,6 +4,7 @@ import { useNavigate } from "react-router-dom";
 import { useCategories } from "@/hooks/queries/catalog";
 import { useSuggest } from "@/hooks/useSuggest";
 import { cn } from "@/lib/cn";
+import { normalizeDigits, normalizeFa } from "@/lib/text";
 import type { CategoryNode } from "@/lib/types";
 
 import { SearchIcon } from "@/components/ui/Icon";
@@ -65,7 +66,8 @@ export function SearchBar({ className, autoFocus, onComplete }: SearchBarProps) 
   function onSubmit(event: FormEvent) {
     event.preventDefault();
     const params = new URLSearchParams();
-    if (term.trim()) params.set("q", term.trim());
+    const q = normalizeFa(normalizeDigits(term)).trim();
+    if (q) params.set("q", q);
     if (scope) params.set("category", scope);
     go(`/products${params.size ? `?${params.toString()}` : ""}`);
   }
@@ -105,6 +107,7 @@ export function SearchBar({ className, autoFocus, onComplete }: SearchBarProps) 
           />
           <input
             type="search"
+            dir="auto"
             value={term}
             autoFocus={autoFocus}
             onChange={(event) => {

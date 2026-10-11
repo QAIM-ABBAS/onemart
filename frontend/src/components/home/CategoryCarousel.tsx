@@ -72,7 +72,7 @@ export function CategoryCarousel() {
               className="flex h-[124px] w-[108px] shrink-0 snap-start flex-col items-center justify-center gap-2 rounded-md bg-surface-2/70 text-center shadow-pressed transition duration-200 hover:-translate-y-0.5 hover:bg-surface hover:shadow-lift"
             >
               <span className="label text-ink-muted">See all</span>
-              <ChevronRightIcon width={16} height={16} className="text-ink-muted" />
+              <ChevronRightIcon width={16} height={16} className="text-ink-muted rtl:-scale-x-100" />
             </Link>
           </Carousel>
         )}

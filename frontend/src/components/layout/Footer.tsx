@@ -45,6 +45,7 @@ export function Footer() {
             <input
               id="newsletter-email"
               type="email"
+              dir="ltr"
               required
               autoComplete="email"
               placeholder="you@example.com"

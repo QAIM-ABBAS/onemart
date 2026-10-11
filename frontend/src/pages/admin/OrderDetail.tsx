@@ -68,7 +68,7 @@ export function AdminOrderDetailPage() {
         <ErrorState error={order.error} onRetry={() => void order.refetch()} />
         <div className="mt-5">
           <Link to="/admin/orders" className="text-sm text-brand-600 underline-offset-4 hover:underline">
-            ← Back to orders
+            <span aria-hidden="true" className="inline-block rtl:-scale-x-100">←</span> Back to orders
           </Link>
         </div>
       </div>
@@ -101,7 +101,7 @@ export function AdminOrderDetailPage() {
   return (
     <div className="max-w-6xl">
       <Link to="/admin/orders" className="label text-ink-muted hover:text-ink">
-        ← Orders
+        <span aria-hidden="true" className="inline-block rtl:-scale-x-100">←</span> Orders
       </Link>
 
       <div className="mt-3 flex flex-wrap items-start justify-between gap-4 border-b border-ink/15 pb-5">
@@ -241,11 +241,11 @@ export function AdminOrderDetailPage() {
                 <div className="flex justify-between">
                   <dt className="text-ink-muted">
                     Discount{" "}
-                    <span className="font-medium text-ink">
+                    <span dir="ltr" className="font-medium text-ink">
                       {o.coupon_code ? `· ${o.coupon_code}` : ""}
                     </span>
                   </dt>
-                  <dd className="num text-deal">−{money(o.discount_total)}</dd>
+                  <dd className="num text-deal"><span dir="ltr">−{money(o.discount_total)}</span></dd>
                 </div>
               ) : null}
               <div className="flex justify-between">

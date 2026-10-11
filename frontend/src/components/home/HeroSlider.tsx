@@ -2,6 +2,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { Link } from "react-router-dom";
 
 import type { BannerSlide } from "@/content/home";
+import { useDirection } from "@/hooks/useDirection";
 import { cn } from "@/lib/cn";
 
 import { ChevronLeftIcon, ChevronRightIcon } from "@/components/ui/Icon";
@@ -13,6 +14,7 @@ export function HeroSlider({ slides }: { slides: BannerSlide[] }) {
   const [paused, setPaused] = useState(false);
   const pointerStart = useRef<number | null>(null);
   const count = slides.length;
+  const { dir } = useDirection();
 
   const go = useCallback(
     (next: number) => setIndex((next + count) % count),
@@ -61,13 +63,17 @@ export function HeroSlider({ slides }: { slides: BannerSlide[] }) {
       }}
       tabIndex={0}
     >
+      {/* Track stays LTR so translateX maths and swipe direction never change;
+          each slide re-applies the page direction for its own content. */}
       <div
+        dir="ltr"
         className="flex h-full transition-transform duration-500 ease-out motion-reduce:transition-none"
         style={{ transform: `translateX(-${index * 100}%)` }}
       >
         {slides.map((slide, i) => (
           <div
             key={slide.id}
+            dir={dir}
             aria-hidden={i !== index}
             className={cn(
               "relative h-full w-full shrink-0 overflow-hidden",
@@ -121,7 +127,7 @@ export function HeroSlider({ slides }: { slides: BannerSlide[] }) {
             onClick={() => go(index - 1)}
             className="grid size-7 place-items-center rounded-full text-ink transition hover:bg-surface-2 hover:text-brand-700"
           >
-            <ChevronLeftIcon width={16} height={16} />
+            <ChevronLeftIcon width={16} height={16} className="rtl:-scale-x-100" />
           </button>
           <div className="flex items-center gap-1.5">
             {slides.map((slide, i) => (
@@ -144,7 +150,7 @@ export function HeroSlider({ slides }: { slides: BannerSlide[] }) {
             onClick={() => go(index + 1)}
             className="grid size-7 place-items-center rounded-full text-ink transition hover:bg-surface-2 hover:text-brand-700"
           >
-            <ChevronRightIcon width={16} height={16} />
+            <ChevronRightIcon width={16} height={16} className="rtl:-scale-x-100" />
           </button>
         </div>
       </div>
