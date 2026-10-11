@@ -131,7 +131,7 @@ export function OrdersPage() {
                         {paymentMethodLabel(order.payment_method)}
                       </Badge>
                     </div>
-                    <p className="num text-base font-semibold sm:text-right">
+                    <p className="num text-base font-semibold sm:text-end">
                       {money(order.total)}
                     </p>
                     <span className="label text-brand-600 sm:justify-self-end">View →</span>

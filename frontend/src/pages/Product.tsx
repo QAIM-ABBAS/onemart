@@ -211,7 +211,7 @@ export function ProductPage() {
               </div>
             )}
             {p.compare_at_price && p.compare_at_price > p.price ? (
-              <span className="label absolute left-3 top-3 inline-flex items-center rounded-full bg-deal px-3 py-1 text-surface shadow-button">
+              <span className="label absolute start-3 top-3 inline-flex items-center rounded-full bg-deal px-3 py-1 text-surface shadow-button">
                 Save {Math.round(((p.compare_at_price - p.price) / p.compare_at_price) * 100)}%
               </span>
             ) : null}
@@ -324,7 +324,7 @@ export function ProductPage() {
                       onClick={() => setVariantId(v.id)}
                       aria-pressed={active}
                       className={cn(
-                        "relative flex min-w-28 flex-col items-start gap-0.5 rounded-md border border-line px-3.5 py-2.5 text-left transition",
+                        "relative flex min-w-28 flex-col items-start gap-0.5 rounded-md border border-line px-3.5 py-2.5 text-start transition",
                         active
                           ? "bg-surface ring-2 ring-brand-600/40"
                           : "bg-surface hover:bg-surface-2",

@@ -118,7 +118,7 @@ export function AccountMenu() {
                 setOpen(false);
                 void logout();
               }}
-              className="block w-full px-4 py-2.5 text-left text-sm text-danger transition-colors hover:bg-danger/5"
+              className="block w-full px-4 py-2.5 text-start text-sm text-danger transition-colors hover:bg-danger/5"
             >
               Sign out
             </button>

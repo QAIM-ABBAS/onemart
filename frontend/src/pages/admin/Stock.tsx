@@ -182,7 +182,7 @@ export function AdminStockPage() {
               <div key={i} className="flex items-center gap-4 px-4 py-3.5">
                 <Skeleton className="h-4 w-1/3" />
                 <Skeleton className="h-4 w-24" />
-                <Skeleton className="ml-auto h-8 w-24" />
+                <Skeleton className="ms-auto h-8 w-24" />
               </div>
             ))}
           </div>
@@ -193,15 +193,15 @@ export function AdminStockPage() {
             <div className="overflow-x-auto rounded-md bg-surface-2 shadow-pressed">
               <table className="w-full min-w-[860px] text-sm">
                 <thead>
-                  <tr className="bg-surface-2 text-left shadow-pressed">
+                  <tr className="bg-surface-2 text-start shadow-pressed">
                     <th className="label px-4 py-2.5 text-ink-muted">Product</th>
                     <th className="label px-4 py-2.5 text-ink-muted">Variant / SKU</th>
-                    <th className="label px-4 py-2.5 text-right text-ink-muted">Price</th>
-                    <th className="label px-4 py-2.5 text-right text-ink-muted">Quantity</th>
-                    <th className="label px-4 py-2.5 text-right text-ink-muted">Reserved</th>
-                    <th className="label px-4 py-2.5 text-right text-ink-muted">Available</th>
+                    <th className="label px-4 py-2.5 text-end text-ink-muted">Price</th>
+                    <th className="label px-4 py-2.5 text-end text-ink-muted">Quantity</th>
+                    <th className="label px-4 py-2.5 text-end text-ink-muted">Reserved</th>
+                    <th className="label px-4 py-2.5 text-end text-ink-muted">Available</th>
                     <th className="label px-4 py-2.5 text-ink-muted">Updated</th>
-                    <th className="label px-4 py-2.5 text-right text-ink-muted">Action</th>
+                    <th className="label px-4 py-2.5 text-end text-ink-muted">Action</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-line">
@@ -222,19 +222,19 @@ export function AdminStockPage() {
                           <p className="text-ink-muted">{row.variant_name}</p>
                           <p className="num text-[0.75rem] text-ink-muted">{row.sku}</p>
                         </td>
-                        <td className="num px-4 py-3 text-right">{money(row.price)}</td>
-                        <td className="num px-4 py-3 text-right">{row.quantity}</td>
-                        <td className="num px-4 py-3 text-right text-ink-muted">{row.reserved}</td>
-                        <td className="num px-4 py-3 text-right font-semibold">
+                        <td className="num px-4 py-3 text-end">{money(row.price)}</td>
+                        <td className="num px-4 py-3 text-end">{row.quantity}</td>
+                        <td className="num px-4 py-3 text-end text-ink-muted">{row.reserved}</td>
+                        <td className="num px-4 py-3 text-end font-semibold">
                           <span className={out ? "text-danger" : low ? "text-warning" : ""}>
                             {row.available}
                           </span>
                           {out ? (
-                            <Badge tone="negative" className="ml-2">
+                            <Badge tone="negative" className="ms-2">
                               Out
                             </Badge>
                           ) : low ? (
-                            <Badge tone="warning" className="ml-2">
+                            <Badge tone="warning" className="ms-2">
                               Low
                             </Badge>
                           ) : null}
@@ -242,7 +242,7 @@ export function AdminStockPage() {
                         <td className="num px-4 py-3 text-[0.8125rem] text-ink-muted">
                           {formatDateTime(row.updated_at)}
                         </td>
-                        <td className="px-4 py-3 text-right">
+                        <td className="px-4 py-3 text-end">
                           <Button variant="secondary" size="sm" onClick={() => openAdjust(row)}>
                             Adjust
                           </Button>

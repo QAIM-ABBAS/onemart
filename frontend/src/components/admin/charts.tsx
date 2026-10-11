@@ -214,8 +214,8 @@ export function StatusDonut({ counts }: { counts: ReportStatusCount[] }) {
               style={{ background: STATUS_SEGMENT[row.status] }}
             />
             <span className="text-ink">{ORDER_STATUS_LABELS[row.status]}</span>
-            <span className="ml-auto num text-ink-muted">{row.orders}</span>
-            <span className="w-12 text-right num text-ink-faint">
+            <span className="ms-auto num text-ink-muted">{row.orders}</span>
+            <span className="w-12 text-end num text-ink-faint">
               {Math.round((row.orders / total) * 100)}%
             </span>
           </li>

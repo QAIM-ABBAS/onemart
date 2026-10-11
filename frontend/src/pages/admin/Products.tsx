@@ -166,13 +166,13 @@ export function AdminProductsPage() {
             <div className="overflow-x-auto rounded-md bg-surface-2 shadow-pressed">
               <table className="w-full min-w-[780px] text-sm">
                 <thead>
-                  <tr className="bg-surface-2 text-left shadow-pressed">
+                  <tr className="bg-surface-2 text-start shadow-pressed">
                     <th className="label px-4 py-2.5 text-ink-muted">Product</th>
                     <th className="label px-4 py-2.5 text-ink-muted">Category</th>
                     <th className="label px-4 py-2.5 text-ink-muted">Price</th>
                     <th className="label px-4 py-2.5 text-ink-muted">Stock</th>
                     <th className="label px-4 py-2.5 text-ink-muted">Status</th>
-                    <th className="label px-4 py-2.5 text-right text-ink-muted">Actions</th>
+                    <th className="label px-4 py-2.5 text-end text-ink-muted">Actions</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-line">

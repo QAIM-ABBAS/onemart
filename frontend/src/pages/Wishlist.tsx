@@ -329,7 +329,7 @@ export function WishlistPage() {
                     setPicking(null);
                   }}
                   className={cn(
-                    "flex min-w-32 flex-col items-start gap-0.5 rounded-md border border-line px-3.5 py-2.5 text-left transition",
+                    "flex min-w-32 flex-col items-start gap-0.5 rounded-md border border-line px-3.5 py-2.5 text-start transition",
                     soldOut ? "bg-surface opacity-55" : "bg-surface hover:bg-surface-2",
                   )}
                 >

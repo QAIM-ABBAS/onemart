@@ -164,7 +164,7 @@ export function AdminReviewsPage() {
               <div key={i} className="flex items-center gap-4 px-4 py-4">
                 <Skeleton className="h-5 w-40" />
                 <Skeleton className="h-5 w-24" />
-                <Skeleton className="ml-auto h-5 w-24" />
+                <Skeleton className="ms-auto h-5 w-24" />
               </div>
             ))}
           </div>
@@ -175,14 +175,14 @@ export function AdminReviewsPage() {
             <div className="overflow-x-auto rounded-md bg-surface-2 shadow-pressed">
               <table className="w-full min-w-[900px] text-sm">
                 <thead>
-                  <tr className="bg-surface-2 text-left shadow-pressed">
+                  <tr className="bg-surface-2 text-start shadow-pressed">
                     <th className="label px-4 py-2.5 text-ink-muted">Product</th>
                     <th className="label px-4 py-2.5 text-ink-muted">Reviewer</th>
                     <th className="label px-4 py-2.5 text-ink-muted">Rating</th>
                     <th className="label px-4 py-2.5 text-ink-muted">Review</th>
                     <th className="label px-4 py-2.5 text-ink-muted">Date</th>
                     <th className="label px-4 py-2.5 text-ink-muted">Status</th>
-                    <th className="label px-4 py-2.5 text-right text-ink-muted">Actions</th>
+                    <th className="label px-4 py-2.5 text-end text-ink-muted">Actions</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-line">

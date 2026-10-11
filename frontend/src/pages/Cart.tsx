@@ -197,7 +197,7 @@ export function CartPage() {
                   </div>
                 </div>
 
-                <div className="sm:text-right">
+                <div className="sm:text-end">
                   {item.deal_price != null ? (
                     <div>
                       <Price value={item.deal_price * item.quantity} size="lg" className="text-deal" />

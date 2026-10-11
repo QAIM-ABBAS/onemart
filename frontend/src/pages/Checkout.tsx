@@ -607,7 +607,7 @@ export function CheckoutPage() {
                     <span className="block truncate font-medium">{item.product_name}</span>
                     <span className="block text-[0.8125rem] text-ink-muted">{item.variant_name}</span>
                   </span>
-                  <span className="shrink-0 text-right">
+                  <span className="shrink-0 text-end">
                     {item.deal_price != null ? (
                       <>
                         <span className="num block font-semibold text-deal">
@@ -835,7 +835,7 @@ function SlotGrid({
               type="button"
               onClick={() => onSelectDate(date)}
               className={cn(
-                "shrink-0 rounded-md border px-3 py-2 text-left text-sm transition",
+                "shrink-0 rounded-md border px-3 py-2 text-start text-sm transition",
                 activeDate === date
                   ? "border-brand-600 bg-surface ring-2 ring-brand-600/40"
                   : "border-line bg-surface hover:shadow-lift",
@@ -869,7 +869,7 @@ function SlotGrid({
               disabled={!selectable}
               onClick={() => onSelectSlot(selected ? null : slot.id)}
               className={cn(
-                "rounded-md border p-3 text-left transition",
+                "rounded-md border p-3 text-start transition",
                 selected
                   ? "border-brand-600 bg-surface ring-2 ring-brand-600/40"
                   : "border-line bg-surface",

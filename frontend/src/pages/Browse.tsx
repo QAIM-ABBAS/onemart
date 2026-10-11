@@ -82,7 +82,7 @@ function FilterPanel({ params, update, clearAll }: FilterPanelProps) {
           ) : null}
         </Link>
         {cat.children && cat.children.length > 0 ? (
-          <ul className="ml-1">{cat.children.map((child) => renderCategory(child, depth + 1))}</ul>
+          <ul className="ms-1">{cat.children.map((child) => renderCategory(child, depth + 1))}</ul>
         ) : null}
       </li>
     );
@@ -114,7 +114,7 @@ function FilterPanel({ params, update, clearAll }: FilterPanelProps) {
               type="button"
               onClick={() => update({ category: undefined })}
               className={cn(
-                "flex w-full items-center rounded-lg px-2 py-1.5 text-left text-sm transition",
+                "flex w-full items-center rounded-lg px-2 py-1.5 text-start text-sm transition",
                 !params.category
                   ? "bg-surface font-semibold text-brand-700 "
                   : "font-medium text-ink hover:bg-surface-2",

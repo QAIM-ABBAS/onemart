@@ -652,7 +652,7 @@ export function AdminProductFormPage() {
             </Button>
           </Link>
           {isEdit && productQuery.data ? (
-            <span className="ml-auto hidden text-[0.8125rem] text-ink-muted sm:block">
+            <span className="ms-auto hidden text-[0.8125rem] text-ink-muted sm:block">
               From {money(productQuery.data.price)} ·{" "}
               <span className="num">{productQuery.data.available}</span> in stock
             </span>

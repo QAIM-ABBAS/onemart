@@ -174,7 +174,7 @@ export function AdminPaymentsPage() {
               <div key={i} className="flex items-center gap-4 px-4 py-4">
                 <Skeleton className="h-5 w-28" />
                 <Skeleton className="h-5 w-24" />
-                <Skeleton className="ml-auto h-5 w-24" />
+                <Skeleton className="ms-auto h-5 w-24" />
               </div>
             ))}
           </div>
@@ -185,14 +185,14 @@ export function AdminPaymentsPage() {
             <div className="overflow-x-auto rounded-md border border-line bg-surface">
               <table className="w-full min-w-[880px] text-sm">
                 <thead>
-                  <tr className="border-b border-line bg-surface-2 text-left">
+                  <tr className="border-b border-line bg-surface-2 text-start">
                     <th className="label px-4 py-2.5 text-ink-muted">Attempt</th>
                     <th className="label px-4 py-2.5 text-ink-muted">Order</th>
                     <th className="label px-4 py-2.5 text-ink-muted">Provider</th>
                     <th className="label px-4 py-2.5 text-ink-muted">Amount</th>
                     <th className="label px-4 py-2.5 text-ink-muted">Status</th>
                     <th className="label px-4 py-2.5 text-ink-muted">Created</th>
-                    <th className="label px-4 py-2.5 text-right text-ink-muted">Actions</th>
+                    <th className="label px-4 py-2.5 text-end text-ink-muted">Actions</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-line">
@@ -220,7 +220,7 @@ export function AdminPaymentsPage() {
                       <td className="num px-4 py-3 text-ink-muted">
                         {formatDateTime(payment.created_at)}
                       </td>
-                      <td className="px-4 py-3 text-right">
+                      <td className="px-4 py-3 text-end">
                         <Button
                           variant="secondary"
                           size="sm"
