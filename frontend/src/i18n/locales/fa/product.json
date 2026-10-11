@@ -1,11 +1,48 @@
 {
-  "card": {
-    "add": "افزودن به سبد خرید",
-    "adding": "در حال افزودن…",
+  "save": {
+    "add": "ذخیره این کالا در علاقه‌مندی‌ها",
+    "remove": "حذف این کالا از علاقه‌مندی‌ها",
+    "saved": "ذخیره شده",
+    "save": "ذخیره"
+  },
+  "addToCart": {
+    "error": "افزودن این کالا به سبد خرید ممکن نشد.",
+    "added": "به سبد خرید اضافه شد",
     "outOfStock": "ناموجود",
+    "add": "افزودن به سبد خرید",
+    "addedFeedback": "به سبد خرید شما اضافه شد.",
+    "goToCart": "مشاهده سبد خرید"
+  },
+  "gallery": {
+    "savePercent": "{{percent}}٪ تخفیف",
+    "viewImage": "مشاهده تصویر {{index}}"
+  },
+  "rating": {
     "reviews_one": "{{count, number}} نظر",
     "reviews_other": "{{count, number}} نظر",
-    "descriptionFallback": "{{category}} تازه — کیفیتی که می‌توانید به آن اعتماد کنید.",
-    "unit": "هر واحد"
-  }
+    "noReviews": "هنوز نظری ثبت نشده — اولین نفر باشید"
+  },
+  "stock": {
+    "outOfStock": "ناموجود",
+    "low": "فقط {{count, number}} عدد باقی مانده",
+    "inStock": "موجود"
+  },
+  "claim": {
+    "claimed": "{{percent, number}}٪ فروخته شد",
+    "left": "{{count, number}} عدد در این پیشنهاد باقی مانده"
+  },
+  "variant": {
+    "defaultLabel": "سایز / بسته",
+    "soldOut": "تمام شد"
+  },
+  "details": {
+    "sku": "شناسه کالا",
+    "skuFallback": "—",
+    "delivery": "ارسال",
+    "deliveryText": "پرداخت در محل. بالای ۹۹۹ روپیه رایگان، در غیر این صورت ۴۰ روپیه. معمولاً تحویل ۱ تا ۲ روزه.",
+    "category": "دسته‌بندی",
+    "description": "توضیحات"
+  },
+  "featured": "منتخب",
+  "browseAll": "مشاهده همه محصولات"
 }

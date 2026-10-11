@@ -1,11 +1,48 @@
 {
-  "card": {
-    "add": "Add to cart",
-    "adding": "Adding…",
+  "save": {
+    "add": "Save this product to your wishlist",
+    "remove": "Remove this product from your wishlist",
+    "saved": "Saved",
+    "save": "Save"
+  },
+  "addToCart": {
+    "error": "Could not add this item to your cart.",
+    "added": "Added to cart",
     "outOfStock": "Out of stock",
+    "add": "Add to cart",
+    "addedFeedback": "Added to your cart.",
+    "goToCart": "Go to cart"
+  },
+  "gallery": {
+    "savePercent": "Save {{percent}}%",
+    "viewImage": "View image {{index}}"
+  },
+  "rating": {
     "reviews_one": "{{count, number}} review",
     "reviews_other": "{{count, number}} reviews",
-    "descriptionFallback": "Fresh {{category}} — quality you can trust.",
-    "unit": "per unit"
-  }
+    "noReviews": "No reviews yet — be the first"
+  },
+  "stock": {
+    "outOfStock": "Out of stock",
+    "low": "Only {{count, number}} left",
+    "inStock": "In stock"
+  },
+  "claim": {
+    "claimed": "{{percent, number}}% claimed",
+    "left": "{{count, number}} left in this deal"
+  },
+  "variant": {
+    "defaultLabel": "Size / pack",
+    "soldOut": "Sold out"
+  },
+  "details": {
+    "sku": "SKU",
+    "skuFallback": "—",
+    "delivery": "Delivery",
+    "deliveryText": "Cash on delivery. Free over ₹999, otherwise ₹40. Usually delivered in 1–2 days.",
+    "category": "Category",
+    "description": "Description"
+  },
+  "featured": "Featured",
+  "browseAll": "Browse all products"
 }
