@@ -1,11 +1,12 @@
 import { useState } from "react";
 import { Link, useNavigate, useSearchParams } from "react-router-dom";
+import { useTranslation } from "react-i18next";
 
 import { Stars } from "@/components/reviews/Stars";
 import { useAddToCart } from "@/hooks/queries/cart";
 import { useToggleWishlist, useWishlistList } from "@/hooks/queries/wishlist";
 import { cn } from "@/lib/cn";
-import { money } from "@/lib/format";
+import { formatPrice } from "@/lib/format";
 import type { WishlistItem } from "@/lib/types";
 import { toast } from "@/stores/toast";
 
@@ -21,18 +22,19 @@ import { EmptyState, ErrorState, Skeleton } from "@/components/ui/States";
 const PAGE_SIZE = 12;
 
 const SORT_OPTIONS = [
-  { value: "recent", label: "Recently saved" },
-  { value: "oldest", label: "Oldest saved" },
-  { value: "price_asc", label: "Price: low to high" },
-  { value: "price_desc", label: "Price: high to low" },
-  { value: "name", label: "Name A–Z" },
+  { value: "recent", labelKey: "filters.sort.recent" },
+  { value: "oldest", labelKey: "filters.sort.oldest" },
+  { value: "price_asc", labelKey: "filters.sort.price_asc" },
+  { value: "price_desc", labelKey: "filters.sort.price_desc" },
+  { value: "name", labelKey: "filters.sort.name" },
 ];
 
 /** Live stock state, same three tints the product page uses. */
 function StockBadge({ item }: { item: WishlistItem }) {
-  if (!item.in_stock) return <Badge tone="negative">Out of stock</Badge>;
-  if (item.available <= 10) return <Badge tone="warning">Only {item.available} left</Badge>;
-  return <Badge tone="positive">In stock</Badge>;
+  const { t } = useTranslation("wishlist");
+  if (!item.in_stock) return <Badge tone="negative">{t("item.out_of_stock")}</Badge>;
+  if (item.available <= 10) return <Badge tone="warning">{t("item.available", { count: item.available })}</Badge>;
+  return <Badge tone="positive">{t("item.in_stock")}</Badge>;
 }
 
 function WishlistCard({
@@ -44,6 +46,7 @@ function WishlistCard({
   onRemove: () => void;
   onAddToCart: () => void;
 }) {
+  const { t } = useTranslation("wishlist");
   return (
     <article className="group relative flex h-full flex-col rounded-md border border-line bg-surface transition hover:-translate-y-0.5 hover:shadow-lift">
       <div className="relative">
@@ -74,14 +77,14 @@ function WishlistCard({
 
         {item.discount_percent ? (
           <span className="label absolute start-2 top-2 rounded-xs bg-deal px-2 py-0.5 text-surface">
-            {item.discount_percent}% off
+            {t("product:discount.badge", { percent: item.discount_percent })}
           </span>
         ) : null}
 
         <button
           type="button"
           onClick={onRemove}
-          aria-label={`Remove ${item.name} from wishlist`}
+          aria-label={t("item.remove_aria", { name: item.name })}
           className="absolute end-2 top-2 z-10 grid size-8 place-items-center rounded-full border border-line bg-surface/95 text-danger transition hover:shadow-lift"
         >
           <HeartIcon width={16} height={16} fill="currentColor" />
@@ -102,7 +105,7 @@ function WishlistCard({
           <div className="mt-2 flex items-center gap-1.5">
             <Stars rating={item.rating_avg} size={13} />
             <span className="num text-[0.6875rem] text-ink-muted">
-              {item.rating_avg.toFixed(1)} ({item.rating_count})
+              {t("product:card.reviews", { count: item.rating_count })}
             </span>
           </div>
         ) : null}
@@ -114,7 +117,7 @@ function WishlistCard({
 
         {/* The price is already on the row above — this line is unit meta. */}
         <p className="num mt-1 text-[0.8125rem] text-ink-muted">
-          {item.in_stock ? `${item.available} in stock` : "\u00a0"}
+          {item.in_stock ? t("item.available", { count: item.available }) : "\u00a0"}
         </p>
 
         <div className="mt-auto flex flex-wrap gap-2 pt-4">
@@ -123,10 +126,10 @@ function WishlistCard({
             disabled={!item.in_stock}
             onClick={onAddToCart}
           >
-            {item.in_stock ? "Add to cart" : "Out of stock"}
+            {item.in_stock ? t("item.add_to_cart") : t("item.out_of_stock")}
           </Button>
           <Link to={`/p/${item.slug}`}>
-            <Button variant="secondary">View</Button>
+            <Button variant="secondary">{t("item.view")}</Button>
           </Link>
         </div>
       </div>
@@ -149,6 +152,7 @@ function CardSkeleton() {
 }
 
 export function WishlistPage() {
+  const { t } = useTranslation("wishlist");
   const [sp, setSp] = useSearchParams();
   const params = {
     page: Number(sp.get("page") ?? 1) || 1,
@@ -210,12 +214,12 @@ export function WishlistPage() {
     <div className="mx-auto max-w-6xl px-4 py-8 lg:py-12">
       <div className="flex flex-wrap items-end justify-between gap-4">
         <div>
-          <p className="label text-brand-600">Your account</p>
-          <h1 className="mt-1.5 text-3xl">Wishlist</h1>
+          <p className="label text-brand-600">{t("page.eyebrow")}</p>
+          <h1 className="mt-1.5 text-3xl">{t("page.title")}</h1>
           <p className="mt-1.5 text-sm text-ink-muted">
             {wishlist.data
-              ? `${wishlist.data.total} saved item${wishlist.data.total === 1 ? "" : "s"}`
-              : "Everything you have saved for later."}
+              ? t("page.count", { count: wishlist.data.total })
+              : t("page.empty")}
           </p>
         </div>
 
@@ -224,7 +228,7 @@ export function WishlistPage() {
             would lose to `fieldBase`'s `w-full` in the stylesheet. */}
         <div className="flex flex-wrap items-center gap-3 rounded-md border border-line bg-surface p-2">
           <Checkbox
-            label="In stock only"
+            label={t("filters.in_stock")}
             checked={params.in_stock}
             onChange={(e) => update({ in_stock: e.target.checked ? "1" : undefined })}
             className="px-1 text-ink-muted"
@@ -234,8 +238,8 @@ export function WishlistPage() {
               type="search"
               value={params.q ?? ""}
               onChange={(e) => update({ q: e.target.value || undefined })}
-              placeholder="Search saved items"
-              aria-label="Search your wishlist"
+              placeholder={t("filters.search")}
+              aria-label={t("filters.search")}
               className="h-9 text-sm"
             />
           </div>
@@ -243,12 +247,12 @@ export function WishlistPage() {
             <Select
               value={params.sort}
               onChange={(e) => update({ sort: e.target.value })}
-              aria-label="Sort wishlist"
+              aria-label={t("filters.sort.label")}
               className="h-9 text-sm"
             >
               {SORT_OPTIONS.map((opt) => (
                 <option key={opt.value} value={opt.value}>
-                  {opt.label}
+                  {t(opt.labelKey)}
                 </option>
               ))}
             </Select>
@@ -288,21 +292,21 @@ export function WishlistPage() {
           </>
         ) : hasFilters ? (
           <EmptyState
-            title="No saved items match"
-            body="Try a different search, or show everything that is in stock."
+            title={t("empty.title_filtered")}
+            body={t("empty.body_filtered")}
             action={
               <Button variant="secondary" onClick={() => setSp(new URLSearchParams())}>
-                Clear filters
+                {t("empty.action_clear")}
               </Button>
             }
           />
         ) : (
           <EmptyState
-            title="Nothing saved yet"
-            body="Tap the heart on any product and it will wait for you here — with its current price and stock."
+            title={t("empty.title")}
+            body={t("empty.body")}
             action={
               <Link to="/products">
-                <Button>Browse products</Button>
+                <Button>{t("empty.action_browse")}</Button>
               </Link>
             }
           />
@@ -312,7 +316,7 @@ export function WishlistPage() {
       <Modal
         open={picking !== null}
         onClose={() => setPicking(null)}
-        title="Choose an option"
+        title={t("modal.title")}
         description={picking ? picking.name : undefined}
       >
         {picking ? (
@@ -335,9 +339,9 @@ export function WishlistPage() {
                 >
                   <span className="text-sm font-medium text-ink">{variant.name}</span>
                   <span className="num text-[0.8125rem] text-ink-muted">
-                    {money(variant.price)}
+                    {formatPrice(variant.price)}
                   </span>
-                  {soldOut ? <span className="label mt-0.5 text-danger">Sold out</span> : null}
+                  {soldOut ? <span className="label mt-0.5 text-danger">{t("modal.sold_out")}</span> : null}
                 </button>
               );
             })}
