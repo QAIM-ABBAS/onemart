@@ -9,6 +9,7 @@
     "typecheck": "tsc --noEmit",
     "preview": "vite preview",
     "i18n:check": "node scripts/check-i18n.mjs",
+    "i18n:used": "node scripts/check-keys-used.mjs",
     "test:e2e": "playwright test"
   },
   "dependencies": {

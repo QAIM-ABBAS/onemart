@@ -44,5 +44,23 @@
     "description": "توضیحات"
   },
   "featured": "منتخب",
-  "browseAll": "مشاهده همه محصولات"
+  "browseAll": "مشاهده همه محصولات",
+  "wishlist": {
+    "add": "افزودن به علاقه‌مندی‌ها",
+    "remove": "حذف از علاقه‌مندی‌ها"
+  },
+  "card": {
+    "reviews": "{{count, number}} نظر",
+    "reviews_other": "{{count, number}} نظر",
+    "descriptionFallback": "{{category}} تازه — کیفیتی که می‌توانید به آن اعتماد کنید.",
+    "unit": "هر واحد",
+    "adding": "در حال افزودن…",
+    "add": "افزودن به سبد خرید",
+    "outOfStock": "ناموجود"
+  },
+  "seeAll": "مشاهده همه",
+  "breadcrumb": "مسیر صفحه",
+  "discount": {
+    "badge": "{{percent}}٪ تخفیف"
+  }
 }

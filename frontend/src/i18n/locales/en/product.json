@@ -44,5 +44,23 @@
     "description": "Description"
   },
   "featured": "Featured",
-  "browseAll": "Browse all products"
+  "browseAll": "Browse all products",
+  "wishlist": {
+    "add": "Add to wishlist",
+    "remove": "Remove from wishlist"
+  },
+  "card": {
+    "reviews": "{{count, number}} review",
+    "reviews_other": "{{count, number}} reviews",
+    "descriptionFallback": "Fresh {{category}} — quality you can trust.",
+    "unit": "per unit",
+    "adding": "Adding…",
+    "add": "Add to cart",
+    "outOfStock": "Out of stock"
+  },
+  "seeAll": "See all",
+  "breadcrumb": "Breadcrumb",
+  "discount": {
+    "badge": "{{percent}}% off"
+  }
 }

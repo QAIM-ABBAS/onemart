@@ -76,6 +76,8 @@
     "onlineHint": "Nothing is charged until you confirm on the gateway. Your items are held for {{minutes, number}} minutes."
   },
   "removeAddress": "Remove address",
+  "confirmDeleteAddress": "Remove this address from your account?",
+  "retry": "Retry",
   "slotStates": {
     "available": "Available",
     "limited": "Few left",
