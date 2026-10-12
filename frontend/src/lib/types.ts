@@ -893,6 +893,75 @@ export interface FlashVariantRow {
   in_live_deal: string | null;
 }
 
+/* ── Promotional banners (Phase 4) ─────────────────────────────────────── */
+
+export type BannerPlacement =
+  | "home_hero"
+  | "home_mid_strip"
+  | "category_header"
+  | "cart_promo";
+export type BannerLinkType = "product" | "category" | "coupon" | "url";
+export type BannerTone = "light" | "brand";
+export type BannerStatus = "active" | "scheduled" | "expired" | "inactive";
+
+/** One creative as a storefront component renders it. `href` is resolved
+ * server-side from link_type/link_target, so a renamed product slug or a
+ * retired coupon can never leave a dead banner behind. */
+export interface Banner {
+  id: number;
+  title: string;
+  eyebrow: string | null;
+  subtitle: string | null;
+  cta_label: string | null;
+  tone: BannerTone;
+  image_desktop: string;
+  image_mobile: string | null;
+  alt: string | null;
+  placement: BannerPlacement;
+  link_type: BannerLinkType;
+  link_target: string;
+  href: string;
+}
+
+export interface BannerWrite {
+  title: string;
+  eyebrow?: string | null;
+  subtitle?: string | null;
+  cta_label?: string | null;
+  tone: BannerTone;
+  image_desktop: string;
+  image_mobile?: string | null;
+  alt?: string | null;
+  placement: BannerPlacement;
+  category_id?: number | null;
+  link_type: BannerLinkType;
+  link_target: string;
+  starts_at?: string | null;
+  ends_at?: string | null;
+  priority: number;
+  is_active: boolean;
+}
+
+/** Admin row: the write fields plus the computed status chip and the live
+ * impression/click counters (Redis-pending values merged in server-side). */
+export interface BannerAdminOut extends BannerWrite {
+  id: number;
+  status: BannerStatus;
+  category_name: string | null;
+  impressions: number;
+  clicks: number;
+  /** percent, 0 until the first impression lands */
+  ctr: number;
+  created_at: string;
+  updated_at: string;
+}
+
+/** Result of POST /admin/banners/upload — two resized WebP variants. */
+export interface BannerUpload {
+  image_desktop: string;
+  image_mobile: string;
+}
+
 export interface ErrorEnvelope {
   error: {
     code: string;

@@ -54,6 +54,34 @@ class Settings(BaseSettings):
     # A slot is bookable only until this many hours before it starts.
     delivery_slot_cutoff_hours: int = 2
 
+    # --- Promotional banners / media storage -------------------------------
+    # Where uploaded creatives live. "local" writes under media_root and
+    # serves them from GET /api/media/…; "s3" is any S3-compatible store
+    # (AWS / MinIO / R2) reached through boto3 — install the `s3` extra.
+    storage_backend: str = "local"
+    # Relative paths resolve against the working dir (backend/ on the host,
+    # /srv in the container — the bind mount keeps them the same directory).
+    media_root: str = "media"
+    media_max_upload_mb: int = 5
+    # Rendered variants: the desktop image is capped at this width, the
+    # phone one considerably narrower (both saved as WebP).
+    media_desktop_max_width: int = 1600
+    media_mobile_max_width: int = 750
+    s3_endpoint_url: str = ""
+    s3_region: str = ""
+    s3_bucket: str = ""
+    s3_access_key: str = ""
+    s3_secret_key: str = ""
+    # Public URL prefix for stored objects (CDN or bucket website).
+    s3_public_base_url: str = ""
+
+    # Banner payloads are cached this long (invalidated on every admin
+    # change); analytics events are rate-limited per client per minute and
+    # one impression per banner is counted per client per dedup window.
+    banner_cache_ttl: int = 60
+    banner_track_rate_limit: int = 120
+    banner_impression_dedup_seconds: int = 1800
+
     # Celery: the broker is `redis_url`. Tests flip this on so tasks execute
     # in-process — no worker and no broker connection anywhere in pytest.
     celery_task_always_eager: bool = False

@@ -34,3 +34,9 @@ class ForbiddenError(AppError):
     status_code = 403
     code = "forbidden"
     default_message = "You do not have access to this resource"
+
+
+class RateLimitedError(AppError):
+    status_code = 429
+    code = "rate_limited"
+    default_message = "Too many requests — please slow down"

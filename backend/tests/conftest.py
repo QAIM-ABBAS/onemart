@@ -1,4 +1,5 @@
 import os
+import tempfile
 
 # 127.0.0.1, not "localhost": ::1 is not published by Docker and stalls ~130s
 os.environ["DATABASE_URL"] = "postgresql+psycopg://onemart:onemart@127.0.0.1:5433/onemart_test"
@@ -7,6 +8,13 @@ os.environ["SEED_ON_STARTUP"] = "false"
 os.environ["COOKIE_SECURE"] = "false"
 # Celery tasks run in-process: no worker, no broker connection in pytest.
 os.environ["CELERY_TASK_ALWAYS_EAGER"] = "true"
+# Banner uploads land in a throwaway dir, never the dev media folder.
+# Guarded: conftest executes twice per run (pytest's plugin import, then
+# again as `tests.conftest` when a test module imports `login`) — a second
+# mkdtemp here would desync os.environ from the settings value the app
+# captured at import, and orphan an empty dir each run.
+if "MEDIA_ROOT" not in os.environ:
+    os.environ["MEDIA_ROOT"] = tempfile.mkdtemp(prefix="onemart-test-media-")
 
 import pytest
 from sqlalchemy import create_engine, text
@@ -51,19 +59,29 @@ def clean_db(engine):
     # Catalog detail is cached in-process when Redis is disabled; without this,
     # a product read in one test would leak into the next (ratings especially).
     # The reports overview caches the same way — clear both before each test.
+    # Banner state goes too: the payload cache, the per-IP rate/dedup keys
+    # (their banner ids restart at 1 after TRUNCATE RESTART IDENTITY) and the
+    # analytics counters waiting to be flushed.
+    from app.core.redis import cache_delete_prefix
+    from app.modules.banners.service import invalidate_banners_cache
     from app.modules.catalog.service import invalidate_catalog_cache
     from app.modules.flash.service import invalidate_flash_cache
     from app.modules.reports.service import invalidate_report_cache
 
-    invalidate_catalog_cache()
-    invalidate_report_cache()
-    invalidate_flash_cache()
+    def _clear_caches():
+        invalidate_catalog_cache()
+        invalidate_report_cache()
+        invalidate_flash_cache()
+        invalidate_banners_cache()
+        cache_delete_prefix("banners:")
+        cache_delete_prefix("bstats:")
+
+    _clear_caches()
     tables = ", ".join(f'"{t.name}"' for t in Base.metadata.sorted_tables)
     with engine.begin() as conn:
         conn.execute(text(f"TRUNCATE {tables} RESTART IDENTITY CASCADE"))
     yield
-    invalidate_catalog_cache()
-    invalidate_flash_cache()
+    _clear_caches()
 
 
 @pytest.fixture()

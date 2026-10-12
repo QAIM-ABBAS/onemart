@@ -1,11 +1,12 @@
 import logging
 from contextlib import asynccontextmanager
 from html import escape
+from pathlib import Path
 
 from fastapi import FastAPI, Request
 from fastapi.exceptions import RequestValidationError
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import JSONResponse, Response
+from fastapi.responses import FileResponse, JSONResponse, Response
 from sqlalchemy.exc import IntegrityError
 
 from app.core.config import settings
@@ -96,6 +97,8 @@ async def unhandled_error_handler(request: Request, exc: Exception):
 
 from fastapi import Query  # noqa: E402
 
+from app.modules.banners.admin_router import router as banners_admin_router  # noqa: E402
+from app.modules.banners.router import router as banners_router  # noqa: E402
 from app.modules.catalog.admin_router import router as catalog_admin_router  # noqa: E402
 from app.modules.catalog.router import router as catalog_router  # noqa: E402
 from app.modules.delivery.admin_router import router as delivery_admin_router  # noqa: E402
@@ -139,6 +142,8 @@ app.include_router(delivery_router, prefix=f"{API_PREFIX}")
 app.include_router(delivery_admin_router, prefix=f"{API_PREFIX}")
 app.include_router(flash_router, prefix=f"{API_PREFIX}")
 app.include_router(flash_admin_router, prefix=f"{API_PREFIX}")
+app.include_router(banners_router, prefix=f"{API_PREFIX}")
+app.include_router(banners_admin_router, prefix=f"{API_PREFIX}")
 
 
 @app.get("/api/health")
@@ -162,3 +167,20 @@ def placeholder_image(
   <text x="400" y="470" text-anchor="middle" font-family="Helvetica, Arial, sans-serif" font-size="34" letter-spacing="4" fill="#{fg}" fill-opacity="0.65">{label}</text>
 </svg>"""
     return Response(content=svg, media_type="image/svg+xml", headers={"Cache-Control": "public, max-age=86400"})
+
+
+@app.get("/api/media/{media_path:path}")
+def media_file(media_path: str):
+    """Serve uploads from the local storage backend.
+
+    Uploaded names are content-unique (uuid), so the response is cached
+    immutably for a year; the resolve + ``is_relative_to`` check refuses
+    any path that climbs out of the media root.
+    """
+    root = Path(settings.media_root).resolve()
+    target = (root / media_path).resolve()
+    if not target.is_relative_to(root) or not target.is_file():
+        return Response(status_code=404)
+    return FileResponse(
+        target, headers={"Cache-Control": "public, max-age=31536000, immutable"}
+    )

@@ -18,7 +18,11 @@ export default defineConfig({
     // modules it never saw change (edits look like they "didn't take").
     watch: {
       usePolling: true,
-      interval: 300,
+      // 1s: polling is required on this Windows bind mount (see above), but
+      // the dev server stats the whole tree on every tick — 300ms kept the
+      // web container at ~60% CPU on a 4-thread host and starved the E2E
+      // suite's Chrome. 1s still picks up saves well within human patience.
+      interval: 1000,
     },
     proxy: {
       "/api": {

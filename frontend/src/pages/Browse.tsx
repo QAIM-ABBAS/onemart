@@ -2,12 +2,14 @@ import { useEffect, useMemo, useState, type FormEvent } from "react";
 import { Link, useSearchParams } from "react-router-dom";
 
 import { ProductCard, ProductGrid, ProductGridSkeleton } from "@/components/catalog/ProductCard";
+import { BannerStrip, BannerStripSkeleton } from "@/components/banner/BannerStrip";
 import { Button } from "@/components/ui/Button";
 import { Checkbox, Input, Select } from "@/components/ui/Form";
 import { SearchIcon } from "@/components/ui/Icon";
 import { Modal } from "@/components/ui/Modal";
 import { Pagination } from "@/components/ui/Pagination";
 import { EmptyState, ErrorState, Skeleton } from "@/components/ui/States";
+import { useBanners } from "@/hooks/queries/banners";
 import { useCategories, useFacets, useProducts, type ProductQueryParams } from "@/hooks/queries/catalog";
 import { cn } from "@/lib/cn";
 import type { CategoryNode } from "@/lib/types";
@@ -249,6 +251,8 @@ export function BrowsePage() {
 
   const products = useProducts(params);
   const categories = useCategories();
+  // Category pages may carry one header banner; hidden while loading/empty.
+  const categoryBanner = useBanners("category_header", params.category);
 
   const activeCategory = useMemo(() => {
     if (!params.category) return null;
@@ -328,6 +332,15 @@ export function BrowsePage() {
           </label>
         </div>
       </div>
+
+      {/* Category header banner: one creative max, hidden when unbooked. */}
+      {params.category ? (
+        categoryBanner.isLoading ? (
+          <BannerStripSkeleton className="mt-6" />
+        ) : categoryBanner.data?.[0] ? (
+          <BannerStrip banner={categoryBanner.data[0]} className="mt-6" />
+        ) : null
+      ) : null}
 
       {/* Results row: parent is a flex row, the filter sidebar and the results
           are its two child boxes. Below lg the sidebar box leaves the flow

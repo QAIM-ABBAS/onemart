@@ -1,14 +1,16 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Link } from "react-router-dom";
 
-import type { BannerSlide } from "@/content/home";
+import { BannerPicture } from "@/components/banner/BannerPicture";
+import { trackClick, trackImpression } from "@/lib/bannerTrack";
 import { cn } from "@/lib/cn";
+import type { Banner } from "@/lib/types";
 
 import { ChevronLeftIcon, ChevronRightIcon } from "@/components/ui/Icon";
 
 const INTERVAL = 5000;
 
-export function HeroSlider({ slides }: { slides: BannerSlide[] }) {
+export function HeroSlider({ slides }: { slides: Banner[] }) {
   const [index, setIndex] = useState(0);
   const [paused, setPaused] = useState(false);
   const pointerStart = useRef<number | null>(null);
@@ -25,6 +27,13 @@ export function HeroSlider({ slides }: { slides: BannerSlide[] }) {
     const timer = window.setInterval(() => setIndex((value) => (value + 1) % count), INTERVAL);
     return () => window.clearInterval(timer);
   }, [count, paused]);
+
+  // Count the slide that's on screen (tracker dedupes to one impression per
+  // banner per session, so cycling back never double counts).
+  useEffect(() => {
+    const active = slides[index];
+    if (active) trackImpression(active.id);
+  }, [index, slides]);
 
   if (count === 0) return null;
 
@@ -81,11 +90,14 @@ export function HeroSlider({ slides }: { slides: BannerSlide[] }) {
                 <h2 className="text-2xl leading-tight sm:text-3xl lg:text-[2.1rem]">
                   {slide.title}
                 </h2>
-                <p className="mt-3 hidden max-w-md text-sm leading-relaxed opacity-75 sm:block">
-                  {slide.subtitle}
-                </p>
+                {slide.subtitle ? (
+                  <p className="mt-3 hidden max-w-md text-sm leading-relaxed opacity-75 sm:block">
+                    {slide.subtitle}
+                  </p>
+                ) : null}
                 <Link
-                  to={slide.cta_url}
+                  to={slide.href}
+                  onClick={() => trackClick(slide.id)}
                   className={cn(
                     "label mt-5 inline-flex h-10 items-center rounded-md px-5 shadow-button transition hover:-translate-y-px",
                     slide.tone === "brand"
@@ -93,19 +105,17 @@ export function HeroSlider({ slides }: { slides: BannerSlide[] }) {
                       : "bg-brand-700 text-surface hover:bg-brand-800",
                   )}
                 >
-                  {slide.cta_label}
+                  {slide.cta_label ?? "Shop now"}
                 </Link>
               </div>
             </div>
             <div className="pointer-events-none absolute inset-y-0 end-0 hidden w-[45%] items-center justify-center sm:flex lg:w-[42%]">
-              <img
-                src={slide.image}
-                alt=""
+              <BannerPicture
+                banner={slide}
+                alt={slide.alt ?? ""}
                 width={320}
                 height={320}
-                loading={i === 0 ? "eager" : "lazy"}
-                fetchPriority={i === 0 ? "high" : "auto"}
-                decoding="async"
+                eager={i === 0}
                 className="photo-lift h-[78%] w-auto max-w-none object-contain"
               />
             </div>

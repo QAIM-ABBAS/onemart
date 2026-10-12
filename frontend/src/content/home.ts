@@ -1,23 +1,3 @@
-export interface BannerSlide {
-  id: string;
-  image: string;
-  title: string;
-  subtitle: string;
-  cta_label: string;
-  cta_url: string;
-  tone: "light" | "brand";
-}
-
-export interface PromoBanner {
-  id: string;
-  eyebrow: string;
-  title: string;
-  subtitle: string;
-  cta_label: string;
-  cta_url: string;
-  image: string;
-}
-
 export interface BrandOffer {
   id: string;
   label: string;
@@ -59,46 +39,6 @@ export function placeholderImage(text: string, index = 0): string {
 export function tintAt(index: number): string {
   return `#${TINTS[index % TINTS.length].bg}`;
 }
-
-export const HERO_BANNERS: BannerSlide[] = [
-  {
-    id: "fresh-week",
-    image: placeholderImage("Fresh Produce", 0),
-    title: "Fresh picks for the week",
-    subtitle: "Fruit, vegetables and daily essentials — priced for the everyday shop.",
-    cta_label: "Shop now",
-    cta_url: "/products?category=fresh-produce",
-    tone: "light",
-  },
-  {
-    id: "dairy-breakfast",
-    image: placeholderImage("Dairy Bakery", 1),
-    title: "Breakfast, sorted in one basket",
-    subtitle: "Milk, eggs, bread and butter from the brands you already buy.",
-    cta_label: "Shop now",
-    cta_url: "/products?category=dairy-bakery",
-    tone: "brand",
-  },
-  {
-    id: "pantry-stockup",
-    image: placeholderImage("Stock Up", 3),
-    title: "Stock up the pantry for less",
-    subtitle: "Snacks, staples and household refills with cash on delivery.",
-    cta_label: "Shop now",
-    cta_url: "/products?sort=bestselling",
-    tone: "light",
-  },
-];
-
-export const PROMO_BANNER: PromoBanner = {
-  id: "promo-featured",
-  eyebrow: "This week only",
-  title: "20% off featured picks",
-  subtitle: "A hand-picked shelf of everyday favourites, discounted while stocks last.",
-  cta_label: "Shop the offer",
-  cta_url: "/products?featured=1",
-  image: placeholderImage("Featured Offer", 4),
-};
 
 export const BRAND_OFFERS: BrandOffer[] = [
   {

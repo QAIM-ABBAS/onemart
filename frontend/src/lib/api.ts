@@ -60,6 +60,8 @@ export function buildQuery(params: Record<string, QueryValue>): string {
 interface RequestOptions {
   method?: "GET" | "POST" | "PATCH" | "PUT" | "DELETE";
   body?: unknown;
+  /** Multipart payload — Content-Type is left to the browser's boundary. */
+  formData?: FormData;
   query?: Record<string, QueryValue>;
   retryOn401?: boolean;
 }
@@ -102,11 +104,13 @@ export async function refreshSession(): Promise<AuthResponse | null> {
 }
 
 export async function request<T>(path: string, options: RequestOptions = {}): Promise<T> {
-  const { method = "GET", body, query, retryOn401 = true } = options;
+  const { method = "GET", body, formData, query, retryOn401 = true } = options;
   const url = `${BASE}${path}${query ? buildQuery(query) : ""}`;
 
   const headers: Record<string, string> = { Accept: "application/json" };
-  if (body !== undefined) headers["Content-Type"] = "application/json";
+  if (formData) {
+    // no Content-Type: the browser adds the multipart boundary
+  } else if (body !== undefined) headers["Content-Type"] = "application/json";
   if (accessToken) headers.Authorization = `Bearer ${accessToken}`;
 
   let res: Response;
@@ -114,7 +118,7 @@ export async function request<T>(path: string, options: RequestOptions = {}): Pr
     res = await fetch(url, {
       method,
       headers,
-      body: body !== undefined ? JSON.stringify(body) : undefined,
+      body: formData ?? (body !== undefined ? JSON.stringify(body) : undefined),
       credentials: "include",
     });
   } catch {
@@ -158,6 +162,8 @@ export const api = {
   post: <T>(path: string, body?: unknown) => request<T>(path, { method: "POST", body }),
   patch: <T>(path: string, body?: unknown) => request<T>(path, { method: "PATCH", body }),
   del: <T>(path: string) => request<T>(path, { method: "DELETE" }),
+  upload: <T>(path: string, formData: FormData) =>
+    request<T>(path, { method: "POST", formData }),
 };
 
 export async function login(email: string, password: string): Promise<AuthResponse> {

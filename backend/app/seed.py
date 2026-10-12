@@ -419,6 +419,121 @@ def ensure_demo_flash(db: Session) -> None:
         invalidate_flash_cache()
 
 
+def ensure_demo_banners(db: Session) -> None:
+    """Seed the storefront's marketing slots (the content that used to live
+    hardcoded in ``frontend/src/content/home.ts``).
+
+    Idempotent by (placement, title): a hand-edited or deleted banner stays
+    that way across re-seeds. Every placement gets at most one demo creative
+    — the homepage rule is one hero carousel + one mid strip + the flash
+    strip, nothing stacked.
+    """
+    from app.modules.banners.models import Banner, BannerLinkType, BannerPlacement
+    from app.modules.banners.service import invalidate_banners_cache
+
+    specs: list[dict] = [
+        # ── home hero carousel (three slides, priority order) ────────────
+        dict(
+            placement=BannerPlacement.HOME_HERO,
+            title="Fresh picks for the week",
+            subtitle="Fruit, vegetables and daily essentials — priced for the everyday shop.",
+            cta_label="Shop now",
+            tone="light",
+            image_desktop=image_url("Fresh Produce", 0),
+            link_type=BannerLinkType.CATEGORY,
+            link_target="fresh-produce",
+            priority=10,
+        ),
+        dict(
+            placement=BannerPlacement.HOME_HERO,
+            title="Breakfast, sorted in one basket",
+            subtitle="Milk, eggs, bread and butter from the brands you already buy.",
+            cta_label="Shop now",
+            tone="brand",
+            image_desktop=image_url("Dairy Bakery", 1),
+            link_type=BannerLinkType.CATEGORY,
+            link_target="dairy-bakery",
+            priority=20,
+        ),
+        dict(
+            placement=BannerPlacement.HOME_HERO,
+            title="Stock up the pantry for less",
+            subtitle="Snacks, staples and household refills with cash on delivery.",
+            cta_label="Shop now",
+            tone="light",
+            image_desktop=image_url("Stock Up", 3),
+            link_type=BannerLinkType.URL,
+            link_target="/products?sort=bestselling",
+            priority=30,
+        ),
+        # ── the single mid-strip promo beside the hero ───────────────────
+        dict(
+            placement=BannerPlacement.HOME_MID_STRIP,
+            eyebrow="This week only",
+            title="20% off featured picks",
+            subtitle="A hand-picked shelf of everyday favourites, discounted while stocks last.",
+            cta_label="Shop the offer",
+            tone="brand",
+            image_desktop=image_url("Featured Offer", 4),
+            link_type=BannerLinkType.URL,
+            link_target="/products?featured=1",
+            priority=10,
+        ),
+        # ── category header (fresh produce page) ─────────────────────────
+        dict(
+            placement=BannerPlacement.CATEGORY_HEADER,
+            title="Fresh produce",
+            subtitle="Fruit and vegetables, picked this morning.",
+            cta_label="Shop now",
+            tone="light",
+            image_desktop=image_url("Fresh Produce", 5),
+            link_type=BannerLinkType.CATEGORY,
+            link_target="fresh-produce",
+            link_category="fresh-produce",
+            priority=10,
+        ),
+        # ── cart promo (deep-links the FREESHIP coupon into the cart) ────
+        dict(
+            placement=BannerPlacement.CART_PROMO,
+            eyebrow="Coupon",
+            title="Free delivery over ₹499",
+            subtitle="Applies in one tap — free delivery on orders above ₹499.",
+            cta_label="Apply in cart",
+            tone="brand",
+            image_desktop=image_url("Free Delivery", 2),
+            link_type=BannerLinkType.COUPON,
+            link_target="FREESHIP",
+            priority=10,
+        ),
+    ]
+
+    changed = False
+    for spec in specs:
+        link_category = spec.pop("link_category", None)
+        exists = db.scalar(
+            select(Banner.id).where(
+                Banner.placement == spec["placement"],
+                Banner.title == spec["title"],
+            )
+        )
+        if exists is not None:
+            continue
+
+        category_id = None
+        if link_category is not None:
+            category_id = db.scalar(
+                select(Category.id).where(Category.slug == link_category)
+            )
+            if category_id is None:
+                continue  # demo category missing — nothing to point at
+        db.add(Banner(**spec, category_id=category_id, is_active=True))
+        changed = True
+
+    if changed:
+        db.commit()
+        invalidate_banners_cache()
+
+
 def ensure_demo_stock(db: Session) -> None:
     """Top the shelf back up to the seeded quantities on re-seed.
 
@@ -455,6 +570,9 @@ def seed(db: Session) -> None:
     # Same idea for delivery: one zone, weekly templates, and 14 days of
     # bookable slots — a re-seed tops up whatever window is missing.
     ensure_demo_delivery(db)
+    # Banner creatives for every storefront placement (idempotent, so a
+    # hand-edited demo banner survives a re-seed).
+    ensure_demo_banners(db)
 
     if db.scalar(select(Product.id).limit(1)) is not None:
         # Catalog already there — still keep the demo usable: refill the
@@ -532,6 +650,8 @@ def seed(db: Session) -> None:
     _seed_orders(db, users["customer"], variants_by_sku)
     db.commit()
     ensure_demo_flash(db)
+    # Categories exist now — retry the one banner that needs one.
+    ensure_demo_banners(db)
 
 
 def _seed_users(db: Session) -> dict[str, User]:

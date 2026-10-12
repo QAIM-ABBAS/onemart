@@ -25,6 +25,7 @@ import { AdminReviewsPage } from "@/pages/admin/Reviews";
 import { AdminCouponsPage } from "@/pages/admin/Coupons";
 import { AdminDeliveryPage } from "@/pages/admin/Delivery";
 import { AdminFlashPage } from "@/pages/admin/Flash";
+import { AdminBannersPage } from "@/pages/admin/Banners";
 import { AdminDiscountsPage } from "@/pages/admin/Discounts";
 import { AdminReportsPage } from "@/pages/admin/Reports";
 import { AdminStockPage } from "@/pages/admin/Stock";
@@ -294,6 +295,16 @@ export function App() {
             <RequireAuth staffOnly>
               <AdminShell>
                 <AdminFlashPage />
+              </AdminShell>
+            </RequireAuth>
+          }
+        />
+        <Route
+          path="/admin/banners"
+          element={
+            <RequireAuth staffOnly>
+              <AdminShell>
+                <AdminBannersPage />
               </AdminShell>
             </RequireAuth>
           }

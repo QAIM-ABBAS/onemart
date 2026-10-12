@@ -360,3 +360,13 @@ export function MonitorIcon(props: IconProps) {
     </svg>
   );
 }
+
+export function PhotoIcon(props: IconProps) {
+  return (
+    <svg {...base(props)}>
+      <rect x="3" y="5" width="18" height="14" rx="2" />
+      <circle cx="8.5" cy="10" r="1.5" />
+      <path d="m4 16.5 5-4.5 3.5 3.5 3-2.5L20 17" />
+    </svg>
+  );
+}

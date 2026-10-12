@@ -37,8 +37,20 @@ test("customer buys with a coupon, admin moves the status, the timeline shows it
     await customer.getByRole("button", { name: /Medium/ }).click();
     const add = customer.getByRole("button", { name: "Add to cart" });
     await expect(add).toBeEnabled();
-    await add.click();
-    await expect(customer.locator("body")).toContainText("Added to your cart");
+    // Wait for the server's 201 (ground truth) before the visible echo: the
+    // "Added to your cart." note self-clears 2.5s after painting, so on a
+    // loaded host a slow round trip can outlast a bare 10s expect.
+    const [addResponse] = await Promise.all([
+      customer.waitForResponse(
+        (r) => r.url().includes("/api/cart/items") && r.request().method() === "POST",
+        { timeout: 30_000 },
+      ),
+      add.click(),
+    ]);
+    expect(addResponse.ok()).toBeTruthy();
+    await expect(customer.locator("body")).toContainText("Added to your cart", {
+      timeout: 30_000,
+    });
 
     // ── Apply the coupon on the cart ──────────────────────────────────────
     await customer.goto("/cart");

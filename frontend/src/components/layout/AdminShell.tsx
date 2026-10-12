@@ -12,6 +12,7 @@ import {
   FolderIcon,
   PackageIcon,
   PercentIcon,
+  PhotoIcon,
   StarIcon,
   StoreIcon,
   TagIcon,
@@ -31,6 +32,7 @@ const NAV = [
   { to: "/admin/coupons", label: "Coupons", icon: TagIcon },
   { to: "/admin/discounts", label: "Discounts", icon: PercentIcon },
   { to: "/admin/flash-deals", label: "Flash deals", icon: BoltIcon },
+  { to: "/admin/banners", label: "Banners", icon: PhotoIcon },
   { to: "/admin/reviews", label: "Reviews", icon: StarIcon },
 ] as const;
 

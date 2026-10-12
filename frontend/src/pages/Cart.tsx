@@ -1,6 +1,7 @@
-import { useState, type FormEvent } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { useEffect, useState, type FormEvent } from "react";
+import { Link, useNavigate, useSearchParams } from "react-router-dom";
 
+import { BannerStrip, BannerStripSkeleton } from "@/components/banner/BannerStrip";
 import {
   useApplyCoupon,
   useCart,
@@ -8,6 +9,7 @@ import {
   useRemoveCoupon,
   useUpdateCartItem,
 } from "@/hooks/queries/cart";
+import { useBanners } from "@/hooks/queries/banners";
 import { money } from "@/lib/format";
 
 import { Badge } from "@/components/ui/Badge";
@@ -25,6 +27,34 @@ export function CartPage() {
   const removeCoupon = useRemoveCoupon();
   const [couponCode, setCouponCode] = useState("");
   const navigate = useNavigate();
+  const [sp, setSp] = useSearchParams();
+  const cartPromo = useBanners("cart_promo");
+
+  // Deep link from a `cart_promo` coupon banner (`/cart?coupon=CODE`):
+  // apply the code once, then strip the param so a refresh or back-button
+  // can't re-fire the mutation. Invalid codes land in the coupon form's
+  // existing error slot.
+  const prefill = sp.get("coupon");
+  useEffect(() => {
+    const code = prefill?.trim().toUpperCase();
+    if (!code) return;
+    const dropParam = () =>
+      setSp(
+        (prev) => {
+          const next = new URLSearchParams(prev);
+          next.delete("coupon");
+          return next;
+        },
+        { replace: true },
+      );
+    if (cart.isPending || !cart.data) return;
+    if (cart.data.items.length === 0 || cart.data.coupon) {
+      dropParam();
+      return;
+    }
+    applyCoupon.mutate(code, { onSettled: dropParam });
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- run only for the incoming ?coupon= value
+  }, [prefill]);
 
   if (cart.isPending) {
     return (
@@ -94,6 +124,13 @@ export function CartPage() {
           {data.item_count} item{data.item_count === 1 ? "" : "s"}
         </p>
       </div>
+
+      {/* Cart promo strip: one creative max, hidden when unbooked. */}
+      {cartPromo.isLoading ? (
+        <BannerStripSkeleton className="mt-6" />
+      ) : cartPromo.data?.[0] ? (
+        <BannerStrip banner={cartPromo.data[0]} className="mt-6" />
+      ) : null}
 
       {/* Items + summary: a flex row of two boxes. The item list grows, the
           summary keeps a fixed basis; on small screens they stack. */}

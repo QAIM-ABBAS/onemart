@@ -1,7 +1,8 @@
 import { lazy, Suspense } from "react";
 
-import { HERO_BANNERS, PROMO_BANNER } from "@/content/home";
+import { useBanners } from "@/hooks/queries/banners";
 import { useHome } from "@/hooks/queries/catalog";
+import { cn } from "@/lib/cn";
 
 import { CategoryCarousel } from "@/components/home/CategoryCarousel";
 import { FeaturedBrands } from "@/components/home/FeaturedBrands";
@@ -41,6 +42,8 @@ const PROMISES = [
 
 export function HomePage() {
   const home = useHome();
+  const hero = useBanners("home_hero");
+  const mid = useBanners("home_mid_strip");
 
   if (home.isError) {
     return (
@@ -50,6 +53,15 @@ export function HomePage() {
     );
   }
 
+  // Homepage promo rule: one hero carousel + one mid strip + the flash strip.
+  // Each slot hides itself when unbooked (empty payload) or unreachable —
+  // a marketing failure never blocks the storefront.
+  const heroSlides = hero.data ?? [];
+  const midBanner = mid.data?.[0] ?? null;
+  const bannersLoading = hero.isLoading || mid.isLoading;
+  const showHero = !hero.isLoading && heroSlides.length > 0;
+  const showMid = !mid.isLoading && midBanner !== null;
+
   return (
     <>
       <h1 className="sr-only">
@@ -57,10 +69,17 @@ export function HomePage() {
       </h1>
 
       <div className="page pt-4 sm:pt-6">
-        <div className="grid gap-4 lg:grid-cols-[2fr_1fr]">
-          <HeroSlider slides={HERO_BANNERS} />
-          <PromoBanner promo={PROMO_BANNER} />
-        </div>
+        {bannersLoading ? (
+          <div className="grid gap-4 lg:grid-cols-[2fr_1fr]">
+            <Skeleton className="h-[360px] rounded-md sm:h-[380px] lg:h-[300px]" />
+            <Skeleton className="min-h-[190px] rounded-md" />
+          </div>
+        ) : showHero || showMid ? (
+          <div className={cn("grid gap-4", showHero && showMid && "lg:grid-cols-[2fr_1fr]")}>
+            {showHero ? <HeroSlider slides={heroSlides} /> : null}
+            {showMid && midBanner ? <PromoBanner banner={midBanner} /> : null}
+          </div>
+        ) : null}
 
         {/* Live flash deal — hides itself when nothing is on. */}
         <FlashStrip />

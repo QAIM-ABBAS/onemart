@@ -8,6 +8,7 @@ celery = Celery(
     "onemart",
     broker=settings.redis_url,
     include=[
+        "app.modules.banners.tasks",
         "app.modules.notifications.tasks",
         "app.modules.orders.tasks",
     ],
@@ -28,6 +29,11 @@ celery.conf.update(
         "release-expired-reservations": {
             "task": "orders.release_expired_reservations",
             "schedule": 60.0,  # every minute
+        },
+        # Buffer drain for banner impressions/clicks (Redis → Postgres).
+        "flush-banner-stats": {
+            "task": "banners.flush_stats",
+            "schedule": 60.0,
         },
     },
 )
