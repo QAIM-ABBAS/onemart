@@ -1,36 +1,39 @@
 import { useEffect, useState, type FormEvent } from "react";
 import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { useQueryClient } from "@tanstack/react-query";
+import { useTranslation } from "react-i18next";
 
 import { ApiError } from "@/lib/api";
 import { useAuth } from "@/stores/auth";
 
 import { Button } from "@/components/ui/Button";
 import { Field, Input } from "@/components/ui/Form";
-import { CheckIcon } from "@/components/ui/Icon";import { InlineError } from "@/components/ui/States";
+import { CheckIcon } from "@/components/ui/Icon";
+import { InlineError } from "@/components/ui/States";
 
 function AuthAside({ mode }: { mode: "login" | "register" }) {
+  const { t } = useTranslation("auth");
   const points =
     mode === "login"
       ? [
-          "Track every order with a live status timeline",
-          "Save delivery addresses for one-tap checkout",
-          "Reorder your regulars in seconds",
+          t("login.aside.track"),
+          t("login.aside.save"),
+          t("login.aside.reorder"),
         ]
       : [
-          "Cash on delivery — pay when your order arrives",
-          "Free delivery on orders over ₹999",
-          "Order history and statuses in one place",
+          t("register.aside.cod"),
+          t("register.aside.free"),
+          t("register.aside.history"),
         ];
   return (
     <aside className="hidden bg-brand-700 px-10 py-12 text-surface lg:flex lg:flex-col lg:justify-between">
       <div>
         <p className="font-display text-2xl font-semibold tracking-tight">OneMart</p>
-        <p className="label mt-1 text-surface/50">Everything you need, in one place.</p>
+        <p className="label mt-1 text-surface/50">{t("nav:brand.tagline")}</p>
       </div>
       <div>
         <h2 className="text-3xl leading-tight text-surface">
-          {mode === "login" ? "Welcome back to your hypermarket." : "Your daily shop, sorted."}
+          {mode === "login" ? t("login.aside.title") : t("register.aside.title")}
         </h2>
         <ul className="mt-7 space-y-4">
           {points.map((point) => (
@@ -42,7 +45,7 @@ function AuthAside({ mode }: { mode: "login" | "register" }) {
         </ul>
       </div>
       <p className="text-[0.8125rem] text-surface/50">
-        Groceries · Home care · Personal care · Daily essentials
+        {t("auth.aside.categories")}
       </p>
     </aside>
   );
@@ -56,6 +59,7 @@ function useSafeNext() {
 }
 
 export function LoginPage() {
+  const { t } = useTranslation("auth");
   const { login, user, booted } = useAuth();
   const navigate = useNavigate();
   const qc = useQueryClient();
@@ -80,7 +84,7 @@ export function LoginPage() {
       qc.removeQueries({ queryKey: ["checkout-summary"] });
       navigate(next, { replace: true });
     } catch (err) {
-      setError(err instanceof ApiError ? err.message : "Could not sign you in. Try again.");
+      setError(err instanceof ApiError ? err.message : t("login.errors.general"));
     } finally {
       setLoading(false);
     }
@@ -91,64 +95,56 @@ export function LoginPage() {
       <div className="grid overflow-hidden rounded-md bg-surface border border-line lg:grid-cols-2">
         <AuthAside mode="login" />
         <div className="px-6 py-10 sm:px-10">
-          <p className="label text-brand-600">Sign in</p>
-          <h1 className="mt-2 text-3xl">Welcome back</h1>
-          <p className="mt-2 text-sm text-ink-muted">
-            Sign in to your account to track orders and check out faster.
-          </p>
+          <p className="label text-brand-600">{t("login.eyebrow")}</p>
+          <h1 className="mt-2 text-3xl">{t("login.title")}</h1>
+          <p className="mt-2 text-sm text-ink-muted">{t("login.subtitle")}</p>
 
           <form onSubmit={onSubmit} className="mt-7 space-y-4" noValidate>
             {error ? <InlineError>{error}</InlineError> : null}
-            <Field label="Email address" htmlFor="email">
+            <Field label={t("login.email")} htmlFor="email">
               <Input
                 id="email"
                 type="email"
                 dir="ltr"
                 required
                 autoComplete="email"
-                placeholder="you@example.com"
+                placeholder={t("login.emailPlaceholder")}
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
               />
             </Field>
-            <Field label="Password" htmlFor="password">
+            <Field label={t("login.password")} htmlFor="password">
               <Input
                 id="password"
                 type="password"
                 dir="ltr"
                 required
                 autoComplete="current-password"
-                placeholder="••••••••"
+                placeholder={t("login.passwordPlaceholder")}
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
               />
             </Field>
             <Button type="submit" block size="lg" loading={loading}>
-              Sign in
+              {t("login.submit")}
             </Button>
           </form>
 
           <p className="mt-6 text-sm text-ink-muted">
-            New to OneMart?{" "}
+            {t("login.registerLink")}{" "}
             <Link
               to={`/register${window.location.search}`}
               className="font-medium text-brand-600 underline-offset-4 hover:underline"
             >
-              Create an account
+              {t("login.registerAction")}
             </Link>
           </p>
 
           <div className="mt-6 rounded-md bg-surface-2/50 px-4 py-4 ">
-            <p className="label text-ink-muted">Demo accounts</p>
+            <p className="label text-ink-muted">{t("login.demoTitle")}</p>
             <div className="mt-2 space-y-1 text-[0.8125rem] text-ink-muted">
-              <p>
-                Customer: <span dir="ltr" className="num">demo@onemart.test</span> ·{" "}
-                <span dir="ltr" className="num">Demo@1234</span>
-              </p>
-              <p>
-                Admin: <span dir="ltr" className="num">admin@onemart.test</span> ·{" "}
-                <span dir="ltr" className="num">Admin@1234</span>
-              </p>
+              <p dangerouslySetInnerHTML={{ __html: t("login.demoCustomer") }} />
+              <p dangerouslySetInnerHTML={{ __html: t("login.demoAdmin") }} />
             </div>
           </div>
         </div>
@@ -158,6 +154,7 @@ export function LoginPage() {
 }
 
 export function RegisterPage() {
+  const { t } = useTranslation("auth");
   const { register, user, booted } = useAuth();
   const navigate = useNavigate();
   const qc = useQueryClient();
@@ -179,10 +176,10 @@ export function RegisterPage() {
     e.preventDefault();
     setError(null);
     const errors: Record<string, string> = {};
-    if (fullName.trim().length < 2) errors.full_name = "Enter your full name";
-    if (!/^\S+@\S+\.\S+$/.test(email.trim())) errors.email = "Enter a valid email address";
-    if (password.length < 8) errors.password = "Use at least 8 characters";
-    if (password !== confirm) errors.confirm = "Passwords do not match";
+    if (fullName.trim().length < 2) errors.full_name = t("register.errors.fullName");
+    if (!/^\S+@\S+\.\S+$/.test(email.trim())) errors.email = t("register.errors.email");
+    if (password.length < 8) errors.password = t("register.errors.password");
+    if (password !== confirm) errors.confirm = t("register.errors.confirm");
     setFieldErrors(errors);
     if (Object.keys(errors).length > 0) return;
 
@@ -210,15 +207,13 @@ export function RegisterPage() {
       <div className="grid overflow-hidden rounded-md bg-surface border border-line lg:grid-cols-2">
         <AuthAside mode="register" />
         <div className="px-6 py-10 sm:px-10">
-          <p className="label text-brand-600">Create account</p>
-          <h1 className="mt-2 text-3xl">Join OneMart</h1>
-          <p className="mt-2 text-sm text-ink-muted">
-            One account for orders, addresses and delivery updates.
-          </p>
+          <p className="label text-brand-600">{t("register.eyebrow")}</p>
+          <h1 className="mt-2 text-3xl">{t("register.title")}</h1>
+          <p className="mt-2 text-sm text-ink-muted">{t("register.subtitle")}</p>
 
           <form onSubmit={onSubmit} className="mt-7 space-y-4" noValidate>
             {error ? <InlineError>{error}</InlineError> : null}
-            <Field label="Full name" htmlFor="full_name" error={fieldErrors.full_name}>
+            <Field label={t("register.fullName")} htmlFor="full_name" error={fieldErrors.full_name}>
               <Input
                 id="full_name"
                 dir="auto"
@@ -229,24 +224,24 @@ export function RegisterPage() {
                 invalid={Boolean(fieldErrors.full_name)}
               />
             </Field>
-            <Field label="Email address" htmlFor="reg_email" error={fieldErrors.email}>
+            <Field label={t("register.email")} htmlFor="reg_email" error={fieldErrors.email}>
               <Input
                 id="reg_email"
                 type="email"
                 dir="ltr"
                 required
                 autoComplete="email"
-                placeholder="you@example.com"
+                placeholder={t("register.emailPlaceholder")}
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 invalid={Boolean(fieldErrors.email)}
               />
             </Field>
             <Field
-              label="Password"
+              label={t("register.password")}
               htmlFor="reg_password"
               error={fieldErrors.password}
-              hint="At least 8 characters"
+              hint={t("register.passwordHint")}
             >
               <Input
                 id="reg_password"
@@ -259,30 +254,31 @@ export function RegisterPage() {
                 invalid={Boolean(fieldErrors.password)}
               />
             </Field>
-            <Field label="Confirm password" htmlFor="confirm" error={fieldErrors.confirm}>
+            <Field label={t("register.confirmPassword")} htmlFor="confirm" error={fieldErrors.confirm}>
               <Input
                 id="confirm"
                 type="password"
                 dir="ltr"
                 required
                 autoComplete="new-password"
+                placeholder={t("register.confirmPlaceholder")}
                 value={confirm}
                 onChange={(e) => setConfirm(e.target.value)}
                 invalid={Boolean(fieldErrors.confirm)}
               />
             </Field>
             <Button type="submit" block size="lg" loading={loading}>
-              Create account
+              {t("register.submit")}
             </Button>
           </form>
 
           <p className="mt-6 text-sm text-ink-muted">
-            Already have an account?{" "}
+            {t("register.loginLink")}{" "}
             <Link
               to={`/login${window.location.search}`}
               className="font-medium text-brand-600 underline-offset-4 hover:underline"
             >
-              Sign in
+              {t("register.loginAction")}
             </Link>
           </p>
         </div>
