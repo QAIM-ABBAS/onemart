@@ -43,6 +43,8 @@ i18n.use(initReactI18next).init({
   defaultNS: 'common',
   ns: Object.keys(resources.en ?? { common: {} }),
   interpolation: { escapeValue: false },
+  saveMissing: import.meta.env.DEV || import.meta.env.VITE_I18N_DEBUG === '1',
+  missingKeyHandler: (_lngs, ns, key) => console.warn('MISSING_I18N_KEY', ns, key),
 });
 
 applyDocumentLang(i18n.language as Lang);
