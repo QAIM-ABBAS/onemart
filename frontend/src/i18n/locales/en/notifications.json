@@ -1,0 +1,38 @@
+{
+  "page": {
+    "eyebrow": "Your account",
+    "title": "Notifications",
+    "unread_count": "{{count, number}} unread",
+    "all_read": "You're all caught up",
+    "loading": "Loading..."
+  },
+  "filters": {
+    "all": "All",
+    "unread": "Unread",
+    "sort": {
+      "label": "Sort notifications",
+      "newest": "Newest first",
+      "oldest": "Oldest first"
+    }
+  },
+  "actions": {
+    "mark_all_read": "Mark all as read",
+    "show_all": "Show all notifications"
+  },
+  "list": {
+    "unread": "Unread",
+    "open": "Open",
+    "time": "{{date}}"
+  },
+  "empty": {
+    "title_all": "No notifications yet",
+    "title_unread": "You're all caught up",
+    "body_all": "Order updates, cancellations and store news will appear here.",
+    "body_unread": "Every notification has been read.",
+    "action": "Show all notifications"
+  },
+  "error": {
+    "title": "Could not load notifications.",
+    "retry": "Retry"
+  }
+}

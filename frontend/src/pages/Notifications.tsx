@@ -1,4 +1,5 @@
 import { useNavigate, useSearchParams } from "react-router-dom";
+import { useTranslation } from "react-i18next";
 
 import {
   useMarkAllNotificationsRead,
@@ -18,11 +19,12 @@ import { EmptyState, ErrorState, Skeleton } from "@/components/ui/States";
 const PAGE_SIZE = 20;
 
 const SORT_OPTIONS = [
-  { value: "newest", label: "Newest first" },
-  { value: "oldest", label: "Oldest first" },
+  { value: "newest", labelKey: "filters.sort.newest" },
+  { value: "oldest", labelKey: "filters.sort.oldest" },
 ];
 
 export function NotificationsPage() {
+  const { t } = useTranslation("notifications");
   const [sp, setSp] = useSearchParams();
   const navigate = useNavigate();
 
@@ -55,10 +57,10 @@ export function NotificationsPage() {
     <div className="mx-auto max-w-3xl px-4 py-8 lg:py-12">
       <div className="flex flex-wrap items-end justify-between gap-4">
         <div>
-          <p className="label text-brand-600">Your account</p>
-          <h1 className="mt-1.5 text-3xl">Notifications</h1>
+          <p className="label text-brand-600">{t("page.eyebrow")}</p>
+          <h1 className="mt-1.5 text-3xl">{t("page.title")}</h1>
           <p className="num mt-1 text-sm text-ink-muted">
-            {unreadCount > 0 ? `${unreadCount} unread` : "You're all caught up"}
+            {unreadCount > 0 ? t("page.unread_count", { count: unreadCount }) : t("page.all_read")}
           </p>
         </div>
         <div className="flex flex-wrap items-center gap-2">
@@ -74,7 +76,7 @@ export function NotificationsPage() {
                   : "text-ink-muted hover:text-ink",
               )}
             >
-              All
+              {t("filters.all")}
             </button>
             <button
               type="button"
@@ -87,18 +89,18 @@ export function NotificationsPage() {
                   : "text-ink-muted hover:text-ink",
               )}
             >
-              Unread
+              {t("filters.unread")}
             </button>
           </div>
           <Select
             value={sort}
             onChange={(e) => update({ sort: e.target.value, page: undefined })}
-            aria-label="Sort notifications"
+            aria-label={t("filters.sort.label")}
             className="h-9 min-w-40 text-sm"
           >
             {SORT_OPTIONS.map((opt) => (
               <option key={opt.value} value={opt.value}>
-                {opt.label}
+                {t(opt.labelKey)}
               </option>
             ))}
           </Select>
@@ -108,7 +110,7 @@ export function NotificationsPage() {
             disabled={unreadCount === 0 || markAll.isPending}
             onClick={() => markAll.mutate()}
           >
-            Mark all as read
+            {t("actions.mark_all_read")}
           </Button>
         </div>
       </div>
@@ -155,7 +157,7 @@ export function NotificationsPage() {
                         >
                           {n.title}
                         </span>
-                        {n.read_at === null ? <span className="label text-brand-600">Unread</span> : null}
+                        {n.read_at === null ? <span className="label text-brand-600">{t("list.unread")}</span> : null}
                       </span>
                       {n.body ? (
                         <span className="mt-1 block text-sm text-ink-muted">{n.body}</span>
@@ -164,7 +166,7 @@ export function NotificationsPage() {
                         {formatDateTime(n.created_at)}
                       </span>
                     </span>
-                    {n.link ? <span className="label shrink-0 text-brand-600">Open <span aria-hidden="true" className="inline-block rtl:-scale-x-100">→</span></span> : null}
+                    {n.link ? <span className="label shrink-0 text-brand-600">{t("list.open")} <span aria-hidden="true" className="inline-block rtl:-scale-x-100">→</span></span> : null}
                   </button>
                 </li>
               ))}
@@ -180,11 +182,11 @@ export function NotificationsPage() {
           </>
         ) : (
           <EmptyState
-            title={unreadOnly ? "You're all caught up" : "No notifications yet"}
+            title={unreadOnly ? t("empty.title_unread") : t("empty.title_all")}
             body={
               unreadOnly
-                ? "Every notification has been read."
-                : "Order updates, cancellations and store news will appear here."
+                ? t("empty.body_unread")
+                : t("empty.body_all")
             }
             action={
               unreadOnly ? (
@@ -193,7 +195,7 @@ export function NotificationsPage() {
                   size="sm"
                   onClick={() => update({ filter: undefined, page: undefined })}
                 >
-                  Show all notifications
+                  {t("empty.action")}
                 </Button>
               ) : undefined
             }
