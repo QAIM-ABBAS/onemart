@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { useTranslation } from "react-i18next";
 
 import { cn } from "@/lib/cn";
 
@@ -29,6 +30,7 @@ export function CountdownPill({
   className?: string;
 }) {
   const [now, setNow] = useState(() => Date.now());
+  const { t } = useTranslation("home");
 
   useEffect(() => {
     const timer = window.setInterval(() => setNow(Date.now()), 1000);
@@ -49,13 +51,13 @@ export function CountdownPill({
         className,
       )}
       aria-live="off"
-      title="Offer ends soon"
+      title={t("countdown.soon")}
     >
       <ClockIcon width={14} height={14} />
       <span className="text-[0.6875rem] tracking-[0.06em]">
-        {left > 0 ? "Expires in" : "Expired"}
+        {left > 0 ? t("countdown.expiresIn") : t("countdown.expired")}
       </span>
-      <span className="num text-[0.8125rem] font-semibold tracking-[0.08em]">
+      <span dir="ltr" className="num text-[0.8125rem] font-semibold tracking-[0.08em]">
         {hours} : {minutes} : {seconds}
       </span>
     </span>

@@ -112,7 +112,7 @@ export function AdminOrdersPage() {
               <div key={i} className="flex items-center gap-4 px-4 py-4">
                 <Skeleton className="h-5 w-40" />
                 <Skeleton className="h-5 w-24" />
-                <Skeleton className="ml-auto h-5 w-24" />
+                <Skeleton className="ms-auto h-5 w-24" />
               </div>
             ))}
           </div>
@@ -123,14 +123,14 @@ export function AdminOrdersPage() {
             <div className="overflow-x-auto rounded-md bg-surface-2 shadow-pressed">
               <table className="w-full min-w-[820px] text-sm">
                 <thead>
-                  <tr className="bg-surface-2 text-left shadow-pressed">
+                  <tr className="bg-surface-2 text-start shadow-pressed">
                     <th className="label px-4 py-2.5 text-ink-muted">Order</th>
                     <th className="label px-4 py-2.5 text-ink-muted">Placed</th>
-                    <th className="label px-4 py-2.5 text-right text-ink-muted">Items</th>
-                    <th className="label px-4 py-2.5 text-right text-ink-muted">Total</th>
+                    <th className="label px-4 py-2.5 text-end text-ink-muted">Items</th>
+                    <th className="label px-4 py-2.5 text-end text-ink-muted">Total</th>
                     <th className="label px-4 py-2.5 text-ink-muted">Payment</th>
                     <th className="label px-4 py-2.5 text-ink-muted">Status</th>
-                    <th className="label px-4 py-2.5 text-right text-ink-muted">Action</th>
+                    <th className="label px-4 py-2.5 text-end text-ink-muted">Action</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-line">
@@ -138,8 +138,8 @@ export function AdminOrdersPage() {
                     <tr key={order.id} className="transition-colors hover:bg-surface">
                       <td className="num px-4 py-3 font-medium">{order.order_number}</td>
                       <td className="num px-4 py-3 text-ink-muted">{formatDate(order.created_at)}</td>
-                      <td className="num px-4 py-3 text-right">{order.item_count}</td>
-                      <td className="num px-4 py-3 text-right font-semibold">
+                      <td className="num px-4 py-3 text-end">{order.item_count}</td>
+                      <td className="num px-4 py-3 text-end font-semibold">
                         {money(order.total)}
                       </td>
                       <td className="px-4 py-3">
@@ -148,7 +148,7 @@ export function AdminOrdersPage() {
                       <td className="px-4 py-3">
                         <StatusBadge status={order.status} />
                       </td>
-                      <td className="px-4 py-3 text-right">
+                      <td className="px-4 py-3 text-end">
                         <Link to={`/admin/orders/${order.id}`}>
                           <Button variant="secondary" size="sm">
                             Open

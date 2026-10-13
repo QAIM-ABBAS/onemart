@@ -275,7 +275,7 @@ export function AdminFlashPage() {
             {Array.from({ length: 4 }, (_, i) => (
               <div key={i} className="flex items-center gap-4 px-4 py-4">
                 <Skeleton className="h-5 w-44" />
-                <Skeleton className="ml-auto h-5 w-28" />
+                <Skeleton className="ms-auto h-5 w-28" />
               </div>
             ))}
           </div>
@@ -293,13 +293,13 @@ export function AdminFlashPage() {
           <div className="overflow-x-auto rounded-md border border-line bg-surface">
             <table className="w-full min-w-[860px] text-sm">
               <thead>
-                <tr className="border-b border-line bg-surface-2 text-left">
+                <tr className="border-b border-line bg-surface-2 text-start">
                   <th className="label px-4 py-2.5 text-ink-muted">Deal</th>
                   <th className="label px-4 py-2.5 text-ink-muted">Window</th>
                   <th className="label px-4 py-2.5 text-ink-muted">Items</th>
                   <th className="label px-4 py-2.5 text-ink-muted">Claimed</th>
                   <th className="label px-4 py-2.5 text-ink-muted">Status</th>
-                  <th className="label px-4 py-2.5 text-right text-ink-muted">Actions</th>
+                  <th className="label px-4 py-2.5 text-end text-ink-muted">Actions</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-line">
@@ -627,12 +627,12 @@ function DealDetail({ deal, onClose }: { deal: FlashDealAdminOut; onClose: () =>
           <div className="overflow-x-auto rounded-md border border-line">
             <table className="w-full min-w-[720px] text-sm">
               <thead>
-                <tr className="border-b border-line bg-surface-2 text-left">
+                <tr className="border-b border-line bg-surface-2 text-start">
                   <th className="label px-4 py-2.5 text-ink-muted">Product</th>
                   <th className="label px-4 py-2.5 text-ink-muted">Price</th>
                   <th className="label px-4 py-2.5 text-ink-muted">Sold / limit</th>
                   <th className="label px-4 py-2.5 text-ink-muted">Per user</th>
-                  <th className="label px-4 py-2.5 text-right text-ink-muted">Actions</th>
+                  <th className="label px-4 py-2.5 text-end text-ink-muted">Actions</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-line">
@@ -653,7 +653,7 @@ function DealDetail({ deal, onClose }: { deal: FlashDealAdminOut; onClose: () =>
                         <span className="num font-semibold text-deal">
                           {money(item.effective_price)}
                         </span>
-                        <span className="num ml-2 text-[0.75rem] text-ink-muted line-through">
+                        <span className="num ms-2 text-[0.75rem] text-ink-muted line-through">
                           {money(item.list_price)}
                         </span>
                       </td>
@@ -748,7 +748,7 @@ function DealDetail({ deal, onClose }: { deal: FlashDealAdminOut; onClose: () =>
                           setErrors((prev) => ({ ...prev, variant: "" }));
                         }}
                         className={cn(
-                          "flex w-full items-center gap-3 px-3 py-2.5 text-left transition hover:bg-surface-2",
+                          "flex w-full items-center gap-3 px-3 py-2.5 text-start transition hover:bg-surface-2",
                           picked?.variant_id === row.variant_id && "bg-brand-600/8",
                         )}
                       >
@@ -774,7 +774,7 @@ function DealDetail({ deal, onClose }: { deal: FlashDealAdminOut; onClose: () =>
                 <div className="mt-3 rounded-md bg-surface-2 px-3 py-2.5 text-sm">
                   <span className="font-medium">{picked.product_name}</span>{" "}
                   <span className="text-ink-muted">— {picked.variant_name}</span>
-                  <span className="num ml-2 text-ink-muted">{money(picked.price)}</span>
+                  <span className="num ms-2 text-ink-muted">{money(picked.price)}</span>
                 </div>
               ) : null}
             </div>
@@ -782,7 +782,7 @@ function DealDetail({ deal, onClose }: { deal: FlashDealAdminOut; onClose: () =>
             <div className="rounded-md bg-surface-2 px-3 py-2.5 text-sm">
               <span className="font-medium">{modal.item.product_name}</span>{" "}
               <span className="text-ink-muted">— {modal.item.variant_name}</span>
-              <span className="num ml-2 text-ink-muted">{money(modal.item.list_price)}</span>
+              <span className="num ms-2 text-ink-muted">{money(modal.item.list_price)}</span>
             </div>
           ) : null}
 
@@ -859,7 +859,7 @@ function DealDetail({ deal, onClose }: { deal: FlashDealAdminOut; onClose: () =>
                   {previewPrice != null ? money(previewPrice) : "—"}
                 </span>
                 {editingListPrice != null ? (
-                  <span className="num ml-2 text-ink-muted line-through">
+                  <span className="num ms-2 text-ink-muted line-through">
                     {money(editingListPrice)}
                   </span>
                 ) : null}

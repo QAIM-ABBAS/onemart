@@ -286,7 +286,7 @@ export function AdminDiscountsPage() {
               <div key={i} className="flex items-center gap-4 px-4 py-4">
                 <Skeleton className="h-5 w-40" />
                 <Skeleton className="h-5 w-20" />
-                <Skeleton className="ml-auto h-5 w-24" />
+                <Skeleton className="ms-auto h-5 w-24" />
               </div>
             ))}
           </div>
@@ -297,12 +297,12 @@ export function AdminDiscountsPage() {
             <div className="overflow-x-auto rounded-md border border-line bg-surface">
               <table className="w-full min-w-[860px] text-sm">
                 <thead>
-                  <tr className="border-b border-line bg-surface-2 text-left">
+                  <tr className="border-b border-line bg-surface-2 text-start">
                     <th className="label px-4 py-2.5 text-ink-muted">Applies to</th>
                     <th className="label px-4 py-2.5 text-ink-muted">Type</th>
                     <th className="label px-4 py-2.5 text-ink-muted">Window</th>
                     <th className="label px-4 py-2.5 text-ink-muted">Status</th>
-                    <th className="label px-4 py-2.5 text-right text-ink-muted">Actions</th>
+                    <th className="label px-4 py-2.5 text-end text-ink-muted">Actions</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-line">

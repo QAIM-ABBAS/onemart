@@ -41,9 +41,10 @@
 
 import { useState, type ReactNode } from "react";
 import { Link } from "react-router-dom";
+import { useTranslation } from "react-i18next";
 
 import { cn } from "@/lib/cn"; // className merge helper (clsx + tailwind-merge)
-import { money } from "@/lib/format"; // currency formatter → "₹50.00"
+import { formatNumber, formatPrice } from "@/lib/format"; // locale-aware price/number formatters
 import type { ProductListItem } from "@/lib/types"; // the data shape for each card
 import { useQuickAdd } from "@/hooks/useQuickAdd"; // add-to-cart logic + toasts
 import { useWishlist } from "@/hooks/useWishlist"; // server-backed wishlist (guests get a login prompt)
@@ -94,13 +95,14 @@ function FallbackImage({ name }: { name: string }) {
    - Colors    : `bg-surface/95` (bg), `text-danger` (saved state)
    ─────────────────────────────────────────────────────────────────────── */
 function WishlistButton({ productId, name }: { productId: number; name: string }) {
+  const { t } = useTranslation();
   const wishlist = useWishlist();
   const saved = wishlist.has(productId);
   return (
     <button
       type="button"
       aria-pressed={saved}
-      aria-label={saved ? `Remove ${name} from wishlist` : `Add ${name} to wishlist`}
+      aria-label={saved ? t("wishlist.remove", { name }) : t("wishlist.add", { name })}
       onClick={(event) => {
         event.preventDefault();
         event.stopPropagation();
@@ -148,6 +150,7 @@ function WishlistButton({ productId, name }: { productId: number; name: string }
    - Text format  : `{rating.toFixed(1)} ({reviewCount} reviews)`
    ─────────────────────────────────────────────────────────────────────── */
 function StarRating({ rating, reviewCount }: { rating: number; reviewCount: number }) {
+  const { t } = useTranslation("product");
   const fullStars = Math.floor(rating);
   const hasHalf = rating - fullStars >= 0.5;
   return (
@@ -164,7 +167,7 @@ function StarRating({ rating, reviewCount }: { rating: number; reviewCount: numb
         ))}
       </div>
       <span className="text-[11px] text-ink-muted num">
-        {rating.toFixed(1)} ({reviewCount} reviews)
+        {formatNumber(rating, { minimumFractionDigits: 1, maximumFractionDigits: 1 })} ({t("card.reviews", { count: reviewCount })})
       </span>
     </div>
   );
@@ -205,6 +208,7 @@ export function ProductCard({ item, className }: ProductCardProps) {
                 (disables the button + swaps the label to "Adding…")
      ───────────────────────────────────────────────────────────────── */
   const quickAdd = useQuickAdd();
+  const { t } = useTranslation("product");
   const [qty, setQty] = useState(1);
   const [adding, setAdding] = useState(false);
 
@@ -224,8 +228,9 @@ export function ProductCard({ item, className }: ProductCardProps) {
 
   const rating = item.rating ?? 4.5;
   const reviewCount = item.review_count ?? 0;
-  const description = item.description ?? `Fresh ${item.category} — quality you can trust.`;
-  const unit = item.unit ?? "per unit";
+  const { t: tCommon } = useTranslation();
+  const description = item.description ?? t("card.descriptionFallback", { category: item.category });
+  const unit = item.unit ?? t("card.unit");
 
   /* ── ADD TO CART HANDLER ───────────────────────────────────────────
      Sets `adding` → calls quickAdd → resets qty to 1 → always clears
@@ -339,7 +344,7 @@ export function ProductCard({ item, className }: ProductCardProps) {
           <p className="label text-brand-600">{item.category}</p>
           {discount > 0 ? (
             <span className="label shrink-0 whitespace-nowrap bg-deal px-2 py-0.5 rounded-xs text-surface">
-              {discount}% off
+              {tCommon("discount.badge", { percent: discount })}
             </span>
           ) : null}
         </div>
@@ -382,10 +387,10 @@ export function ProductCard({ item, className }: ProductCardProps) {
             `num` = tabular numerals so digits line up.
             ─────────────────────────────────────────────────────────── */}
         <div className="mt-3 flex items-baseline gap-2">
-          <span className="text-lg font-bold text-ink num">{money(item.price)}</span>
+          <span className="text-lg font-bold text-ink num">{formatPrice(item.price)}</span>
           {item.compare_at_price && item.compare_at_price > item.price ? (
             <span className="text-xs text-ink-muted line-through num">
-              {money(item.compare_at_price)} {unit}
+              {formatPrice(item.compare_at_price)} {unit}
             </span>
           ) : (
             <span className="text-xs text-ink-muted">{unit}</span>
@@ -485,7 +490,7 @@ export function ProductCard({ item, className }: ProductCardProps) {
             >
               <span className="flex flex-wrap items-center justify-center gap-x-1.5 gap-y-0.5 leading-none">
                 <span className="whitespace-nowrap font-bold text-sm">
-                  {adding ? "Adding…" : item.in_stock ? "Add to cart" : "Out of stock"}
+                  {adding ? t("card.adding") : item.in_stock ? t("card.add") : t("card.outOfStock")}
                 </span>
                 {item.in_stock && !adding ? (
                   <>
@@ -493,7 +498,7 @@ export function ProductCard({ item, className }: ProductCardProps) {
                       ·
                     </span>
                     <span className="num whitespace-nowrap font-bold text-sm">
-                      {money(item.price * qty)}
+                      {formatPrice(item.price * qty)}
                     </span>
                   </>
                 ) : null}
@@ -576,7 +581,7 @@ export function SectionHeading({
   eyebrow,
   title,
   href,
-  linkLabel = "See all",
+  linkLabel,
   className,
 }: {
   eyebrow?: string;
@@ -585,6 +590,7 @@ export function SectionHeading({
   linkLabel?: string;
   className?: string;
 }) {
+  const { t } = useTranslation();
   return (
     <div className={cn("flex flex-wrap items-end justify-between gap-3 pb-1", className)}>
       <div>
@@ -596,7 +602,7 @@ export function SectionHeading({
           to={href}
           className="label border-b border-ink/30 pb-0.5 text-ink transition-colors hover:border-brand-600 hover:text-brand-600"
         >
-          {linkLabel}
+          {linkLabel ?? t("seeAll")}
         </Link>
       ) : null}
     </div>

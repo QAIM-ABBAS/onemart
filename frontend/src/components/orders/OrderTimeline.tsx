@@ -53,7 +53,7 @@ export function OrderTimeline({
           <li key={step} className="relative flex gap-3.5 pb-5 last:pb-0">
             {/* rail into the next step */}
             {terminalFlowStep ? null : (
-              <span aria-hidden="true" className="absolute left-[7px] top-5 h-full w-px bg-line" />
+              <span aria-hidden="true" className="absolute start-[7px] top-5 h-full w-px bg-line" />
             )}
 
             <span

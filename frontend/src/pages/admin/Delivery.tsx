@@ -299,7 +299,7 @@ function BoardRow({ entry }: { entry: DeliveryBoardEntry }) {
         <span className="num block text-[0.75rem] text-ink-muted">{entry.phone}</span>
       </div>
       <StatusBadge status={entry.status} />
-      <span className="num w-20 text-right font-medium">{money(entry.total)}</span>
+      <span className="num w-20 text-end font-medium">{money(entry.total)}</span>
       {nextStatus ? (
         <Button
           variant="secondary"
@@ -491,7 +491,7 @@ function ZonesTab() {
             {Array.from({ length: 4 }, (_, i) => (
               <div key={i} className="flex items-center gap-4 px-4 py-4">
                 <Skeleton className="h-5 w-40" />
-                <Skeleton className="ml-auto h-5 w-24" />
+                <Skeleton className="ms-auto h-5 w-24" />
               </div>
             ))}
           </div>
@@ -507,14 +507,14 @@ function ZonesTab() {
           <div className="overflow-x-auto rounded-md border border-line bg-surface">
             <table className="w-full min-w-[760px] text-sm">
               <thead>
-                <tr className="border-b border-line bg-surface-2 text-left">
+                <tr className="border-b border-line bg-surface-2 text-start">
                   <th className="label px-4 py-2.5 text-ink-muted">Zone</th>
                   <th className="label px-4 py-2.5 text-ink-muted">Coverage</th>
                   <th className="label px-4 py-2.5 text-ink-muted">Standard</th>
                   <th className="label px-4 py-2.5 text-ink-muted">Express</th>
                   <th className="label px-4 py-2.5 text-ink-muted">Free over</th>
                   <th className="label px-4 py-2.5 text-ink-muted">Status</th>
-                  <th className="label px-4 py-2.5 text-right text-ink-muted">Actions</th>
+                  <th className="label px-4 py-2.5 text-end text-ink-muted">Actions</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-line">

@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { useTranslation } from "react-i18next";
 
 import {
   useMarkNotificationRead,
@@ -15,6 +16,7 @@ import { Skeleton } from "@/components/ui/States";
 
 /** Header bell: unread badge + a dropdown of the latest 10 (poll-driven, see hooks). */
 export function NotificationBell() {
+  const { t } = useTranslation("nav");
   const user = useAuth((state) => state.user);
   const [open, setOpen] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
@@ -53,7 +55,7 @@ export function NotificationBell() {
     <div ref={ref} className="relative">
       <button
         type="button"
-        aria-label="Notifications"
+        aria-label={t("notifications.label")}
         aria-expanded={open}
         onClick={() => setOpen((v) => !v)}
         className="relative inline-flex size-10 items-center justify-center rounded-md border border-brand-700 bg-brand-800 text-brand-50 transition hover:bg-brand-700"
@@ -68,12 +70,12 @@ export function NotificationBell() {
 
       {open ? (
         <div
-          aria-label="Notifications"
+          aria-label={t("notifications.label")}
           className="absolute end-0 top-[calc(100%+6px)] w-80 overflow-hidden rounded-md border border-line bg-surface shadow-panel sm:w-96"
         >
           <div className="flex items-center justify-between border-b border-line px-4 py-3">
-            <p className="text-sm font-semibold">Notifications</p>
-            <p className="label text-ink-muted">{count > 0 ? `${count} unread` : "All read"}</p>
+            <p className="text-sm font-semibold">{t("notifications.label")}</p>
+            <p className="label text-ink-muted">{count > 0 ? t("notifications.unread", { count }) : t("notifications.allRead")}</p>
           </div>
 
           {list.isLoading ? (
@@ -84,13 +86,13 @@ export function NotificationBell() {
             </div>
           ) : list.isError ? (
             <div className="px-4 py-6 text-center">
-              <p className="text-sm text-ink-muted">Could not load notifications.</p>
+              <p className="text-sm text-ink-muted">{t("notifications.error")}</p>
               <button
                 type="button"
                 onClick={() => void list.refetch()}
                 className="label mt-2 text-brand-700 transition-colors hover:text-brand-800"
               >
-                Try again
+                {t("notifications.retry")}
               </button>
             </div>
           ) : list.data && list.data.items.length > 0 ? (
@@ -136,9 +138,9 @@ export function NotificationBell() {
             </ul>
           ) : (
             <div className="px-4 py-8 text-center">
-              <p className="text-sm font-medium">No notifications yet</p>
+              <p className="text-sm font-medium">{t("notifications.empty")}</p>
               <p className="mt-1 text-[0.8125rem] text-ink-muted">
-                Order updates and store news will show up here.
+                {t("notifications.emptyBody")}
               </p>
             </div>
           )}
@@ -152,7 +154,7 @@ export function NotificationBell() {
               }}
               className="block w-full px-4 py-3 text-center text-sm font-medium text-brand-700 transition hover:bg-surface-2"
             >
-              View all notifications
+              {t("notifications.viewAll")}
             </button>
           </div>
         </div>

@@ -1,4 +1,5 @@
 import { lazy, Suspense } from "react";
+import { useTranslation } from "react-i18next";
 
 import { useBanners } from "@/hooks/queries/banners";
 import { useHome } from "@/hooks/queries/catalog";
@@ -35,12 +36,13 @@ function ShelfFallback() {
 }
 
 const PROMISES = [
-  { title: "Cash on delivery", body: "Pay when your order arrives at your door — no cards, no wallets." },
-  { title: "Free delivery over ₹999", body: "A flat ₹40 delivery fee below that, shown upfront at checkout." },
-  { title: "Status you can follow", body: "Every order carries a timeline — packed, shipped, delivered." },
+  { key: "cod", title: "Cash on delivery", body: "Pay when your order arrives at your door — no cards, no wallets." },
+  { key: "free", title: "Free delivery over ₹999", body: "A flat ₹40 delivery fee below that, shown upfront at checkout." },
+  { key: "track", title: "Status you can follow", body: "Every order carries a timeline — packed, shipped, delivered." },
 ] as const;
 
 export function HomePage() {
+  const { t } = useTranslation("home");
   const home = useHome();
   const hero = useBanners("home_hero");
   const mid = useBanners("home_mid_strip");
@@ -65,7 +67,7 @@ export function HomePage() {
   return (
     <>
       <h1 className="sr-only">
-        OneMart — everything you need, in one place
+        {t("title")}
       </h1>
 
       <div className="page pt-4 sm:pt-6">
@@ -100,9 +102,9 @@ export function HomePage() {
         <section className="rounded-md bg-surface px-6 py-9 border border-line">
           <div className="grid gap-8 sm:grid-cols-3">
             {PROMISES.map((item) => (
-              <div key={item.title}>
-                <p className="label text-brand-600">{item.title}</p>
-                <p className="mt-2 text-sm leading-relaxed text-ink-muted">{item.body}</p>
+              <div key={item.key}>
+                <p className="label text-brand-600">{t(`promises.${item.key}Title`)}</p>
+                <p className="mt-2 text-sm leading-relaxed text-ink-muted">{t(`promises.${item.key}Body`)}</p>
               </div>
             ))}
           </div>

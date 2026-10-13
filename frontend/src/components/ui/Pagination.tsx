@@ -1,4 +1,6 @@
+import { useTranslation } from "react-i18next";
 import { cn } from "@/lib/cn";
+import { formatNumber } from "@/lib/format";
 
 import { ChevronLeftIcon, ChevronRightIcon } from "./Icon";
 
@@ -29,27 +31,28 @@ export function Pagination({
   onChange: (page: number) => void;
   className?: string;
 }) {
+  const { t } = useTranslation();
   if (pages <= 1) return null;
   const from = (page - 1) * pageSize + 1;
   const to = Math.min(page * pageSize, total);
 
   return (
     <nav
-      aria-label="Pagination"
+      aria-label={t("pagination.label")}
       className={cn("flex flex-wrap items-center justify-between gap-4", className)}
     >
       <p className="text-[0.8125rem] text-ink-muted num">
-        Showing {from}–{to} of {total}
+        {t("pagination.showing", { from: formatNumber(from), to: formatNumber(to), total: formatNumber(total) })}
       </p>
       <div className="flex items-center gap-1 rounded-md bg-surface p-1.5 border border-line">
         <button
           type="button"
-          aria-label="Previous page"
+          aria-label={t("pagination.prev")}
           disabled={page <= 1}
           onClick={() => onChange(page - 1)}
           className="grid size-9 place-items-center rounded-lg text-ink transition hover:bg-surface-2 disabled:opacity-35"
         >
-          <ChevronLeftIcon width={16} height={16} />
+          <ChevronLeftIcon width={16} height={16} className="rtl:-scale-x-100" />
         </button>
         {pageWindow(page, pages).map((entry, i) =>
           entry === "gap" ? (
@@ -75,12 +78,12 @@ export function Pagination({
         )}
         <button
           type="button"
-          aria-label="Next page"
+          aria-label={t("pagination.next")}
           disabled={page >= pages}
           onClick={() => onChange(page + 1)}
           className="grid size-9 place-items-center rounded-lg text-ink transition hover:bg-surface-2 disabled:opacity-35"
         >
-          <ChevronRightIcon width={16} height={16} />
+          <ChevronRightIcon width={16} height={16} className="rtl:-scale-x-100" />
         </button>
       </div>
     </nav>

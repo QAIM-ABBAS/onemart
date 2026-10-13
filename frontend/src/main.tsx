@@ -1,3 +1,5 @@
+import './i18n';
+import '@fontsource-variable/vazirmatn';
 import { StrictMode } from "react";
 import { createRoot } from "react-dom/client";
 import { QueryClientProvider } from "@tanstack/react-query";

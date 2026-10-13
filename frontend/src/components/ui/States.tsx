@@ -1,4 +1,5 @@
 import type { ReactNode } from "react";
+import { useTranslation } from "react-i18next";
 
 import { cn } from "@/lib/cn";
 import { ApiError } from "@/lib/api";
@@ -32,6 +33,7 @@ export function EmptyState({
   action?: ReactNode;
   className?: string;
 }) {
+  const { t } = useTranslation();
   return (
     <div
       className={cn(
@@ -39,7 +41,7 @@ export function EmptyState({
         className,
       )}
     >
-      <p className="label text-ink-faint">Nothing here</p>
+      <p className="label text-ink-faint">{t("empty.title")}</p>
       <h3 className="mt-3 text-xl">{title}</h3>
       {body ? <p className="mt-2 text-sm text-ink-muted max-w-md mx-auto">{body}</p> : null}
       {action ? <div className="mt-6 flex justify-center">{action}</div> : null}
@@ -57,20 +59,21 @@ export function ErrorState({
   onRetry?: () => void;
   className?: string;
 }) {
+  const { t } = useTranslation();
   const message =
     error instanceof ApiError
       ? error.message
       : error instanceof Error
         ? error.message
-        : "Something went wrong while loading this section.";
+        : t("error.body");
   return (
     <div className={cn("rounded-md border border-danger/20 bg-danger/5 px-6 py-10 text-center", className)}>
-      <p className="label text-danger">Could not load</p>
+      <p className="label text-danger">{t("error.title")}</p>
       <p className="mt-3 text-sm text-ink max-w-md mx-auto">{message}</p>
       {onRetry ? (
         <div className="mt-5 flex justify-center">
           <Button variant="secondary" size="sm" onClick={onRetry}>
-            Try again
+            {t("tryAgain")}
           </Button>
         </div>
       ) : null}

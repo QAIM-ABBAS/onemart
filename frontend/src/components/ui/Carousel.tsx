@@ -16,9 +16,11 @@ export function useCarousel<T extends HTMLElement>() {
     const el = ref.current;
     if (!el) return;
     const max = el.scrollWidth - el.clientWidth - 2;
+    // scrollLeft is NEGATIVE in RTL (Chrome/Firefox) — use abs for bounds.
+    const pos = Math.abs(el.scrollLeft);
     setBounds({
-      prev: el.scrollLeft > 2,
-      next: el.scrollLeft < max,
+      prev: pos > 2,
+      next: pos < max,
     });
   }, []);
 
@@ -26,8 +28,9 @@ export function useCarousel<T extends HTMLElement>() {
     const el = ref.current;
     if (!el) return;
     const reduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    const isRTL = document.documentElement.dir === "rtl";
     el.scrollBy({
-      left: direction * Math.max(el.clientWidth * 0.8, 160),
+      left: direction * Math.max(el.clientWidth * 0.8, 160) * (isRTL ? -1 : 1),
       behavior: reduced ? "auto" : "smooth",
     });
   }, []);

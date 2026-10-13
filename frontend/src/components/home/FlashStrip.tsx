@@ -22,9 +22,10 @@
 import { useCallback } from "react";
 import { Link } from "react-router-dom";
 import { useQueryClient } from "@tanstack/react-query";
+import { useTranslation } from "react-i18next";
 
 import { cn } from "@/lib/cn";
-import { money } from "@/lib/format";
+import { formatPrice } from "@/lib/format";
 import type { FlashDealItemOut } from "@/lib/types";
 import { useActiveDeals } from "@/hooks/queries/deals";
 
@@ -39,6 +40,7 @@ import { Skeleton } from "@/components/ui/States";
              server string; clamp so a stale cache can't overflow the bar.
    ─────────────────────────────────────────────────────────────────────── */
 function DealCard({ item }: { item: FlashDealItemOut }) {
+  const { t } = useTranslation("home");
   const dealPrice = Number(item.deal_price);
   const listPrice = Number(item.list_price);
   const claimed = Math.min(100, Math.max(0, Number(item.claimed_percent) || 0));
@@ -48,7 +50,7 @@ function DealCard({ item }: { item: FlashDealItemOut }) {
     <Link
       to={`/p/${item.product_slug}`}
       className="group w-44 shrink-0 snap-start overflow-hidden rounded-md border border-line bg-surface shadow-card transition duration-200 hover:-translate-y-1 hover:shadow-lift focus-visible:-translate-y-1 sm:w-56"
-      aria-label={`${item.product_name}, deal price ${money(dealPrice)}`}
+      aria-label={t("flash.dealPrice", { name: item.product_name, price: formatPrice(dealPrice) })}
     >
       <div className="relative aspect-square overflow-hidden rounded-t-md bg-surface-2">
         {item.image_url ? (
@@ -75,7 +77,7 @@ function DealCard({ item }: { item: FlashDealItemOut }) {
         )}
         {percentOff > 0 ? (
           <span className="label absolute start-2 top-2 rounded-xs bg-deal px-2 py-0.5 text-surface">
-            {percentOff}% off
+            {t("common:discount.badge", { percent: percentOff })}
           </span>
         ) : null}
       </div>
@@ -87,8 +89,8 @@ function DealCard({ item }: { item: FlashDealItemOut }) {
         <p className="label mt-1 text-ink-faint">{item.variant_name}</p>
 
         <div className="mt-2 flex items-baseline gap-2">
-          <span className="num text-lg font-bold text-deal">{money(dealPrice)}</span>
-          <span className="num text-xs text-ink-muted line-through">{money(listPrice)}</span>
+          <span className="num text-lg font-bold text-deal">{formatPrice(dealPrice)}</span>
+          <span className="num text-xs text-ink-muted line-through">{formatPrice(listPrice)}</span>
         </div>
 
         {/* Claimed progress — deal-50 track, deal-600 fill (tokens only). */}
@@ -99,7 +101,7 @@ function DealCard({ item }: { item: FlashDealItemOut }) {
           />
         </div>
         <p className="num mt-1.5 text-[11px] text-ink-muted">
-          {Math.round(claimed)}% claimed · {item.remaining} left
+          {t("flash.claimed", { claimed: Math.round(claimed) })} · {t("flash.left", { count: item.remaining })}
         </p>
       </div>
     </Link>
@@ -124,6 +126,7 @@ function StripSkeleton() {
 }
 
 export function FlashStrip() {
+  const { t } = useTranslation("home");
   const deals = useActiveDeals();
   const qc = useQueryClient();
 
@@ -141,9 +144,9 @@ export function FlashStrip() {
 
   return (
     <section aria-labelledby={headingId} className="section-block">
-      <SectionHeader id={headingId} title={deal?.name ?? "Flash deals"}>
+      <SectionHeader id={headingId} title={deal?.name ?? t("flash.fallback")}>
         <span className="label rounded-xs bg-deal-50 px-2 py-0.5 text-deal-700">
-          Limited stock
+          {t("flash.limited")}
         </span>
         {deal?.ends_at ? <CountdownPill endsAt={deal.ends_at} onExpire={onExpire} /> : null}
       </SectionHeader>
@@ -157,7 +160,7 @@ export function FlashStrip() {
             "pb-1 -mx-1 px-1",
           )}
           role="list"
-          aria-label="Flash deal items"
+          aria-label={t("flash.items")}
         >
           {deal?.items.map((item) => (
             <div key={item.id} role="listitem">

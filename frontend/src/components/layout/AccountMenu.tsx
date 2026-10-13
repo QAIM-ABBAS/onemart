@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { Link, NavLink } from "react-router-dom";
+import { useTranslation } from "react-i18next";
 
 import { cn } from "@/lib/cn";
 import { roleName } from "@/lib/format";
@@ -8,6 +9,7 @@ import { isStaff, useAuth } from "@/stores/auth";
 import { ChevronDownIcon, UserIcon } from "@/components/ui/Icon";
 
 export function AccountMenu() {
+  const { t } = useTranslation("nav");
   const { user, logout } = useAuth();
   const [open, setOpen] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
@@ -35,7 +37,7 @@ export function AccountMenu() {
         className="inline-flex h-10 items-center gap-2 whitespace-nowrap rounded-md border border-brand-700 bg-brand-800 px-3 text-sm font-medium text-brand-50 transition hover:bg-brand-700 sm:inline-flex"
       >
         <UserIcon width={17} height={17} />
-        Sign in
+        {t("account.signin")}
       </NavLink>
     );
   }
@@ -73,7 +75,7 @@ export function AccountMenu() {
         >
           <div className="border-b border-line bg-surface px-4 pb-3 pt-3.5">
             <p className="truncate text-sm font-medium">{user.full_name}</p>
-            <p className="truncate text-[0.8125rem] text-ink-muted">{user.email}</p>
+            <p dir="ltr" className="truncate text-[0.8125rem] text-ink-muted">{user.email}</p>
             <p className={cn("label mt-1.5 text-ink-muted")}>{roleName(user.role)}</p>
           </div>
           <div className="py-1">
@@ -83,7 +85,7 @@ export function AccountMenu() {
               className="block px-4 py-2.5 text-sm transition-colors hover:bg-surface-2"
               role="menuitem"
             >
-              My orders
+              {t("account.orders")}
             </Link>
             <Link
               to="/wishlist"
@@ -91,7 +93,7 @@ export function AccountMenu() {
               className="block px-4 py-2.5 text-sm transition-colors hover:bg-surface-2"
               role="menuitem"
             >
-              Wishlist
+              {t("account.wishlist")}
             </Link>
             <Link
               to="/notifications"
@@ -99,7 +101,7 @@ export function AccountMenu() {
               className="block px-4 py-2.5 text-sm transition-colors hover:bg-surface-2"
               role="menuitem"
             >
-              Notifications
+              {t("account.notifications")}
             </Link>
             {isStaff(user) ? (
               <Link
@@ -108,7 +110,7 @@ export function AccountMenu() {
                 className="block px-4 py-2.5 text-sm transition-colors hover:bg-surface-2"
                 role="menuitem"
               >
-                Admin console
+                {t("account.admin")}
               </Link>
             ) : null}
             <button
@@ -118,9 +120,9 @@ export function AccountMenu() {
                 setOpen(false);
                 void logout();
               }}
-              className="block w-full px-4 py-2.5 text-left text-sm text-danger transition-colors hover:bg-danger/5"
+              className="block w-full px-4 py-2.5 text-start text-sm text-danger transition-colors hover:bg-danger/5"
             >
-              Sign out
+              {t("account.signout")}
             </button>
           </div>
         </div>

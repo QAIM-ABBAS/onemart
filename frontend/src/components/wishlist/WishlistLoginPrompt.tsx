@@ -1,4 +1,5 @@
 import { Link, useLocation } from "react-router-dom";
+import { useTranslation } from "react-i18next";
 
 import { useWishlistPrompt } from "@/hooks/useWishlist";
 
@@ -14,6 +15,7 @@ import { Modal } from "@/components/ui/Modal";
  * signing in adds it without the guest having to find it again.
  */
 export function WishlistLoginPrompt() {
+  const { t } = useTranslation("account");
   const { product, dismiss } = useWishlistPrompt();
   const location = useLocation();
   const next = `${location.pathname}${location.search}`;
@@ -22,22 +24,22 @@ export function WishlistLoginPrompt() {
     <Modal
       open={product !== null}
       onClose={dismiss}
-      title="Sign in to save items"
+      title={t("wishlistPrompt.title")}
       description={
         product
-          ? `${product.name} will be waiting in your wishlist.`
-          : "Your wishlist follows your account."
+          ? t("wishlistPrompt.saved", { name: product.name })
+          : t("wishlistPrompt.fallback")
       }
       footer={
         <>
           <Button variant="ghost" onClick={dismiss}>
-            Keep browsing
+            {t("wishlistPrompt.browse")}
           </Button>
           <Link to={`/register?next=${encodeURIComponent(next)}`}>
-            <Button variant="secondary">Create account</Button>
+            <Button variant="secondary">{t("wishlistPrompt.register")}</Button>
           </Link>
           <Link to={`/login?next=${encodeURIComponent(next)}`}>
-            <Button>Sign in</Button>
+            <Button>{t("wishlistPrompt.signin")}</Button>
           </Link>
         </>
       }
@@ -47,9 +49,7 @@ export function WishlistLoginPrompt() {
           <HeartIcon width={18} height={18} fill="currentColor" />
         </span>
         <p className="text-sm leading-relaxed text-ink-muted">
-          Your wishlist is kept with your account, so it is there on your phone,
-          your laptop, and after you come back. Sign in and we will add{" "}
-          <span className="font-medium text-ink">{product?.name ?? "your item"}</span> for you.
+          {t("wishlistPrompt.body", { name: product?.name ?? t("wishlistPrompt.fallback") })}
         </p>
       </div>
     </Modal>

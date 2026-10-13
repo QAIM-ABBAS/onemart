@@ -1,0 +1,51 @@
+{
+  "eyebrow": {
+    "search": "جستجو",
+    "catalogue": "فروشگاه"
+  },
+  "resultsFor": "نتایج برای «{{q}}»",
+  "featured": "کالاهای منتخب",
+  "all": "همه محصولات",
+  "count_one": "{{count, number}} کالا",
+  "count_other": "{{count, number}} کالا",
+  "loading": "در حال بارگذاری کالاها…",
+  "filters": "فیلترها",
+  "sort": "مرتب‌سازی",
+  "sortLabel": "مرتب‌سازی کالاها",
+  "sortOptions": {
+    "newest": "جدیدترین اول",
+    "bestselling": "پرفروش‌ترین",
+    "price_asc": "قیمت: کم به زیاد",
+    "price_desc": "قیمت: زیاد به کم",
+    "name_asc": "نام: الف تا ی",
+    "name_desc": "نام: ی تا الف"
+  },
+  "panel": {
+    "categories": "دسته‌بندی‌ها",
+    "allCategories": "همه دسته‌بندی‌ها",
+    "brands": "برند",
+    "price": "قیمت",
+    "min": "حداقل",
+    "minLabel": "حداقل قیمت",
+    "max": "حداکثر",
+    "maxLabel": "حداکثر قیمت",
+    "apply": "اعمال",
+    "listedFrom": "کالاها از {{price}}",
+    "inStock": "فقط موجود",
+    "clear": "پاک کردن",
+    "clearAll": "پاک کردن همه فیلترها"
+  },
+  "empty": {
+    "title": "کالایی با این فیلترها مطابقت ندارد",
+    "body": "فیلتری را حذف کنید یا چیز دیگری جستجو کنید.",
+    "clear": "پاک کردن فیلترها",
+    "browse": "مشاهده همه کالاها"
+  },
+  "modal": {
+    "title": "فیلترها",
+    "description": "فروشگاه را محدودتر کنید",
+    "show_one": "نمایش {{count, number}} کالا",
+    "show_other": "نمایش {{count, number}} کالا",
+    "showFallback": "نمایش کالاها"
+  }
+}

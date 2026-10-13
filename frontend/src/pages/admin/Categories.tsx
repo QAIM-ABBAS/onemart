@@ -142,7 +142,7 @@ export function AdminCategoriesPage() {
               <div key={i} className="flex items-center gap-4 px-4 py-3.5">
                 <Skeleton className="h-4 w-40" />
                 <Skeleton className="h-4 w-20" />
-                <Skeleton className="ml-auto h-8 w-28" />
+                <Skeleton className="ms-auto h-8 w-28" />
               </div>
             ))}
           </div>
@@ -160,7 +160,7 @@ export function AdminCategoriesPage() {
               <span className="label text-ink-muted">Category</span>
               <span className="label text-ink-muted">Products</span>
               <span className="label text-ink-muted">Status</span>
-              <span className="label text-right text-ink-muted">Actions</span>
+              <span className="label text-end text-ink-muted">Actions</span>
             </div>
             <ul className="divide-y divide-line">
               {rows.map(({ node, depth }) => (
@@ -168,7 +168,7 @@ export function AdminCategoriesPage() {
                   key={node.id}
                   className="flex flex-wrap items-center gap-x-4 gap-y-2 px-4 py-3 transition-colors hover:bg-surface-2 sm:grid sm:grid-cols-[1fr_120px_110px_230px]"
                 >
-                  <div className="flex min-w-0 items-center gap-2" style={{ paddingLeft: depth * 18 }}>
+                  <div className="flex min-w-0 items-center gap-2" style={{ paddingInlineStart: depth * 18 }}>
                     {depth > 0 ? (
                       <span aria-hidden="true" className="text-line">
                         └

@@ -8,7 +8,8 @@ import { pushRecent } from "@/hooks/useRecentlyViewed";
 import { useWishlist } from "@/hooks/useWishlist";
 import { cn } from "@/lib/cn";
 import { ApiError } from "@/lib/api";
-import { money, pluralize } from "@/lib/format";
+import { formatNumber, formatPrice } from "@/lib/format";
+import { useTranslation } from "react-i18next";
 import type { FlashDealItemOut } from "@/lib/types";
 
 import { Button } from "@/components/ui/Button";
@@ -25,25 +26,27 @@ import { Stars } from "@/components/reviews/Stars";
  * replayed after they log in).
  */
 function SaveButton({ saved, onClick }: { saved: boolean; onClick: () => void }) {
+  const { t } = useTranslation("product");
   return (
     <Button
       variant="secondary"
       size="lg"
       aria-pressed={saved}
       aria-label={
-        saved ? "Remove this product from your wishlist" : "Save this product to your wishlist"
+        saved ? t("save.remove") : t("save.add")
       }
       onClick={onClick}
       className={saved ? "border-danger/40 text-danger" : "hover:text-danger"}
     >
       <HeartIcon width={16} height={16} fill={saved ? "currentColor" : "none"} />
-      {saved ? "Saved" : "Save"}
+      {saved ? t("save.saved") : t("save.save")}
     </Button>
   );
 }
 
 export function ProductPage() {
   const { slug } = useParams<{ slug: string }>();
+  const { t } = useTranslation("product");
   const product = useProduct(slug);
   const addToCart = useAddToCart();
   const wishlist = useWishlist();
@@ -137,7 +140,7 @@ export function ProductPage() {
         />
         <div className="mt-6 text-center">
           <Link to="/products" className="text-sm text-brand-600 underline-offset-4 hover:underline">
-            Browse all products
+            {t("browseAll")}
           </Link>
         </div>
       </div>
@@ -159,7 +162,7 @@ export function ProductPage() {
       setAdded(true);
       setQty(1);
     } catch (err) {
-      setError(err instanceof ApiError ? err.message : "Could not add this item to your cart.");
+      setError(err instanceof ApiError ? err.message : t("addToCart.error"));
     }
   }
 
@@ -168,11 +171,11 @@ export function ProductPage() {
 
   return (
     <div className="mx-auto max-w-6xl px-4 py-6 lg:py-10">
-      <nav aria-label="Breadcrumb" className="text-[0.8125rem] text-ink-muted">
+      <nav aria-label={t("breadcrumb")} className="text-[0.8125rem] text-ink-muted">
         <ol className="flex flex-wrap items-center gap-1.5">
           <li>
             <Link to="/" className="hover:text-ink hover:underline underline-offset-2">
-              Home
+              {t("nav:home")}
             </Link>
           </li>
           <li aria-hidden="true">/</li>
@@ -211,8 +214,8 @@ export function ProductPage() {
               </div>
             )}
             {p.compare_at_price && p.compare_at_price > p.price ? (
-              <span className="label absolute left-3 top-3 inline-flex items-center rounded-full bg-deal px-3 py-1 text-surface shadow-button">
-                Save {Math.round(((p.compare_at_price - p.price) / p.compare_at_price) * 100)}%
+              <span className="label absolute start-3 top-3 inline-flex items-center rounded-full bg-deal px-3 py-1 text-surface shadow-button">
+                {t("gallery.savePercent", { percent: Math.round(((p.compare_at_price - p.price) / p.compare_at_price) * 100) })}
               </span>
             ) : null}
           </div>
@@ -223,7 +226,7 @@ export function ProductPage() {
                   key={img.id}
                   type="button"
                   onClick={() => setImageIndex(i)}
-                  aria-label={`View image ${i + 1}`}
+                  aria-label={t("gallery.viewImage", { index: i + 1 })}
                   className={cn(
                     "size-20 shrink-0 overflow-hidden rounded-md bg-surface-2 transition",
                     i === imageIndex
@@ -241,7 +244,7 @@ export function ProductPage() {
         <div>
           <div className="flex flex-wrap items-center gap-2.5">
             <p className="label text-ink-muted">{p.brand?.name ?? p.category.name}</p>
-            {p.is_featured ? <Badge tone="info">Featured</Badge> : null}
+            {p.is_featured ? <Badge tone="info">{t("featured")}</Badge> : null}
           </div>
           <h1 className="mt-2 text-3xl sm:text-[2.4rem]">{p.name}</h1>
 
@@ -253,12 +256,12 @@ export function ProductPage() {
             {p.rating_count > 0 ? (
               <>
                 <Stars rating={p.rating_avg} size={15} />
-                <span className="num font-semibold text-ink">{p.rating_avg.toFixed(1)}</span>
+                <span className="num font-semibold text-ink">{formatNumber(p.rating_avg, { minimumFractionDigits: 1, maximumFractionDigits: 1 })}</span>
                 <span aria-hidden="true">·</span>
-                <span>{pluralize(p.rating_count, "review")}</span>
+                <span>{t("rating.reviews", { count: p.rating_count })}</span>
               </>
             ) : (
-              <span>No reviews yet — be the first</span>
+              <span>{t("rating.noReviews")}</span>
             )}
           </a>
 
@@ -275,15 +278,15 @@ export function ProductPage() {
             />
             {selectedDeal ? (
               <span className="label rounded-xs bg-deal px-2 py-0.5 text-surface">
-                Flash deal −{Math.round(Number(selectedDeal.percent_off) || 0)}%
+                {t("discount.badge", { percent: Math.round(Number(selectedDeal.percent_off) || 0) })}
               </span>
             ) : null}
             {outOfStock ? (
-              <Badge tone="negative">Out of stock</Badge>
+              <Badge tone="negative">{t("stock.outOfStock")}</Badge>
             ) : selectedAvailable <= 10 ? (
-              <Badge tone="warning">Only {selectedAvailable} left</Badge>
+              <Badge tone="warning">{t("stock.low", { count: selectedAvailable })}</Badge>
             ) : (
-              <Badge tone="positive">In stock</Badge>
+              <Badge tone="positive">{t("stock.inStock")}</Badge>
             )}
           </div>
 
@@ -299,8 +302,8 @@ export function ProductPage() {
                 />
               </div>
               <p className="num mt-1.5 text-xs text-ink-muted">
-                {Math.round(Number(selectedDeal.claimed_percent) || 0)}% claimed ·{" "}
-                {selectedDeal.remaining} left in this deal
+                {t("claim.claimed", { percent: Math.round(Number(selectedDeal.claimed_percent) || 0) })} ·{" "}
+                {t("claim.left", { count: selectedDeal.remaining })}
               </p>
             </div>
           ) : null}
@@ -310,7 +313,7 @@ export function ProductPage() {
               <p className="label text-ink-muted">
                 {Object.keys(selected?.attributes ?? {}).length > 0
                   ? Object.keys(selected!.attributes)[0].replace(/\b\w/g, (c) => c.toUpperCase())
-                  : "Size / pack"}
+                  : t("variant.defaultLabel")}
               </p>
               <div className="mt-2.5 flex flex-wrap gap-2">
                 {variants.map((v) => {
@@ -324,7 +327,7 @@ export function ProductPage() {
                       onClick={() => setVariantId(v.id)}
                       aria-pressed={active}
                       className={cn(
-                        "relative flex min-w-28 flex-col items-start gap-0.5 rounded-md border border-line px-3.5 py-2.5 text-left transition",
+                        "relative flex min-w-28 flex-col items-start gap-0.5 rounded-md border border-line px-3.5 py-2.5 text-start transition",
                         active
                           ? "bg-surface ring-2 ring-brand-600/40"
                           : "bg-surface hover:bg-surface-2",
@@ -343,16 +346,16 @@ export function ProductPage() {
                         {vDeal ? (
                           <>
                             <span className="font-semibold text-deal">
-                              {money(Number(vDeal.deal_price))}
+                              {formatPrice(Number(vDeal.deal_price))}
                             </span>{" "}
-                            <span className="text-ink-muted line-through">{money(v.price)}</span>
+                            <span className="text-ink-muted line-through">{formatPrice(v.price)}</span>
                           </>
                         ) : (
-                          <span className="text-ink-muted">{money(v.price)}</span>
+                          <span className="text-ink-muted">{formatPrice(v.price)}</span>
                         )}
                       </span>
                       {vAvailable <= 0 ? (
-                        <span className="label mt-0.5 text-danger">Sold out</span>
+                        <span className="label mt-0.5 text-danger">{t("variant.soldOut")}</span>
                       ) : null}
                     </button>
                   );
@@ -379,12 +382,12 @@ export function ProductPage() {
               {added ? (
                 <>
                   <CheckIcon width={16} height={16} />
-                  Added to cart
+                  {t("addToCart.added")}
                 </>
               ) : outOfStock ? (
-                "Out of stock"
+                t("addToCart.outOfStock")
               ) : (
-                "Add to cart"
+                t("addToCart.add")
               )}
             </Button>
             <SaveButton
@@ -396,26 +399,26 @@ export function ProductPage() {
           {error ? <InlineError className="mt-3">{error}</InlineError> : null}
           {added ? (
             <p className="mt-3 text-sm text-brand-600">
-              Added to your cart.{" "}
+              {t("addToCart.addedFeedback")}{" "}
               <Link to="/cart" className="underline underline-offset-2">
-                Go to cart →
+                {t("addToCart.goToCart")} <span aria-hidden="true" className="inline-block rtl:-scale-x-100">→</span>
               </Link>
             </p>
           ) : null}
 
           <dl className="mt-7 divide-y divide-line rounded-md bg-surface px-5 py-1 text-sm border border-line">
             <div className="flex gap-4 py-3">
-              <dt className="label w-32 shrink-0 pt-0.5 text-ink-muted">SKU</dt>
-              <dd className="num">{selected?.sku ?? "—"}</dd>
+              <dt className="label w-32 shrink-0 pt-0.5 text-ink-muted">{t("details.sku")}</dt>
+              <dd dir="ltr" className="num">{selected?.sku ?? t("details.skuFallback")}</dd>
             </div>
             <div className="flex gap-4 py-3">
-              <dt className="label w-32 shrink-0 pt-0.5 text-ink-muted">Delivery</dt>
+              <dt className="label w-32 shrink-0 pt-0.5 text-ink-muted">{t("details.delivery")}</dt>
               <dd>
-                Cash on delivery. Free over ₹999, otherwise ₹40. Usually delivered in 1–2 days.
+                {t("details.deliveryText")}
               </dd>
             </div>
             <div className="flex gap-4 py-3">
-              <dt className="label w-32 shrink-0 pt-0.5 text-ink-muted">Category</dt>
+              <dt className="label w-32 shrink-0 pt-0.5 text-ink-muted">{t("details.category")}</dt>
               <dd>
                 <Link
                   to={`/products?category=${p.category.slug}`}
@@ -429,7 +432,7 @@ export function ProductPage() {
 
           {p.description ? (
             <div className="mt-5 rounded-md bg-surface px-5 py-4 border border-line">
-              <h2 className="text-lg">Description</h2>
+              <h2 className="text-lg">{t("details.description")}</h2>
               <p className="prose-basic mt-2.5 whitespace-pre-line text-sm">{p.description}</p>
             </div>
           ) : null}

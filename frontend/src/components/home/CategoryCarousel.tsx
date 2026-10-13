@@ -1,4 +1,5 @@
 import { Link } from "react-router-dom";
+import { useTranslation } from "react-i18next";
 
 import { useCategories } from "@/hooks/queries/catalog";
 import type { CategoryNode } from "@/lib/types";
@@ -23,6 +24,7 @@ function buildTiles(nodes: CategoryNode[]): CategoryNode[] {
 }
 
 export function CategoryCarousel() {
+  const { t } = useTranslation("home");
   const categories = useCategories();
   const { ref, scrollBy, canPrev, canNext } = useCarousel<HTMLDivElement>();
 
@@ -32,9 +34,9 @@ export function CategoryCarousel() {
     <section aria-labelledby="categories-heading" className="section-block">
       <SectionHeader
         id="categories-heading"
-        title="Browse by category"
+        title={t("categories.title")}
         href="/products"
-        linkLabel="All categories"
+        linkLabel={t("categories.all")}
         onPrev={() => scrollBy(-1)}
         onNext={() => scrollBy(1)}
         canPrev={canPrev}
@@ -49,7 +51,7 @@ export function CategoryCarousel() {
             ))}
           </div>
         ) : (
-          <Carousel containerRef={ref} ariaLabel="Product categories">
+          <Carousel containerRef={ref} ariaLabel={t("categories.label")}>
             {tiles.map((cat) => (
               <Link
                 key={cat.id}
@@ -71,8 +73,8 @@ export function CategoryCarousel() {
               to="/products"
               className="flex h-[124px] w-[108px] shrink-0 snap-start flex-col items-center justify-center gap-2 rounded-md bg-surface-2/70 text-center shadow-pressed transition duration-200 hover:-translate-y-0.5 hover:bg-surface hover:shadow-lift"
             >
-              <span className="label text-ink-muted">See all</span>
-              <ChevronRightIcon width={16} height={16} className="text-ink-muted" />
+              <span className="label text-ink-muted">{t("categories.seeAll")}</span>
+              <ChevronRightIcon width={16} height={16} className="text-ink-muted rtl:-scale-x-100" />
             </Link>
           </Carousel>
         )}

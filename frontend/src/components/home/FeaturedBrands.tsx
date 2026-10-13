@@ -1,4 +1,5 @@
 import { Link } from "react-router-dom";
+import { useTranslation } from "react-i18next";
 
 import { BRAND_OFFERS } from "@/content/home";
 
@@ -9,15 +10,16 @@ const CARD_WIDTH =
   "w-[78%] shrink-0 snap-start sm:w-[46%] md:w-[31%] lg:w-[calc((100%-3*1rem)/4)]";
 
 export function FeaturedBrands() {
+  const { t } = useTranslation("home");
   const { ref, scrollBy, canPrev, canNext } = useCarousel<HTMLDivElement>();
 
   return (
     <section aria-labelledby="brands-heading" className="section-block pt-0">
       <SectionHeader
         id="brands-heading"
-        title="Featured offers"
+        title={t("brands.title")}
         href="/products"
-        linkLabel="All offers"
+        linkLabel={t("brands.all")}
         onPrev={() => scrollBy(-1)}
         onNext={() => scrollBy(1)}
         canPrev={canPrev}
@@ -25,7 +27,7 @@ export function FeaturedBrands() {
       />
 
       <div className="mt-5">
-        <Carousel containerRef={ref} ariaLabel="Featured offers">
+        <Carousel containerRef={ref} ariaLabel={t("brands.label")}>
           {BRAND_OFFERS.map((offer) => (
             <Link
               key={offer.id}
@@ -46,9 +48,9 @@ export function FeaturedBrands() {
                   className="h-full w-full object-contain transition-transform duration-300 group-hover:scale-[1.04]"
                 />
               </span>
-              <span className="label mt-3 block px-3 text-ink-muted">{offer.label}</span>
+              <span className="label mt-3 block px-3 text-ink-muted">{t(`brands.offers.${offer.id}.label`)}</span>
               <span className="mt-1.5 block px-3 pb-3 text-sm leading-snug font-semibold text-ink transition-colors group-hover:text-brand-600">
-                {offer.title}
+                {t(`brands.offers.${offer.id}.title`)}
               </span>
             </Link>
           ))}

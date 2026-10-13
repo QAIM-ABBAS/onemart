@@ -363,7 +363,7 @@ export function AdminReportsPage() {
                   <span aria-hidden="true" className="size-2.5 rounded-sm bg-brand-200" />
                   Orders
                 </span>
-                <span className="ml-auto">
+                <span className="ms-auto">
                   {data.range.bucket === "hour" ? "Hourly buckets" : "Daily buckets"}
                 </span>
               </div>
@@ -448,10 +448,10 @@ export function AdminReportsPage() {
                 <div className="overflow-x-auto">
                   <table className="w-full min-w-[420px] text-sm">
                     <thead>
-                      <tr className="border-b border-line bg-surface-2 text-left">
+                      <tr className="border-b border-line bg-surface-2 text-start">
                         <th className="label px-3 py-2.5 text-ink-muted">Variant</th>
-                        <th className="label px-3 py-2.5 text-right text-ink-muted">Available</th>
-                        <th className="label px-3 py-2.5 text-right text-ink-muted">Threshold</th>
+                        <th className="label px-3 py-2.5 text-end text-ink-muted">Available</th>
+                        <th className="label px-3 py-2.5 text-end text-ink-muted">Threshold</th>
                         <th className="px-3 py-2.5" />
                       </tr>
                     </thead>
@@ -466,16 +466,16 @@ export function AdminReportsPage() {
                           </td>
                           <td
                             className={cn(
-                              "num px-3 py-2.5 text-right font-semibold",
+                              "num px-3 py-2.5 text-end font-semibold",
                               row.available === 0 ? "text-danger" : "text-ink",
                             )}
                           >
                             {row.available}
                           </td>
-                          <td className="num px-3 py-2.5 text-right text-ink-muted">
+                          <td className="num px-3 py-2.5 text-end text-ink-muted">
                             {row.threshold}
                           </td>
-                          <td className="px-3 py-2.5 text-right">
+                          <td className="px-3 py-2.5 text-end">
                             <Link
                               to="/admin/stock"
                               className="text-sm text-brand-600 underline-offset-4 hover:underline"
@@ -498,11 +498,11 @@ export function AdminReportsPage() {
                 <div className="overflow-x-auto">
                   <table className="w-full min-w-[440px] text-sm">
                     <thead>
-                      <tr className="border-b border-line bg-surface-2 text-left">
+                      <tr className="border-b border-line bg-surface-2 text-start">
                         <th className="label px-3 py-2.5 text-ink-muted">Order</th>
                         <th className="label px-3 py-2.5 text-ink-muted">Customer</th>
                         <th className="label px-3 py-2.5 text-ink-muted">Status</th>
-                        <th className="label px-3 py-2.5 text-right text-ink-muted">Total</th>
+                        <th className="label px-3 py-2.5 text-end text-ink-muted">Total</th>
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-line">
@@ -522,7 +522,7 @@ export function AdminReportsPage() {
                           <td className="px-3 py-2.5">
                             <StatusBadge status={row.status} />
                           </td>
-                          <td className="num px-3 py-2.5 text-right font-semibold">
+                          <td className="num px-3 py-2.5 text-end font-semibold">
                             {money(row.total)}
                           </td>
                         </tr>

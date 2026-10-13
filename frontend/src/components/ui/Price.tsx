@@ -1,5 +1,6 @@
+import { useTranslation } from "react-i18next";
 import { cn } from "@/lib/cn";
-import { money } from "@/lib/format";
+import { formatNumber, formatPrice } from "@/lib/format";
 
 import { MinusIcon, PlusIcon } from "./Icon";
 
@@ -23,9 +24,9 @@ export function Price({
   const showCompare = compareAt != null && compareAt > value;
   return (
     <span className={cn("inline-flex items-baseline gap-2 num", className)}>
-      <span className={cn("font-semibold", sizes[size])}>{money(value)}</span>
+      <span className={cn("font-semibold", sizes[size])}>{formatPrice(value)}</span>
       {showCompare ? (
-        <span className="text-[0.8125rem] text-ink-muted line-through num">{money(compareAt)}</span>
+        <span className="text-[0.8125rem] text-ink-muted line-through num">{formatPrice(compareAt)}</span>
       ) : null}
     </span>
   );
@@ -68,6 +69,7 @@ export function QuantityStepper({
   variant?: "default" | "outline";
   className?: string;
 }) {
+  const { t } = useTranslation();
   const size = compact ? "size-8" : "h-11 w-11";
   const canDec = value > min && !disabled;
   const canInc = value < max && !disabled;
@@ -91,7 +93,7 @@ export function QuantityStepper({
       >
         <button
           type="button"
-          aria-label="Decrease quantity"
+          aria-label={t("stepper.decrease")}
           disabled={!canDec}
           onClick={() => canDec && onChange(value - 1)}
           className={btn}
@@ -103,12 +105,12 @@ export function QuantityStepper({
           aria-live="polite"
           className="flex min-w-0 items-baseline justify-center gap-0.5 whitespace-nowrap num font-bold text-ink"
         >
-          <span className="text-sm @[320px]:text-lg">{value}</span>
+          <span className="text-sm @[320px]:text-lg">{formatNumber(value)}</span>
         </span>
 
         <button
           type="button"
-          aria-label="Increase quantity"
+          aria-label={t("stepper.increase")}
           disabled={!canInc}
           onClick={() => canInc && onChange(value + 1)}
           className={btn}
@@ -130,7 +132,7 @@ export function QuantityStepper({
     >
       <button
         type="button"
-        aria-label="Decrease quantity"
+        aria-label={t("stepper.decrease")}
         disabled={!canDec}
         onClick={() => canDec && onChange(value - 1)}
         className={cn(
@@ -148,11 +150,11 @@ export function QuantityStepper({
         )}
         aria-live="polite"
       >
-        {value}
+        {formatNumber(value)}
       </span>
       <button
         type="button"
-        aria-label="Increase quantity"
+        aria-label={t("stepper.increase")}
         disabled={!canInc}
         onClick={() => canInc && onChange(value + 1)}
         className={cn(

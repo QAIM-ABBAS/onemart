@@ -1,3 +1,4 @@
+import i18n from "@/i18n";
 import type { OrderStatus, PaymentStatus, UserRole } from "./types";
 
 const inr = new Intl.NumberFormat("en-IN", {
@@ -10,22 +11,30 @@ export function money(value: number): string {
   return inr.format(value);
 }
 
-export function formatDate(iso: string): string {
-  return new Date(iso).toLocaleDateString("en-IN", {
-    day: "numeric",
-    month: "short",
-    year: "numeric",
-  });
+const loc = () => (i18n.language === "fa" ? "fa-IR" : "en-US");
+
+export const formatNumber = (n: number, opts?: Intl.NumberFormatOptions) =>
+  new Intl.NumberFormat(loc(), opts).format(n);
+
+// Keep the SAME decimals the app already uses for prices (maximumFractionDigits: 2).
+export const formatPrice = (amount: number, opts?: Intl.NumberFormatOptions) =>
+  `${formatNumber(amount, { maximumFractionDigits: 2, ...opts })} ${i18n.t("common:currency")}`;
+
+export function formatDate(iso: string | Date, opts?: Intl.DateTimeFormatOptions): string {
+  return new Intl.DateTimeFormat(
+    loc(),
+    opts ?? { day: "numeric", month: "short", year: "numeric" },
+  ).format(new Date(iso));
 }
 
-export function formatDateTime(iso: string): string {
-  return new Date(iso).toLocaleString("en-IN", {
+export function formatDateTime(iso: string | Date): string {
+  return new Intl.DateTimeFormat(loc(), {
     day: "numeric",
     month: "short",
     year: "numeric",
     hour: "numeric",
     minute: "2-digit",
-  });
+  }).format(new Date(iso));
 }
 
 export function titleCase(value: string): string {
@@ -63,7 +72,7 @@ export function paymentStatusLabel(status: PaymentStatus): string {
 }
 
 export function roleName(role: UserRole): string {
-  return role === "admin" ? "Admin" : role === "staff" ? "Staff" : "Customer";
+  return i18n.t(`common:role.${role}`);
 }
 
 export function pluralize(count: number, singular: string, plural?: string): string {

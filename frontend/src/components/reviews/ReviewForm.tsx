@@ -77,6 +77,7 @@ export function ReviewForm({
         <Field label="Title" htmlFor="review-title" error={fields.title ?? null}>
           <Input
             id="review-title"
+            dir="auto"
             value={title}
             maxLength={120}
             required
@@ -96,6 +97,7 @@ export function ReviewForm({
       >
         <Textarea
           id="review-body"
+          dir="auto"
           value={body}
           maxLength={4000}
           required

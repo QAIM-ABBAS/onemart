@@ -4,6 +4,7 @@ import { useSearchParams } from "react-router-dom";
 import { useAdminCoupons, useDeleteCoupon, useSaveCoupon } from "@/hooks/queries/admin";
 import { ApiError } from "@/lib/api";
 import { money } from "@/lib/format";
+import { normalizeDigits } from "@/lib/text";
 import type { CouponAdminOut, CouponWrite } from "@/lib/types";
 import { toast } from "@/stores/toast";
 
@@ -152,7 +153,7 @@ export function AdminCouponsPage() {
     if (Object.keys(next).length > 0) return;
 
     const payload: CouponWrite = {
-      code: form.code.trim(),
+      code: normalizeDigits(form.code).trim(),
       description: form.description.trim() || null,
       kind: form.kind,
       value: form.kind === "free_delivery" ? 0 : Number(form.value),
@@ -275,7 +276,7 @@ export function AdminCouponsPage() {
               <div key={i} className="flex items-center gap-4 px-4 py-4">
                 <Skeleton className="h-5 w-32" />
                 <Skeleton className="h-5 w-24" />
-                <Skeleton className="ml-auto h-5 w-24" />
+                <Skeleton className="ms-auto h-5 w-24" />
               </div>
             ))}
           </div>
@@ -286,14 +287,14 @@ export function AdminCouponsPage() {
             <div className="overflow-x-auto rounded-md border border-line bg-surface">
               <table className="w-full min-w-[960px] text-sm">
                 <thead>
-                  <tr className="border-b border-line bg-surface-2 text-left">
+                  <tr className="border-b border-line bg-surface-2 text-start">
                     <th className="label px-4 py-2.5 text-ink-muted">Code</th>
                     <th className="label px-4 py-2.5 text-ink-muted">Type</th>
                     <th className="label px-4 py-2.5 text-ink-muted">Min order</th>
                     <th className="label px-4 py-2.5 text-ink-muted">Window</th>
                     <th className="label px-4 py-2.5 text-ink-muted">Used</th>
                     <th className="label px-4 py-2.5 text-ink-muted">Status</th>
-                    <th className="label px-4 py-2.5 text-right text-ink-muted">Actions</th>
+                    <th className="label px-4 py-2.5 text-end text-ink-muted">Actions</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-line">
@@ -412,6 +413,7 @@ export function AdminCouponsPage() {
           <Field label="Code" htmlFor="coupon-code" error={errors.code}>
             <Input
               id="coupon-code"
+              dir="ltr"
               value={form.code}
               onChange={(e) => setForm({ ...form, code: e.target.value })}
               placeholder="WELCOME10"

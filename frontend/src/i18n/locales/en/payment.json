@@ -1,0 +1,22 @@
+{
+  "success": {
+    "eyebrow": "Payment complete",
+    "title": "Thank you — your order is confirmed",
+    "body": "We received <span class=\"num font-semibold\">{{amount}}</span> for order <span class=\"num font-semibold\">{{orderNumber}}</span>. A confirmation is in your notifications.",
+    "viewOrder": "View order",
+    "keepShopping": "Keep shopping"
+  },
+  "failed": {
+    "eyebrow": "Payment not completed",
+    "title": "That payment didn't go through",
+    "body": "Nothing was charged for order <span class=\"num font-semibold\">{{orderNumber}}</span>. Your items are still held — retry now, or pay later from the order page.",
+    "retry": "Retry payment",
+    "backToOrder": "Back to order"
+  },
+  "pending": {
+    "eyebrow": "Payment pending",
+    "title": "Finishing your payment…",
+    "body": "We are waiting to confirm <span class=\"num font-semibold\">{{amount}}</span> for order <span class=\"num font-semibold\">{{orderNumber}}</span>. This page updates itself — you can safely keep it open.",
+    "viewOrder": "View order"
+  }
+}

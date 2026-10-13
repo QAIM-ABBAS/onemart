@@ -1,4 +1,6 @@
+import { useTranslation } from "react-i18next";
 import { cn } from "@/lib/cn";
+import { formatNumber } from "@/lib/format";
 import { StarIcon } from "@/components/ui/Icon";
 
 /**
@@ -16,10 +18,11 @@ export function Stars({
 }) {
   const full = Math.floor(rating);
   const half = rating - full >= 0.5;
+  const { t } = useTranslation();
   return (
     <span
       role="img"
-      aria-label={`${rating} out of 5 stars`}
+      aria-label={t("stars.label", { rating: formatNumber(rating, { minimumFractionDigits: 1, maximumFractionDigits: 1 }) })}
       className={cn("inline-flex items-center gap-0.5 text-warning", className)}
     >
       {Array.from({ length: 5 }, (_, i) => {
@@ -46,15 +49,16 @@ export function StarPicker({
   value: number;
   onChange: (rating: number) => void;
 }) {
+  const { t } = useTranslation();
   return (
-    <div role="radiogroup" aria-label="Your rating" className="inline-flex items-center gap-0.5">
+    <div role="radiogroup" aria-label={t("stars.yourRating")} className="inline-flex items-center gap-0.5">
       {[1, 2, 3, 4, 5].map((n) => (
         <button
           key={n}
           type="button"
           role="radio"
           aria-checked={value === n}
-          aria-label={`${n} star${n === 1 ? "" : "s"}`}
+          aria-label={t("stars.pick", { count: formatNumber(n) })}
           onClick={() => onChange(n)}
           className={cn(
             "rounded-md p-1.5 transition hover:bg-surface-2",
@@ -64,7 +68,7 @@ export function StarPicker({
           <StarIcon width={24} height={24} fill={n <= value ? "currentColor" : "none"} />
         </button>
       ))}
-      <span className="ms-1.5 text-sm text-ink-muted">{value}/5</span>
+      <span dir="ltr" className="ms-1.5 text-sm text-ink-muted">{value}/5</span>
     </div>
   );
 }

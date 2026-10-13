@@ -1,0 +1,11 @@
+{
+  "wishlistPrompt": {
+    "title": "Sign in to save items",
+    "saved": "{{name}} will be waiting in your wishlist.",
+    "fallback": "Your wishlist follows your account.",
+    "browse": "Keep browsing",
+    "register": "Create account",
+    "signin": "Sign in",
+    "body": "Your wishlist is kept with your account, so it is there on your phone, your laptop, and after you come back. Sign in and we will add {{name}} for you."
+  }
+}

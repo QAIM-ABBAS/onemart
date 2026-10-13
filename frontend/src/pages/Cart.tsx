@@ -1,5 +1,6 @@
 import { useEffect, useState, type FormEvent } from "react";
 import { Link, useNavigate, useSearchParams } from "react-router-dom";
+import { useTranslation } from "react-i18next";
 
 import { BannerStrip, BannerStripSkeleton } from "@/components/banner/BannerStrip";
 import {
@@ -10,7 +11,8 @@ import {
   useUpdateCartItem,
 } from "@/hooks/queries/cart";
 import { useBanners } from "@/hooks/queries/banners";
-import { money } from "@/lib/format";
+import { formatPrice } from "@/lib/format";
+import { normalizeDigits } from "@/lib/text";
 
 import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
@@ -20,6 +22,7 @@ import { Price, QuantityStepper } from "@/components/ui/Price";
 import { EmptyState, ErrorState, InlineError, Skeleton } from "@/components/ui/States";
 
 export function CartPage() {
+  const { t } = useTranslation("cart");
   const cart = useCart();
   const updateItem = useUpdateCartItem();
   const removeItem = useRemoveCartItem();
@@ -93,13 +96,13 @@ export function CartPage() {
     return (
       <div className="mx-auto max-w-3xl px-4 py-16">
         <EmptyState
-          title="Your cart is empty"
-          body="Browse the catalogue and add the things you need — groceries, home care, daily essentials."
+          title={t("empty.title")}
+          body={t("empty.body")}
           action={
             <Link to="/products">
               <Button>
                 <BagIcon width={16} height={16} />
-                Start shopping
+                {t("empty.cta")}
               </Button>
             </Link>
           }
@@ -110,7 +113,7 @@ export function CartPage() {
 
   const onApplyCoupon = (event: FormEvent) => {
     event.preventDefault();
-    const code = couponCode.trim();
+    const code = normalizeDigits(couponCode).trim();
     if (!code) return;
     applyCoupon.mutate(code, { onSuccess: () => setCouponCode("") });
   };
@@ -118,10 +121,10 @@ export function CartPage() {
   return (
     <div className="mx-auto max-w-6xl px-4 py-8 lg:py-12">
       <div className="pb-1">
-        <p className="label text-brand-600">Your basket</p>
-        <h1 className="mt-1.5 text-3xl">Cart</h1>
+        <p className="label text-brand-600">{t("eyebrow")}</p>
+        <h1 className="mt-1.5 text-3xl">{t("title")}</h1>
         <p className="mt-1.5 text-sm text-ink-muted num">
-          {data.item_count} item{data.item_count === 1 ? "" : "s"}
+          {t("items", { count: data.item_count })}
         </p>
       </div>
 
@@ -140,14 +143,14 @@ export function CartPage() {
             <InlineError>
               {updateItem.error instanceof Error
                 ? updateItem.error.message
-                : "Could not update quantity."}
+                : t("errors.update")}
             </InlineError>
           ) : null}
           {removeItem.isError ? (
             <InlineError>
               {removeItem.error instanceof Error
                 ? removeItem.error.message
-                : "Could not remove item."}
+                : t("errors.remove")}
             </InlineError>
           ) : null}
 
@@ -185,29 +188,29 @@ export function CartPage() {
                     {item.product_name}
                   </Link>
                   <p className="mt-1 text-[0.8125rem] text-ink-muted">
-                    {item.variant_name} · SKU <span className="num">{item.sku}</span>
+                    {item.variant_name} · {t("item.sku")} <span dir="ltr" className="num">{item.sku}</span>
                   </p>
                   <p className="num mt-1 text-[0.8125rem] text-ink-muted">
                     {item.deal_price != null ? (
                       <>
-                        <span className="font-semibold text-deal">{money(item.deal_price)} each</span>{" "}
-                        <span className="line-through">{money(item.unit_price)}</span>{" "}
+                        <span className="font-semibold text-deal">{t("item.dealPrice", { price: formatPrice(item.deal_price) })}</span>{" "}
+                        <span className="line-through">{formatPrice(item.unit_price)}</span>{" "}
                         <span className="label rounded-xs bg-deal px-1.5 py-0.5 text-surface">
-                          Flash deal
+                          {t("item.flashDeal")}
                         </span>
                       </>
                     ) : (
-                      <>{money(item.unit_price)} each</>
+                      <>{t("item.unitPrice", { price: formatPrice(item.unit_price) })}</>
                     )}
                   </p>
 
                   {missing ? (
                     <p className="mt-2 text-[0.8125rem] font-medium text-danger">
-                      Out of stock — remove this item to continue.
+                      {t("item.outOfStock")}
                     </p>
                   ) : exceeds ? (
                     <p className="mt-2 text-[0.8125rem] font-medium text-warning">
-                      Only {item.available} available. Reduce the quantity to check out.
+                      {t("item.exceeds", { count: item.available })}
                     </p>
                   ) : null}
 
@@ -229,17 +232,17 @@ export function CartPage() {
                       className="inline-flex h-9 items-center gap-1.5 rounded-lg px-2 text-[0.8125rem] text-ink-muted transition hover:bg-danger/10 hover:text-danger disabled:opacity-40"
                     >
                       <TrashIcon width={15} height={15} />
-                      Remove
+                      {t("item.remove")}
                     </button>
                   </div>
                 </div>
 
-                <div className="sm:text-right">
+                <div className="sm:text-end">
                   {item.deal_price != null ? (
                     <div>
                       <Price value={item.deal_price * item.quantity} size="lg" className="text-deal" />
                       <p className="num text-[0.8125rem] text-ink-muted line-through">
-                        {money(item.line_total)}
+                        {formatPrice(item.line_total)}
                       </p>
                     </div>
                   ) : (
@@ -257,7 +260,7 @@ export function CartPage() {
         <aside className="lg:sticky lg:top-36 lg:w-[340px] lg:shrink-0 lg:self-start">
           <div className="rounded-md bg-surface border border-line">
             <div className="px-5 py-4">
-              <h2 className="text-lg">Order summary</h2>
+              <h2 className="text-lg">{t("summary.title")}</h2>
             </div>
 
             {/* Coupon: one input while none is applied, one chip once it is.
@@ -265,9 +268,9 @@ export function CartPage() {
             <div className="border-t border-line px-5 py-4">
               {data.coupon ? (
                 <div className="flex flex-wrap items-center justify-between gap-2">
-                  <span className="inline-flex items-center gap-2 rounded-md bg-highlight px-2.5 py-1.5 text-xs font-semibold text-highlight-ink">
+                  <span dir="ltr" className="inline-flex items-center gap-2 rounded-md bg-highlight px-2.5 py-1.5 text-xs font-semibold text-highlight-ink">
                     {data.coupon.code}
-                    <span className="font-normal opacity-80">applied</span>
+                    <span className="font-normal opacity-80">{t("coupon.applied")}</span>
                   </span>
                   <button
                     type="button"
@@ -275,17 +278,18 @@ export function CartPage() {
                     disabled={removeCoupon.isPending}
                     className="text-[0.8125rem] text-ink-muted underline underline-offset-2 transition hover:text-ink disabled:opacity-40"
                   >
-                    Remove
+                    {t("coupon.remove")}
                   </button>
                 </div>
               ) : (
                 <form onSubmit={onApplyCoupon} className="flex gap-2">
                   <Input
                     id="coupon-code"
+                    dir="ltr"
                     value={couponCode}
                     onChange={(e) => setCouponCode(e.target.value)}
-                    placeholder="Coupon code"
-                    aria-label="Coupon code"
+                    placeholder={t("coupon.placeholder")}
+                    aria-label={t("coupon.label")}
                     autoComplete="off"
                     className="h-9 flex-1 uppercase"
                   />
@@ -296,7 +300,7 @@ export function CartPage() {
                     loading={applyCoupon.isPending}
                     disabled={!couponCode.trim()}
                   >
-                    Apply
+                    {t("coupon.apply")}
                   </Button>
                 </form>
               )}
@@ -304,66 +308,63 @@ export function CartPage() {
                 <InlineError className="mt-2">
                   {applyCoupon.error instanceof Error
                     ? applyCoupon.error.message
-                    : "Could not apply that code."}
+                    : t("errors.coupon")}
                 </InlineError>
               ) : null}
             </div>
 
             <dl className="space-y-3 px-5 py-4 text-sm">
               <div className="flex justify-between">
-                <dt className="text-ink-muted">Subtotal</dt>
-                <dd className="num font-medium">{money(data.subtotal)}</dd>
+                <dt className="text-ink-muted">{t("summary.subtotal")}</dt>
+                <dd className="num font-medium">{formatPrice(data.subtotal)}</dd>
               </div>
               {data.flash_discount > 0 ? (
                 <div className="flex justify-between">
-                  <dt className="text-ink-muted">Flash deal</dt>
-                  <dd className="num font-medium text-deal">−{money(data.flash_discount)}</dd>
+                  <dt className="text-ink-muted">{t("summary.flashDeal")}</dt>
+                  <dd className="num font-medium text-deal"><span dir="ltr">−{formatPrice(data.flash_discount)}</span></dd>
                 </div>
               ) : null}
               {data.auto_discount > 0 ? (
                 <div className="flex justify-between">
-                  <dt className="text-ink-muted">Discount</dt>
-                  <dd className="num font-medium text-deal">−{money(data.auto_discount)}</dd>
+                  <dt className="text-ink-muted">{t("summary.discount")}</dt>
+                  <dd className="num font-medium text-deal"><span dir="ltr">−{formatPrice(data.auto_discount)}</span></dd>
                 </div>
               ) : null}
               {data.coupon?.kind === "free_delivery" ? (
                 <div className="flex justify-between">
                   <dt className="text-ink-muted">
-                    Coupon <span className="font-medium text-ink">{data.coupon.code}</span>
+                    {t("summary.coupon")} <span dir="ltr" className="font-medium text-ink">{data.coupon.code}</span>
                   </dt>
-                  <dd className="num font-medium text-brand-600">Free delivery</dd>
+                  <dd className="num font-medium text-brand-600">{t("summary.freeDelivery")}</dd>
                 </div>
               ) : data.discount > 0 ? (
                 <div className="flex justify-between">
                   <dt className="text-ink-muted">
-                    Coupon <span className="font-medium text-ink">{data.coupon?.code}</span>
+                    {t("summary.coupon")} <span dir="ltr" className="font-medium text-ink">{data.coupon?.code}</span>
                   </dt>
-                  <dd className="num font-medium text-deal">−{money(data.discount)}</dd>
+                  <dd className="num font-medium text-deal"><span dir="ltr">−{formatPrice(data.discount)}</span></dd>
                 </div>
               ) : null}
               <div className="flex justify-between">
-                <dt className="text-ink-muted">Delivery</dt>
+                <dt className="text-ink-muted">{t("summary.delivery")}</dt>
                 <dd className="num font-medium">
                   {data.delivery_fee === 0 ? (
-                    <span className="text-brand-600">Free</span>
+                    <span className="text-brand-600">{t("summary.free")}</span>
                   ) : (
-                    money(data.delivery_fee)
+                    formatPrice(data.delivery_fee)
                   )}
                 </dd>
               </div>
               <div className="flex justify-between pt-3 text-base">
-                <dt className="font-medium">Total</dt>
-                <dd className="num font-semibold">{money(data.total)}</dd>
+                <dt className="font-medium">{t("summary.total")}</dt>
+                <dd className="num font-semibold">{formatPrice(data.total)}</dd>
               </div>
             </dl>
             {data.free_delivery_gap > 0 ? (
-              <p className="bg-surface-2/50 px-5 py-3 text-[0.8125rem] text-ink-muted ">
-                Add <span className="num font-medium text-ink">{money(data.free_delivery_gap)}</span> more
-                for free delivery.
-              </p>
+              <p className="bg-surface-2/50 px-5 py-3 text-[0.8125rem] text-ink-muted " dangerouslySetInnerHTML={{ __html: t("summary.gap", { amount: formatPrice(data.free_delivery_gap) }) }} />
             ) : (
               <p className="bg-brand-600/8 px-5 py-3 text-[0.8125rem] text-brand-600 ">
-                You have unlocked free delivery.
+                {t("summary.unlocked")}
               </p>
             )}
             <div className="space-y-2.5 px-5 py-4">
@@ -373,16 +374,16 @@ export function CartPage() {
                 onClick={() => navigate("/checkout")}
                 disabled={data.items.some((i) => i.available < i.quantity)}
               >
-                Proceed to checkout
+                {t("summary.checkout")}
               </Button>
               <Link to="/products">
                 <Button block variant="ghost">
-                  Continue shopping
+                  {t("summary.continue")}
                 </Button>
               </Link>
             </div>
             <div className="bg-surface-2/50 px-5 py-3 ">
-              <Badge tone="neutral">Cash on delivery</Badge>
+              <Badge tone="neutral">{t("summary.cod")}</Badge>
             </div>
           </div>
         </aside>

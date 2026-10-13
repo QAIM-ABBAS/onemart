@@ -1,6 +1,8 @@
 import { useState, type ReactNode } from "react";
+import { useTranslation } from "react-i18next";
 
 import { useProducts, type ProductQueryParams } from "@/hooks/queries/catalog";
+import { useDirection } from "@/hooks/useDirection";
 import { cn } from "@/lib/cn";
 import type { CategoryNode } from "@/lib/types";
 
@@ -44,7 +46,9 @@ export function ProductShelf({
   headingExtra,
 }: ProductShelfProps) {
   const [active, setActive] = useState(0);
+  const { t } = useTranslation("home");
   const { ref, scrollBy, canPrev, canNext } = useCarousel<HTMLDivElement>();
+  const { isRTL } = useDirection();
 
   const current = tabs[active];
   const params: ProductQueryParams = {
@@ -115,9 +119,9 @@ export function ProductShelf({
             </div>
           ) : items.length === 0 ? (
             <div className="rounded-md bg-surface-2/50 px-6 py-12 text-center shadow-pressed">
-              <p className="label text-ink-muted">Nothing here yet</p>
+              <p className="label text-ink-muted">{t("shelves.empty")}</p>
               <p className="mt-2 text-sm text-ink-muted">
-                No products in this shelf right now — try another category.
+                {t("shelves.emptyBody")}
               </p>
             </div>
           ) : (
@@ -129,11 +133,11 @@ export function ProductShelf({
                 onKeyDown={(event) => {
                   if (event.key === "ArrowLeft") {
                     event.preventDefault();
-                    scrollBy(-1);
+                    scrollBy(isRTL ? 1 : -1);
                   }
                   if (event.key === "ArrowRight") {
                     event.preventDefault();
-                    scrollBy(1);
+                    scrollBy(isRTL ? -1 : 1);
                   }
                 }}
               >
@@ -144,7 +148,7 @@ export function ProductShelf({
                 ))}
               </Carousel>
               <span className="sr-only" aria-live="polite">
-                {products.isFetching ? "Updating products" : ""}
+                {products.isFetching ? t("shelves.updating") : ""}
               </span>
             </div>
           )}

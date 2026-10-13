@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState, type FormEvent } from "react";
 import { Link, useSearchParams } from "react-router-dom";
+import { useTranslation } from "react-i18next";
 
 import { ProductCard, ProductGrid, ProductGridSkeleton } from "@/components/catalog/ProductCard";
 import { BannerStrip, BannerStripSkeleton } from "@/components/banner/BannerStrip";
@@ -12,15 +13,17 @@ import { EmptyState, ErrorState, Skeleton } from "@/components/ui/States";
 import { useBanners } from "@/hooks/queries/banners";
 import { useCategories, useFacets, useProducts, type ProductQueryParams } from "@/hooks/queries/catalog";
 import { cn } from "@/lib/cn";
+import { formatNumber, formatPrice } from "@/lib/format";
+import { normalizeDigits } from "@/lib/text";
 import type { CategoryNode } from "@/lib/types";
 
 const SORT_OPTIONS = [
-  { value: "newest", label: "Newest first" },
-  { value: "bestselling", label: "Best selling" },
-  { value: "price_asc", label: "Price: low to high" },
-  { value: "price_desc", label: "Price: high to low" },
-  { value: "name_asc", label: "Name: A to Z" },
-  { value: "name_desc", label: "Name: Z to A" },
+  { value: "newest", labelKey: "sortOptions.newest" },
+  { value: "bestselling", labelKey: "sortOptions.bestselling" },
+  { value: "price_asc", labelKey: "sortOptions.price_asc" },
+  { value: "price_desc", labelKey: "sortOptions.price_desc" },
+  { value: "name_asc", labelKey: "sortOptions.name_asc" },
+  { value: "name_desc", labelKey: "sortOptions.name_desc" },
 ];
 
 const PAGE_SIZE = 24;
@@ -38,6 +41,7 @@ interface FilterPanelProps {
 }
 
 function FilterPanel({ params, update, clearAll }: FilterPanelProps) {
+  const { t } = useTranslation("catalog");
   const categories = useCategories();
   const facets = useFacets(params);
   const [minInput, setMinInput] = useState(params.min_price?.toString() ?? "");
@@ -51,8 +55,8 @@ function FilterPanel({ params, update, clearAll }: FilterPanelProps) {
   function applyPrice(e: FormEvent) {
     e.preventDefault();
     update({
-      min_price: minInput.trim() || undefined,
-      max_price: maxInput.trim() || undefined,
+      min_price: normalizeDigits(minInput).trim() || undefined,
+      max_price: normalizeDigits(maxInput).trim() || undefined,
     });
   }
 
@@ -74,17 +78,17 @@ function FilterPanel({ params, update, clearAll }: FilterPanelProps) {
                 ? "font-medium text-ink hover:bg-surface-2"
                 : "text-ink-muted hover:bg-surface-2",
           )}
-          style={depth > 0 ? { paddingLeft: `${0.5 + depth * 0.85}rem` } : undefined}
+          style={depth > 0 ? { paddingInlineStart: `${0.5 + depth * 0.85}rem` } : undefined}
         >
           <span>{cat.name}</span>
           {typeof cat.product_count === "number" ? (
             <span className={cn("num text-[0.6875rem]", active ? "text-brand-600" : "text-ink-muted")}>
-              {cat.product_count}
+              {formatNumber(cat.product_count)}
             </span>
           ) : null}
         </Link>
         {cat.children && cat.children.length > 0 ? (
-          <ul className="ml-1">{cat.children.map((child) => renderCategory(child, depth + 1))}</ul>
+          <ul className="ms-1">{cat.children.map((child) => renderCategory(child, depth + 1))}</ul>
         ) : null}
       </li>
     );
@@ -99,14 +103,14 @@ function FilterPanel({ params, update, clearAll }: FilterPanelProps) {
     <div className="space-y-7">
       <div>
         <div className="flex items-center justify-between pb-2">
-          <p className="label text-ink">Categories</p>
+          <p className="label text-ink">{t("panel.categories")}</p>
           {params.category ? (
             <button
               type="button"
               onClick={() => update({ category: undefined })}
               className="text-[0.75rem] text-ink-muted underline-offset-2 hover:text-ink hover:underline"
             >
-              Clear
+              {t("panel.clear")}
             </button>
           ) : null}
         </div>
@@ -116,13 +120,13 @@ function FilterPanel({ params, update, clearAll }: FilterPanelProps) {
               type="button"
               onClick={() => update({ category: undefined })}
               className={cn(
-                "flex w-full items-center rounded-lg px-2 py-1.5 text-left text-sm transition",
+                "flex w-full items-center rounded-lg px-2 py-1.5 text-start text-sm transition",
                 !params.category
                   ? "bg-surface font-semibold text-brand-700 "
                   : "font-medium text-ink hover:bg-surface-2",
               )}
             >
-              All categories
+              {t("panel.allCategories")}
             </button>
           </li>
           {categories.isLoading ? (
@@ -140,14 +144,14 @@ function FilterPanel({ params, update, clearAll }: FilterPanelProps) {
       {facets.data?.brands && facets.data.brands.length > 0 ? (
         <div>
           <div className="flex items-center justify-between pb-2">
-            <p className="label text-ink">Brands</p>
+            <p className="label text-ink">{t("panel.brands")}</p>
             {params.brand ? (
               <button
                 type="button"
                 onClick={() => update({ brand: undefined })}
                 className="text-[0.75rem] text-ink-muted underline-offset-2 hover:text-ink hover:underline"
               >
-                Clear
+                {t("panel.clear")}
               </button>
             ) : null}
           </div>
@@ -176,37 +180,37 @@ function FilterPanel({ params, update, clearAll }: FilterPanelProps) {
       ) : null}
 
       <div>
-        <p className="label pb-2 text-ink">Price</p>
+        <p className="label pb-2 text-ink">{t("panel.price")}</p>
         <form onSubmit={applyPrice} className="mt-3 flex items-center gap-2">
           <Input
             type="number"
             min={0}
             inputMode="numeric"
-            placeholder="Min"
-            aria-label="Minimum price"
+            placeholder={t("panel.min")}
+            aria-label={t("panel.minLabel")}
             value={minInput}
             onChange={(e) => setMinInput(e.target.value)}
             className="h-9 text-sm"
           />
-          <span className="text-ink-muted">–</span>
+          <span aria-hidden="true" className="text-ink-muted">–</span>
           <Input
             type="number"
             min={0}
             inputMode="numeric"
-            placeholder="Max"
-            aria-label="Maximum price"
+            placeholder={t("panel.max")}
+            aria-label={t("panel.maxLabel")}
             value={maxInput}
             onChange={(e) => setMaxInput(e.target.value)}
             className="h-9 text-sm"
           />
           <Button type="submit" variant="secondary" size="sm">
-            Apply
+            {t("panel.apply")}
           </Button>
         </form>
         {facets.data ? (
           <p className="mt-2 text-[0.75rem] text-ink-muted num">
             {typeof facets.data.min_price === "number"
-              ? `Listed from ${new Intl.NumberFormat("en-IN", { style: "currency", currency: "INR", maximumFractionDigits: 0 }).format(facets.data.min_price)}`
+              ? t("panel.listedFrom", { price: formatPrice(facets.data.min_price, { maximumFractionDigits: 0 }) })
               : ""}
           </p>
         ) : null}
@@ -214,7 +218,7 @@ function FilterPanel({ params, update, clearAll }: FilterPanelProps) {
 
       <div>
         <Checkbox
-          label="In stock only"
+          label={t("panel.inStock")}
           checked={Boolean(params.in_stock)}
           onChange={(e) => update({ in_stock: e.target.checked ? "1" : undefined })}
         />
@@ -222,7 +226,7 @@ function FilterPanel({ params, update, clearAll }: FilterPanelProps) {
 
       {hasFilters ? (
         <Button variant="ghost" size="sm" onClick={clearAll} className="w-full justify-start px-0">
-          Clear all filters
+          {t("panel.clearAll")}
         </Button>
       ) : null}
     </div>
@@ -230,6 +234,7 @@ function FilterPanel({ params, update, clearAll }: FilterPanelProps) {
 }
 
 export function BrowsePage() {
+  const { t } = useTranslation("catalog");
   const [sp, setSp] = useSearchParams();
   const [filtersOpen, setFiltersOpen] = useState(false);
 
@@ -285,12 +290,12 @@ export function BrowsePage() {
   }
 
   const title = params.q
-    ? `Results for “${params.q}”`
+    ? t("resultsFor", { q: params.q })
     : activeCategory
       ? activeCategory.name
       : params.featured
-        ? "Featured products"
-        : "All products";
+        ? t("featured")
+        : t("all");
 
   const page = params.page ?? 1;
 
@@ -298,12 +303,12 @@ export function BrowsePage() {
     <div className="mx-auto max-w-7xl px-4 py-6 lg:py-10">
       <div className="flex flex-wrap items-end justify-between gap-4">
         <div>
-          <p className="label text-brand-600">{params.q ? "Search" : "Catalogue"}</p>
+          <p className="label text-brand-600">{params.q ? t("eyebrow.search") : t("eyebrow.catalogue")}</p>
           <h1 className="mt-1.5 text-3xl sm:text-[2.25rem]">{title}</h1>
           <p className="mt-1.5 text-sm text-ink-muted num" aria-live="polite">
             {products.data
-              ? `${products.data.total} product${products.data.total === 1 ? "" : "s"}`
-              : "Loading products…"}
+              ? t("count", { count: products.data.total })
+              : t("loading")}
           </p>
         </div>
         <div className="flex items-center gap-2">
@@ -313,19 +318,19 @@ export function BrowsePage() {
             className="lg:hidden"
             onClick={() => setFiltersOpen(true)}
           >
-            Filters
+            {t("filters")}
           </Button>
           <label className="flex items-center gap-2 text-sm">
-            <span className="label hidden text-ink-muted sm:inline">Sort</span>
+            <span className="label hidden text-ink-muted sm:inline">{t("sort")}</span>
             <Select
               value={params.sort ?? "newest"}
               onChange={(e) => update({ sort: e.target.value })}
-              aria-label="Sort products"
+              aria-label={t("sortLabel")}
               className="h-9 min-w-44 text-sm"
             >
               {SORT_OPTIONS.map((opt) => (
                 <option key={opt.value} value={opt.value}>
-                  {opt.label}
+                  {t(opt.labelKey)}
                 </option>
               ))}
             </Select>
@@ -379,15 +384,15 @@ export function BrowsePage() {
             </>
           ) : (
             <EmptyState
-              title="No products match these filters"
-              body="Try removing a filter or searching for something else."
+              title={t("empty.title")}
+              body={t("empty.body")}
               action={
                 <div className="flex flex-wrap justify-center gap-3">
                   <Button variant="secondary" onClick={clearAll}>
-                    Clear filters
+                    {t("empty.clear")}
                   </Button>
                   <Link to="/products">
-                    <Button variant="primary">Browse everything</Button>
+                    <Button variant="primary">{t("empty.browse")}</Button>
                   </Link>
                 </div>
               }
@@ -399,12 +404,12 @@ export function BrowsePage() {
       <Modal
         open={filtersOpen}
         onClose={() => setFiltersOpen(false)}
-        title="Filters"
-        description="Narrow down the catalogue"
+        title={t("modal.title")}
+        description={t("modal.description")}
         footer={
           <Button block onClick={() => setFiltersOpen(false)}>
             <SearchIcon width={15} height={15} />
-            {products.data ? `Show ${products.data.total} products` : "Show products"}
+            {products.data ? t("modal.show", { count: products.data.total }) : t("modal.showFallback")}
           </Button>
         }
       >

@@ -1,4 +1,5 @@
 import { useCallback, useMemo } from "react";
+import { useTranslation } from "react-i18next";
 
 import { DEAL_ENDS_AT, DEAL_SLOTS } from "@/content/home";
 import { useHome } from "@/hooks/queries/catalog";
@@ -9,6 +10,7 @@ import { SectionHeader } from "@/components/ui/SectionHeader";
 import { ErrorState } from "@/components/ui/States";
 
 export function TopSaver() {
+  const { t } = useTranslation("home");
   const home = useHome();
 
   const refetch = useCallback(() => {
@@ -30,9 +32,9 @@ export function TopSaver() {
     <section aria-labelledby={headingId} className="section-block">
       <SectionHeader
         id={headingId}
-        title="Top saver today"
+        title={t("topsaver.title")}
         href="/products?featured=1"
-        linkLabel="All offers"
+        linkLabel={t("topsaver.all")}
       >
         <CountdownPill endsAt={DEAL_ENDS_AT} onExpire={refetch} className="ms-1" />
       </SectionHeader>
@@ -48,9 +50,9 @@ export function TopSaver() {
           <ErrorState error={home.error} onRetry={() => void home.refetch()} />
         ) : deals.length === 0 ? (
           <div className="rounded-md bg-surface-2/50 px-6 py-12 text-center shadow-pressed">
-            <p className="label text-ink-muted">No deals right now</p>
+            <p className="label text-ink-muted">{t("topsaver.empty")}</p>
             <p className="mt-2 text-sm text-ink-muted">
-              Today's offers are being restocked — check back soon.
+              {t("topsaver.emptyBody")}
             </p>
           </div>
         ) : (

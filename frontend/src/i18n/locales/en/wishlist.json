@@ -1,0 +1,43 @@
+{
+  "page": {
+    "eyebrow": "Your account",
+    "title": "Wishlist",
+    "count_one": "{{count, number}} saved item",
+    "count_other": "{{count, number}} saved items",
+    "empty": "Everything you have saved for later."
+  },
+  "filters": {
+    "in_stock": "In stock only",
+    "search": "Search saved items",
+    "sort": {
+      "label": "Sort wishlist",
+      "recent": "Recently saved",
+      "oldest": "Oldest saved",
+      "price_asc": "Price: low to high",
+      "price_desc": "Price: high to low",
+      "name": "Name A–Z"
+    }
+  },
+  "item": {
+    "sku": "SKU",
+    "available": "{{count, number}} in stock",
+    "in_stock": "In stock",
+    "add_to_cart": "Add to cart",
+    "out_of_stock": "Out of stock",
+    "view": "View",
+    "remove_aria": "Remove {{name}} from wishlist"
+  },
+  "modal": {
+    "title": "Choose an option",
+    "description": "{{name}}",
+    "sold_out": "Sold out"
+  },
+  "empty": {
+    "title": "Nothing saved yet",
+    "title_filtered": "No saved items match",
+    "body": "Tap the heart on any product and it will wait for you here — with its current price and stock.",
+    "body_filtered": "No saved items match. Try a different search, or show everything that is in stock.",
+    "action_browse": "Browse products",
+    "action_clear": "Clear filters"
+  }
+}

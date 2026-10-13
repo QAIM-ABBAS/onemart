@@ -1,7 +1,9 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Link } from "react-router-dom";
+import { useTranslation } from "react-i18next";
 
 import { BannerPicture } from "@/components/banner/BannerPicture";
+import { useDirection } from "@/hooks/useDirection";
 import { trackClick, trackImpression } from "@/lib/bannerTrack";
 import { cn } from "@/lib/cn";
 import type { Banner } from "@/lib/types";
@@ -15,6 +17,8 @@ export function HeroSlider({ slides }: { slides: Banner[] }) {
   const [paused, setPaused] = useState(false);
   const pointerStart = useRef<number | null>(null);
   const count = slides.length;
+  const { dir } = useDirection();
+  const { t } = useTranslation("home");
 
   const go = useCallback(
     (next: number) => setIndex((next + count) % count),
@@ -42,7 +46,7 @@ export function HeroSlider({ slides }: { slides: Banner[] }) {
   return (
     <section
       aria-roledescription="carousel"
-      aria-label="Featured offers"
+      aria-label={t("hero.label")}
       className="relative h-[360px] overflow-hidden rounded-md bg-surface-2 border border-line sm:h-[380px] lg:h-[300px]"
       onMouseEnter={() => setPaused(true)}
       onMouseLeave={() => setPaused(false)}
@@ -70,13 +74,17 @@ export function HeroSlider({ slides }: { slides: Banner[] }) {
       }}
       tabIndex={0}
     >
+      {/* Track stays LTR so translateX maths and swipe direction never change;
+          each slide re-applies the page direction for its own content. */}
       <div
+        dir="ltr"
         className="flex h-full transition-transform duration-500 ease-out motion-reduce:transition-none"
         style={{ transform: `translateX(-${index * 100}%)` }}
       >
         {slides.map((slide, i) => (
           <div
             key={slide.id}
+            dir={dir}
             aria-hidden={i !== index}
             className={cn(
               "relative h-full w-full shrink-0 overflow-hidden",
@@ -127,18 +135,18 @@ export function HeroSlider({ slides }: { slides: Banner[] }) {
         <div className="flex items-center gap-1.5 rounded-full bg-surface/90 px-3 py-2 border border-line">
           <button
             type="button"
-            aria-label="Previous slide"
+            aria-label={t("hero.prev")}
             onClick={() => go(index - 1)}
             className="grid size-7 place-items-center rounded-full text-ink transition hover:bg-surface-2 hover:text-brand-700"
           >
-            <ChevronLeftIcon width={16} height={16} />
+            <ChevronLeftIcon width={16} height={16} className="rtl:-scale-x-100" />
           </button>
           <div className="flex items-center gap-1.5">
             {slides.map((slide, i) => (
               <button
                 key={slide.id}
                 type="button"
-                aria-label={`Go to slide ${i + 1}`}
+                aria-label={t("hero.goTo", { index: i + 1 })}
                 aria-current={i === index}
                 onClick={() => setIndex(i)}
                 className={cn(
@@ -150,11 +158,11 @@ export function HeroSlider({ slides }: { slides: Banner[] }) {
           </div>
           <button
             type="button"
-            aria-label="Next slide"
+            aria-label={t("hero.next")}
             onClick={() => go(index + 1)}
             className="grid size-7 place-items-center rounded-full text-ink transition hover:bg-surface-2 hover:text-brand-700"
           >
-            <ChevronRightIcon width={16} height={16} />
+            <ChevronRightIcon width={16} height={16} className="rtl:-scale-x-100" />
           </button>
         </div>
       </div>

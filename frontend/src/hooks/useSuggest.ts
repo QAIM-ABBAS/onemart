@@ -1,6 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
 
 import { api } from "@/lib/api";
+import { normalizeDigits, normalizeFa } from "@/lib/text";
 import type { CategoryNode, Page, ProductListItem } from "@/lib/types";
 
 export interface Suggestion {
@@ -21,7 +22,7 @@ function matchCategory(nodes: CategoryNode[], needle: string): CategoryNode[] {
 }
 
 export function useSuggest(term: string) {
-  const needle = term.trim().toLowerCase();
+  const needle = normalizeFa(normalizeDigits(term)).trim().toLowerCase();
   const enabled = needle.length >= 2;
 
   const products = useQuery({

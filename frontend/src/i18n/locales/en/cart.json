@@ -1,0 +1,49 @@
+{
+  "eyebrow": "Your basket",
+  "title": "Cart",
+  "items_one": "{{count, number}} item",
+  "items_other": "{{count, number}} items",
+  "empty": {
+    "title": "Your cart is empty",
+    "body": "Browse the catalogue and add the things you need — groceries, home care, daily essentials.",
+    "cta": "Start shopping"
+  },
+  "errors": {
+    "update": "Could not update quantity.",
+    "remove": "Could not remove item.",
+    "coupon": "Could not apply that code."
+  },
+  "item": {
+    "sku": "SKU",
+    "each": "each",
+    "dealPrice": "{{price}} each",
+    "unitPrice": "{{price}} each",
+    "flashDeal": "Flash deal",
+    "outOfStock": "Out of stock — remove this item to continue.",
+    "exceeds": "Only {{count, number}} available. Reduce the quantity to check out.",
+    "remove": "Remove"
+  },
+  "coupon": {
+    "applied": "applied",
+    "remove": "Remove",
+    "placeholder": "Coupon code",
+    "label": "Coupon code",
+    "apply": "Apply"
+  },
+  "summary": {
+    "title": "Order summary",
+    "subtotal": "Subtotal",
+    "flashDeal": "Flash deal",
+    "discount": "Discount",
+    "coupon": "Coupon",
+    "freeDelivery": "Free delivery",
+    "delivery": "Delivery",
+    "free": "Free",
+    "total": "Total",
+    "gap": "Add <span class=\"num font-medium text-ink\">{{amount}}</span> more for free delivery.",
+    "unlocked": "You have unlocked free delivery.",
+    "checkout": "Proceed to checkout",
+    "continue": "Continue shopping",
+    "cod": "Cash on delivery"
+  }
+}
