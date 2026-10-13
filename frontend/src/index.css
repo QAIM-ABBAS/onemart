@@ -229,7 +229,7 @@
   --font-sans: var(--font-body);
 }
 
-html[lang='fa'] { --font-body: 'Vazirmatn Variable', 'Inter', system-ui, sans-serif; }
+html[lang='fa'] { --font-body: 'IranYekan', 'Vazirmatn Variable', 'Inter', system-ui, sans-serif; }
 html[lang='en'] { --font-body: 'Inter', system-ui, sans-serif; }
 body { font-family: var(--font-body); }
 /* Persian script must never have letter-spacing (it breaks letter joining) */
