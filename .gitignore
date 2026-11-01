@@ -1,18 +1,3 @@
-# Python
-__pycache__/
-*.py[cod]
-.venv/
-venv/
-.pytest_cache/
-.mypy_cache/
-.ruff_cache/
-*.egg-info/
-
-# Node
-node_modules/
-dist/
-.vite/
-
 # Env / secrets
 .env
 .env.local
@@ -43,6 +28,3 @@ home-*.png
 /step0/
 /card-*.png
 /design-*.png
-
-# Celery beat runtime state
-celerybeat-schedule*
