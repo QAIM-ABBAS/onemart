@@ -16,7 +16,7 @@ export interface ShelfTab {
   slug?: string;
 }
 
-const ITEM_WIDTH =
+export const SHELF_ITEM_WIDTH =
   "w-[64%] shrink-0 snap-start sm:w-[46%] md:w-[31%] lg:w-[calc((100%-4*1rem)/5)]";
 
 export function shelfTabsFromCategories(
@@ -112,7 +112,7 @@ export function ProductShelf({
           ) : showSkeleton ? (
             <div className="flex gap-4">
               {Array.from({ length: 5 }, (_, i) => (
-                <div key={i} className={ITEM_WIDTH}>
+                <div key={i} className={SHELF_ITEM_WIDTH}>
                   <ProductCardSkeleton />
                 </div>
               ))}
@@ -142,7 +142,7 @@ export function ProductShelf({
                 }}
               >
                 {items.map((item) => (
-                  <div key={item.id} className={ITEM_WIDTH}>
+                  <div key={item.id} className={SHELF_ITEM_WIDTH}>
                     <ProductCard item={item} />
                   </div>
                 ))}
